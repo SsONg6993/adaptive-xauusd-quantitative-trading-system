@@ -1,4 +1,4 @@
-# Phase 0-2 runbook
+# Phase 0-3 runbook
 
 ## Data lifecycle
 
@@ -45,3 +45,19 @@ after installing TA-Lib, but it is not required by the runtime.
 Before training: review the feature manifest, approve candidate groups, classify source-data gaps,
 choose fold-local imputation/scaling policy, and agree label horizons/purging. Phase 2 tests must
 remain green, especially future-mutation, prefix-invariance, completed-bar, and swing-delay tests.
+
+## Phase 3 dataset lifecycle
+
+1. Validate source candles and classify reported session/weekend gaps.
+2. Synchronize higher timeframes on completed-bar availability.
+3. Select a versioned label definition and keep the AMBIGUOUS collision default unless a reviewed
+   alternative is explicitly required.
+4. Build the immutable dataset with datasets/build_dataset.py.
+5. Archive dataset, feature, label, split, and quality manifests together.
+6. Inspect row counts, label balance, missingness reasons, purged/embargoed rows, and MFE/MAE.
+7. Never fit imputation, scaling, selection, or reduction outside a fold's training range.
+
+    python datasets/build_dataset.py --config configs/datasets/xauusd_m5.yaml
+    python datasets/inspect_dataset.py --dataset-manifest datasets/generated/DATASET_ID/dataset.manifest.json
+
+Phase 4 may consume these artifacts only after their IDs and split boundaries are reviewed.

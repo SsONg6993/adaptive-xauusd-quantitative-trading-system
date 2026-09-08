@@ -12,5 +12,8 @@ ruff>=0.8,<1
 mypy>=1.13,<2
 pandas-stubs>=2.2,<3
 
+# Immutable Phase 3 Parquet datasets (or install with: pip install -e ".[dataset]")
+pyarrow>=18,<24
+
 # Heavy/optional ML dependencies are intentionally deferred. Install with:
 # pip install -e ".[future-ml]"

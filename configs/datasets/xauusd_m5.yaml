@@ -1,0 +1,25 @@
+dataset_name: xauusd-m5-direction-5
+symbol: XAUUSD
+base_timeframe: M5
+source_files:
+  M5: data/processed/xauusd_m5_sample.csv
+feature_config: configs/base.yaml
+label:
+  name: next_5_bar_direction
+  version: direction-close-5-v1
+  kind: DIRECTION
+  horizon_bars: 5
+  threshold_mode: PERCENTAGE
+  neutral_threshold: 0.0001
+row_policy:
+  drop_before_max_warmup: true
+  drop_incomplete_labels: true
+  critical_feature_columns: [pa_body, pa_range, vol_atr_14]
+  retain_optional_nans: true
+split:
+  train_fraction: 0.60
+  validation_fraction: 0.20
+  purge_bars: 5
+  embargo_bars: 0
+storage_format: parquet
+output_root: datasets/generated

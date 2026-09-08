@@ -1,18 +1,63 @@
 labels:
-  - version: next-1-direction-v1
+  - name: next_1_bar_direction
+    version: direction-close-1-v1
     kind: DIRECTION
     horizon_bars: 1
+    threshold_mode: PERCENTAGE
     neutral_threshold: 0.0
-  - version: next-5-direction-v1
+  - name: next_3_bar_direction
+    version: direction-close-3-v1
+    kind: DIRECTION
+    horizon_bars: 3
+    threshold_mode: PERCENTAGE
+    neutral_threshold: 0.0001
+  - name: next_5_bar_direction
+    version: direction-close-5-v1
     kind: DIRECTION
     horizon_bars: 5
+    threshold_mode: PERCENTAGE
     neutral_threshold: 0.0001
-  - version: forward-return-10-v1
+  - name: next_10_bar_direction
+    version: direction-close-10-v1
+    kind: DIRECTION
+    horizon_bars: 10
+    threshold_mode: PERCENTAGE
+    neutral_threshold: 0.0001
+  - name: next_20_bar_direction
+    version: direction-close-20-v1
+    kind: DIRECTION
+    horizon_bars: 20
+    threshold_mode: ATR
+    neutral_threshold: 0.1
+    atr_column: vol_atr_14
+  - name: forward_return_10
+    version: forward-close-simple-10-v1
     kind: FORWARD_RETURN
     horizon_bars: 10
-  - version: triple-barrier-v1
+    return_mode: SIMPLE
+  - name: atr_adjusted_return_10
+    version: forward-close-atr-10-v1
+    kind: ATR_ADJUSTED_RETURN
+    horizon_bars: 10
+    return_mode: ATR
+    atr_column: vol_atr_14
+  - name: triple_barrier_long
+    version: triple-barrier-long-atr-v1
     kind: TRIPLE_BARRIER
     horizon_bars: 20
-    take_profit_atr: 1.5
-    stop_loss_atr: 1.0
-    max_holding_bars: 20
+    barrier_mode: ATR
+    upper_barrier: 1.5
+    lower_barrier: 1.0
+    side: LONG
+    collision_policy: AMBIGUOUS
+    atr_column: vol_atr_14
+  - name: tp_before_sl_long
+    version: tp-before-sl-long-atr-v1
+    kind: TP_BEFORE_SL
+    horizon_bars: 20
+    barrier_mode: ATR
+    upper_barrier: 1.5
+    lower_barrier: 1.0
+    side: LONG
+    collision_policy: AMBIGUOUS
+    atr_column: vol_atr_14

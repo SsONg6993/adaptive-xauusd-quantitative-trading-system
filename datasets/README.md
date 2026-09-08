@@ -1,3 +1,4 @@
 # Datasets
 
-Phase 3 will create chronological dataset builders from immutable manifests and versioned labels.
+Phase 3 provides immutable dataset build/inspection CLIs. Production artifacts use Parquet and are
+stored under ignored content-derived directories. This package never trains a model.

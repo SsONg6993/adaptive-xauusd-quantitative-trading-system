@@ -1,4 +1,4 @@
-# System architecture (Phase 0-2 baseline)
+# System architecture (Phase 0-3 baseline)
 
 ## Safety invariant
 
@@ -155,7 +155,16 @@ Labels have independent semantic versions and declare kind, horizon, neutral thr
 parameters. Supported designs are N-bar direction (1/3/5/10/20), forward return, ATR-adjusted
 return, triple barrier, and TP-before-SL. A feature row at `t` may use only data available at `t`;
 labels may look forward solely to create targets. Boundary samples without a complete future window
-are dropped. Barrier labels require an explicit same-bar TP/SL collision policy before Phase 3.
+are dropped.
+
+Phase 3 implements these contracts. Dataset rows carry both UTC candle-open and decision timestamps;
+for completed M5 candles the decision timestamp is open plus five minutes. Ordered feature,
+target, and label-metadata allowlists prevent target leakage. Content-derived dataset identity binds
+source data, configuration, feature/label/split manifests, and Git commit.
+
+Chronological and reusable walk-forward definitions use half-open ranges, label-horizon purging,
+and optional embargo. All fitted preprocessing is guarded to training rows. Parquet is the immutable
+production storage format; gzip CSV is debug-only. See [datasets](datasets.md) and [labels](labels.md).
 
 ## Failure states
 

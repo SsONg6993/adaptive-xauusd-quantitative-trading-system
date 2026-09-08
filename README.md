@@ -1,7 +1,7 @@
 # Adaptive XAUUSD Multi-Agent Trading System
 
 Production-oriented, local-first foundation for a measurable multi-agent MT5 trading system. The
-current repository intentionally stops after completed Phase 2 feature engineering. There is no
+current repository intentionally stops after completed Phase 3 dataset engineering. There is no
 trained model, autonomous strategy, live execution EA, or claim of trading
 profitability.
 
@@ -16,13 +16,18 @@ profitability.
   statistics, DST-aware sessions, and causally delayed market structure.
 - Canonical per-output feature manifests, formal warm-up/missing policies, leakage tests, and
   lightweight correlation/stability/quality diagnostics.
+- Versioned direction, return, triple-barrier, and TP-before-SL labels with explicit same-bar
+  ambiguity and MFE/MAE metadata.
+- Immutable Parquet-oriented dataset contracts with UTC decision timestamps, feature/target
+  allowlists, deterministic manifests, chronological purging/embargo, and walk-forward definitions.
 - SQLite WAL schema and transactional migrations, with PostgreSQL migration boundaries documented.
 - Dataset manifests, label definitions, immutable model metadata, JSON logging, YAML configuration,
   and deterministic risk-veto foundation.
 - Local-first defaults: LLM and external-news integrations are off.
 
 Read [the architecture](docs/architecture.md), [indicator research](docs/indicator_research.md),
-[feature contract](docs/features.md), and [runbook](docs/runbook.md) before adding models.
+[feature contract](docs/features.md), [dataset contract](docs/datasets.md),
+[label contract](docs/labels.md), and [runbook](docs/runbook.md) before adding models.
 
 ## Setup (Windows PowerShell)
 
@@ -31,6 +36,7 @@ py -3.12 -m venv .venv
 .venv\Scripts\Activate.ps1
 python -m pip install --upgrade pip
 python -m pip install -e ".[dev,mt5]"
+python -m pip install -e ".[dataset]"
 Copy-Item .env.example .env
 ```
 
@@ -83,7 +89,8 @@ src/axq/                 contracts, config, logs, database, risk, versioning, mo
 tests/                   deterministic tiny-data tests
 agents/ master/ risk/    reserved boundaries for later phased implementations
 execution/ mt5/          reserved for Phase 11 execution protocol and EA
-datasets/ training/      reserved for Phase 3+ dataset/training scripts
+datasets/                immutable Phase 3 dataset build/inspection commands
+training/                reserved for Phase 4+ training scripts
 tuning/ evaluation/      reserved for local experiments; never run automatically
 backtest/ models/        reserved for Phase 12 and registered artifacts
 monitoring/              reserved for health/watchdog services
