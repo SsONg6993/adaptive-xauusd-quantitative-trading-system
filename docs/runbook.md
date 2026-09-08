@@ -1,4 +1,4 @@
-# Phase 0-3 runbook
+# Phase 0-4 runbook
 
 ## Data lifecycle
 
@@ -61,3 +61,22 @@ remain green, especially future-mutation, prefix-invariance, completed-bar, and 
     python datasets/inspect_dataset.py --dataset-manifest datasets/generated/DATASET_ID/dataset.manifest.json
 
 Phase 4 may consume these artifacts only after their IDs and split boundaries are reviewed.
+
+## Phase 4 Quant Agent lifecycle
+
+1. Inspect the dataset, feature, label, and split manifests; never edit an immutable dataset.
+2. Install `.[ml]` for scikit-learn baselines. Install XGBoost/LightGBM separately only when needed.
+3. Review target, ordered features, preprocessing, selection, weights, calibration, HOLD threshold,
+   seed, device, and output path in `configs/quant/`.
+4. Train from the dataset artifact. Confirm fit scopes in `run_summary.json`: TRAIN for preprocessing
+   and model, VALIDATION for calibration, OOS only for final frozen evaluation.
+5. Re-run `training/quant/evaluate.py`; it must reproduce saved OOS metrics without retraining.
+6. Smoke one current feature row through `QuantAgent` with matching manifest IDs and UTC timestamp.
+7. Review metric breadth, calibration, class distribution, BUY/SELL/HOLD coverage, confidence
+   buckets, and return/MFE/MAE diagnostics without interpreting them as profitability.
+8. Leave the run as CANDIDATE unless an explicit future Champion/Challenger review is completed.
+
+Generated models, registries, and experiment databases belong under ignored `runtime/`. Never load
+untrusted joblib artifacts. If identity/hash/order/freshness validation fails, inference must HOLD at
+the orchestration boundary rather than attempting repair. Phase 4 performs no automatic promotion,
+threshold optimization, retraining loop, or online learning.

@@ -1,4 +1,4 @@
-# System architecture (Phase 0-3 baseline)
+# System architecture (Phase 0-4 baseline)
 
 ## Safety invariant
 
@@ -165,6 +165,20 @@ source data, configuration, feature/label/split manifests, and Git commit.
 Chronological and reusable walk-forward definitions use half-open ranges, label-horizon purging,
 and optional embargo. All fitted preprocessing is guarded to training rows. Parquet is the immutable
 production storage format; gzip CSV is debug-only. See [datasets](datasets.md) and [labels](labels.md).
+
+## Quant Agent model boundary
+
+Phase 4 adds a frozen Quant inference boundary over Phase 3 artifacts. Dataset loading verifies all
+manifest identities, payload hash, schema/order, chronology, split row count, and feature/target
+separation. TRAIN alone fits feature selection, imputation, scaling, and the estimator. VALIDATION
+alone fits optional calibration. OOS labels are unavailable to fitting and are read only by the
+final frozen evaluator.
+
+Artifacts and their SHA-256 hashes are bound by a content-addressed model manifest. Inference checks
+feature and optional dataset identity, exact required columns, NaN/inf policy, UTC-aware timestamp,
+and freshness before producing the shared `AgentPrediction`. Lifecycle changes are explicit registry
+transitions; no model can promote or update itself. See [Quant Agent](quant_agent.md),
+[training](model_training.md), and [registry](model_registry.md).
 
 ## Failure states
 

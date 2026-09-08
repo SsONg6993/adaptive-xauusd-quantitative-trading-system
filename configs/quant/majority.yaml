@@ -1,0 +1,14 @@
+agent: quant
+architecture: majority
+dataset_dir: datasets/generated/DATASET_ID
+target_column: null
+preprocessing: {imputation: median, scaler: none}
+feature_selection: {variance_threshold: null, correlation_threshold: null}
+model_hyperparameters: {}
+random_seed: 42
+class_weighting: none
+calibration: {method: none}
+hold_policy: {minimum_confidence: 0.50, explicit_neutral_class: true}
+output_root: runtime/models/quant
+device: cpu
+maximum_data_age_ms: 600000

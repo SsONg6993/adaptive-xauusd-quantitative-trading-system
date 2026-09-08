@@ -1,10 +1,10 @@
 agent: quant
-architecture: logistic_regression
+architecture: random_forest
 dataset_dir: datasets/generated/DATASET_ID
 target_column: null
-preprocessing: {imputation: median, scaler: standard}
+preprocessing: {imputation: median, scaler: none}
 feature_selection: {variance_threshold: 0.0, correlation_threshold: 0.995}
-model_hyperparameters: {C: 1.0, solver: lbfgs}
+model_hyperparameters: {n_estimators: 300, max_depth: 8, min_samples_leaf: 5, n_jobs: -1}
 random_seed: 42
 class_weighting: balanced
 calibration: {method: sigmoid}

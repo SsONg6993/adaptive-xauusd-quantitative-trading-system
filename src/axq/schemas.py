@@ -51,6 +51,8 @@ class AgentPrediction(StrictMessage):
     data_freshness_ms: int = Field(ge=0)
     model_version: str
     feature_version: str
+    dataset_id: str | None = None
+    label_manifest_id: str | None = None
     reasons: dict[str, Any] = Field(default_factory=dict)
     metadata: dict[str, Any] = Field(default_factory=dict)
 

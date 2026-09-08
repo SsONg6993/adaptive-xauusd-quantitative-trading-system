@@ -1,8 +1,8 @@
 # Adaptive XAUUSD Multi-Agent Trading System
 
 Production-oriented, local-first foundation for a measurable multi-agent MT5 trading system. The
-current repository intentionally stops after completed Phase 3 dataset engineering. There is no
-trained model, autonomous strategy, live execution EA, or claim of trading
+current repository intentionally stops after the Phase 4 Quant Agent framework. There is no
+production-trained model, autonomous strategy, live execution EA, or claim of trading
 profitability.
 
 ## Current capabilities
@@ -20,6 +20,11 @@ profitability.
   ambiguity and MFE/MAE metadata.
 - Immutable Parquet-oriented dataset contracts with UTC decision timestamps, feature/target
   allowlists, deterministic manifests, chronological purging/embargo, and walk-forward definitions.
+- Manifest-bound Quant Agent training/evaluation/inference with majority/prior and logistic
+  baselines, Random Forest plus optional XGBoost/LightGBM adapters, train-only preprocessing,
+  validation-only calibration, explicit HOLD policy, metrics, explanations, and artifact hashes.
+- Candidate/Challenger/Champion/Retired local registry with evidence-required manual promotion and
+  a lightweight SQLite experiment audit trail.
 - SQLite WAL schema and transactional migrations, with PostgreSQL migration boundaries documented.
 - Dataset manifests, label definitions, immutable model metadata, JSON logging, YAML configuration,
   and deterministic risk-veto foundation.
@@ -27,7 +32,9 @@ profitability.
 
 Read [the architecture](docs/architecture.md), [indicator research](docs/indicator_research.md),
 [feature contract](docs/features.md), [dataset contract](docs/datasets.md),
-[label contract](docs/labels.md), and [runbook](docs/runbook.md) before adding models.
+[label contract](docs/labels.md), [Quant Agent](docs/quant_agent.md),
+[model training](docs/model_training.md), [model registry](docs/model_registry.md), and
+[runbook](docs/runbook.md) before running models.
 
 ## Setup (Windows PowerShell)
 
@@ -37,6 +44,7 @@ py -3.12 -m venv .venv
 python -m pip install --upgrade pip
 python -m pip install -e ".[dev,mt5]"
 python -m pip install -e ".[dataset]"
+python -m pip install -e ".[ml]"
 Copy-Item .env.example .env
 ```
 
@@ -51,8 +59,8 @@ python -m mypy src/axq
 python scripts/init_db.py --path runtime/smoke.sqlite3
 ```
 
-These are foundation checks only; they do not connect to a broker unless the downloader command is
-run and do not train a model.
+These checks do not connect to a broker or train a model. Phase 4 tests use only tiny deterministic
+fits.
 
 ## Download and validate a small sample
 
@@ -90,7 +98,7 @@ tests/                   deterministic tiny-data tests
 agents/ master/ risk/    reserved boundaries for later phased implementations
 execution/ mt5/          reserved for Phase 11 execution protocol and EA
 datasets/                immutable Phase 3 dataset build/inspection commands
-training/                reserved for Phase 4+ training scripts
+training/quant/          Phase 4 config-driven training and frozen evaluation CLIs
 tuning/ evaluation/      reserved for local experiments; never run automatically
 backtest/ models/        reserved for Phase 12 and registered artifacts
 monitoring/              reserved for health/watchdog services
@@ -101,5 +109,5 @@ monitoring/              reserved for health/watchdog services
 Use chronological splits, fit preprocessing on training data only, and account for overlapping label
 horizons with gaps/purging. Every feature must be available at prediction time. All model output is
 advisory; deterministic risk controls and the EA retain veto power. Failures block new positions.
-Real training, large tuning, DTW indexing, image generation, and multi-year backtests are user-run
-local jobs in later reviewed phases.
+Serious training, large tuning, DTW indexing, image generation, and multi-year backtests are
+user-run local jobs in later reviewed phases.

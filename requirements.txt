@@ -15,5 +15,9 @@ pandas-stubs>=2.2,<3
 # Immutable Phase 3 Parquet datasets (or install with: pip install -e ".[dataset]")
 pyarrow>=18,<24
 
+# Phase 4 CPU baselines, preprocessing, calibration, metrics, and local serialization
+scikit-learn>=1.5,<2
+joblib>=1.4,<2
+
 # Heavy/optional ML dependencies are intentionally deferred. Install with:
 # pip install -e ".[future-ml]"
