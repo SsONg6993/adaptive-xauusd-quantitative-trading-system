@@ -73,3 +73,23 @@ do not silently rewrite earlier decisions.
   success/failure attribution.
 - **Reason:** Improvement must be measurable and auditable.
 - **Consequence:** Online learning and full reporting remain future reviewed phases.
+
+## 2026-09-09 — Separate Quant development layer
+
+- **Decision:** Place experiment suites, walk-forward evaluation, ablation, drift, comparison, and
+  tuning in `axq.quant.development` around the Phase 3–4 contracts rather than expanding the
+  production trainer.
+- **Reason:** Model-development orchestration has different recovery, reporting, and comparison
+  responsibilities from one frozen production training run.
+- **Consequence:** Phase 4 remains the ordinary manifest-bound training/inference path; Phase 5 jobs
+  are content-addressed, atomic, resumable, auditable, and locally user-run.
+
+## 2026-09-09 — Immutable final OOS is evaluation-only
+
+- **Decision:** Final OOS cannot participate in tuning, feature selection, calibration, threshold
+  selection, ablation choice, or model choice. Walk-forward development folds end before final OOS.
+- **Reason:** Repeatedly consulting final OOS converts it into development data and invalidates the
+  claimed generalization estimate.
+- **Consequence:** Every development fold fits fresh preprocessing, selection, model, and calibration;
+  fold models remain unregistered evidence. Optuna accepts only validation or walk-forward-validation
+  objectives, and model promotion stays manual.

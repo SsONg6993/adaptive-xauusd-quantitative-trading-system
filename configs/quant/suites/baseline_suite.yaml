@@ -1,0 +1,12 @@
+schema_version: "1.0"
+name: baseline-suite
+experiments:
+  - ../experiments/majority.yaml
+  - ../experiments/prior.yaml
+  - ../experiments/logistic.yaml
+  - ../experiments/random_forest.yaml
+  - ../experiments/xgboost_cpu.yaml
+  - ../experiments/lightgbm_cpu.yaml
+output_root: ../../../runtime/experiments/quant/suites
+continue_on_failure: true
+resume: true

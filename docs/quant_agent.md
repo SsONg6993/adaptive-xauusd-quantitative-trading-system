@@ -34,3 +34,9 @@ therefore verifies SHA-256 hashes before loading every artifact. ONNX export is 
 Future prediction logging should preserve prediction/outcome linkage, actual class, future return,
 MFE/MAE, confidence bucket, and every model/dataset/feature/label version. This is the interface for
 controlled weekly review and drift analysis, not uncontrolled online learning.
+
+Phase 5 development reports preserve these fields in `predictions.parquet` where the Phase 3 label
+manifest supplies them. Reusable summaries cover prediction counts, BUY/SELL/HOLD distribution,
+actionable coverage, confidence, actual outcomes, classification/calibration metrics, return/MFE/MAE
+diagnostics, version identities, drift interfaces, and prior-period comparison. Scheduling and
+autonomous retraining remain out of scope.

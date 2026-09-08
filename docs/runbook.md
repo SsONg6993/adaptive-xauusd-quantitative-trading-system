@@ -1,4 +1,4 @@
-# Phase 0-4 runbook
+# Phase 0-5 runbook
 
 ## Data lifecycle
 
@@ -80,3 +80,22 @@ Generated models, registries, and experiment databases belong under ignored `run
 untrusted joblib artifacts. If identity/hash/order/freshness validation fails, inference must HOLD at
 the orchestration boundary rather than attempting repair. Phase 4 performs no automatic promotion,
 threshold optimization, retraining loop, or online learning.
+
+## Phase 5 local model development
+
+1. Run the bounded MT5 history report before requesting a large range.
+2. Build one immutable M5/M15/H1/H4 dataset explicitly with `--execute`; review quality and split
+   manifests before fitting.
+3. Run majority and prior baselines before Logistic Regression, then compare calibration, stability,
+   and actionable coverage rather than accuracy alone.
+4. Run Random Forest and boosting only after simpler evidence is reviewed. Probe actual device
+   support first; package presence alone is not GPU capability.
+5. Limit early walk-forward runs to a few folds. Resume reuses only identity-matching completed fold
+   outputs. Every learned component is fold-local.
+6. Run feature-group ablation only on finalists. Run Optuna last, only with `--execute`, and never
+   allow final OOS into its objective.
+7. Preserve completed reports for review; no fold model is registered and no Challenger is promoted
+   automatically.
+
+Exact commands, compute categories, and output locations are in
+[Phase 5 local runs](phase5_local_runs.md).

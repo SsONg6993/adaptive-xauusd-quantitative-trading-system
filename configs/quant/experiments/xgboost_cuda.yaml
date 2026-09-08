@@ -1,0 +1,16 @@
+schema_version: "1.0"
+name: xgboost-cuda
+output_root: ../../../runtime/experiments/quant
+training:
+  architecture: xgboost
+  dataset_dir: ../../../datasets/generated/DATASET_ID
+  preprocessing: {imputation: median, scaler: none}
+  feature_selection: {variance_threshold: 0.0, correlation_threshold: 0.995}
+  model_hyperparameters: {n_estimators: 600, max_depth: 6, learning_rate: 0.03, subsample: 0.8, colsample_bytree: 0.8, tree_method: hist, n_jobs: -1}
+  random_seed: 42
+  class_weighting: none
+  calibration: {method: sigmoid}
+  hold_policy: {minimum_confidence: 0.55, explicit_neutral_class: true}
+  output_root: ../../../runtime/models/quant
+  device: cuda
+evaluation: {hold_thresholds: [0.40, 0.45, 0.50, 0.55, 0.60, 0.65, 0.70]}

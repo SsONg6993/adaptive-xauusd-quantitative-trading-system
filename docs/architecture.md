@@ -1,4 +1,4 @@
-# System architecture (Phase 0-4 baseline)
+# System architecture (Phase 0-5 baseline)
 
 ## Safety invariant
 
@@ -50,6 +50,19 @@ order, and broker-ticket identifiers. JSON logs and database rows reconstruct th
 MetaQuotes documents that MT5 bar times are UTC and that availability is limited by terminal chart
 history, so ingestion uses timezone-aware UTC inputs and validates returned coverage
 ([MT5 `copy_rates_range`](https://www.mql5.com/en/docs/python_metatrader5/mt5copyratesrange_py)).
+
+## Quant development boundary
+
+Phase 5 adds `axq.quant.development` around, not inside, the Phase 4 production trainer. Ordinary
+manifest-bound runs continue through the frozen Phase 4 TRAIN/VALIDATION/final-OOS path. Experiment
+suites, walk-forward folds, ablations, drift reports, comparison, and tuning preparation live in the
+separate development layer.
+
+The immutable final OOS partition is evaluation-only. Development fold generation stops at its
+starting index, every fold independently fits preprocessing, feature selection, model, and
+calibration, and fold models never enter the lifecycle registry. Content-derived run/fold identities,
+atomic status, artifact hashes, and skip-on-verified-completion make local jobs auditable and
+resumable without introducing autonomous model choice.
 
 ## Python and MT5 boundaries
 

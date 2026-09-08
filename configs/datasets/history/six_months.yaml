@@ -1,0 +1,4 @@
+symbol: XAUUSD
+lookback_days: 183
+timeframes: [M5, M15, H1, H4]
+raw_output_root: data/raw/mt5/xauusd-six-months

@@ -1,0 +1,9 @@
+enabled: true
+mode: expanding
+train_length: 50000
+validation_length: 10000
+oos_length: 10000
+step_size: 10000
+purge_bars: 5
+embargo_bars: 0
+max_folds: 3

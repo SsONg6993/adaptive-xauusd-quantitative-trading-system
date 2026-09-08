@@ -1,0 +1,6 @@
+architecture: random_forest
+objective_scope: walk_forward_validation
+metric: log_loss
+direction: minimize
+n_trials: 25
+random_seed: 42

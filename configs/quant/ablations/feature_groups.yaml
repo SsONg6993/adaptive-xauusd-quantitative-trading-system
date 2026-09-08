@@ -1,0 +1,3 @@
+feature_groups: [PRICE_ACTION, TREND, MOMENTUM, VOLATILITY, BREAKOUT, VOLUME, STATISTICAL, SESSION, MULTI_TIMEFRAME]
+single_features: []
+include_all_features: true
