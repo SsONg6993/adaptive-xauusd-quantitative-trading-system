@@ -41,6 +41,20 @@ python training/quant/train.py --config configs/quant/logistic.yaml --dataset da
 python training/quant/evaluate.py --run runtime/models/quant/RUN_ID --dataset datasets/generated/DATASET_ID --split oos
 ```
 
-Phase 4 validation uses only a 96-row broker sample and tiny synthetic fixtures. Full training,
-hyperparameter tuning, large ablation, walk-forward experiments, GPU jobs, and profitability
-optimization are intentionally user-run work after review.
+Phase 4 validation used only a 96-row broker sample and tiny synthetic fixtures.
+
+## Phase 5 development layer
+
+`axq.quant.development` surrounds rather than replaces the frozen Phase 4 path. A normal experiment
+validates the immutable dataset, derives a content-addressed development run, delegates the one-model
+fit to Phase 4, and writes extended prediction, calibration, stability, threshold, feature-importance,
+and audit artifacts under ignored `runtime/experiments/quant/`.
+
+Walk-forward and ablation use fresh preprocessors, selectors, estimators, and calibrators for every
+fold. Their generation boundary is the start of immutable final OOS, so final OOS rows and labels
+cannot enter selection. Fold models are evidence artifacts and never enter the lifecycle registry.
+Optuna objectives use these development folds and structurally reject OOS scope.
+
+Threshold sweeps are descriptive and never select a profitability threshold. Drift reports do not
+retrain. Challenger evidence does not promote. See [Phase 5 local runs](phase5_local_runs.md) for the
+ordered user-run commands and output locations.

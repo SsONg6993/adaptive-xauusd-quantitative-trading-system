@@ -1,7 +1,7 @@
 # Adaptive XAUUSD Multi-Agent Trading System
 
 Production-oriented, local-first foundation for a measurable multi-agent MT5 trading system. The
-current repository intentionally stops after the Phase 4 Quant Agent framework. There is no
+current repository intentionally stops after the Phase 5 local Quant development framework. There is no
 production-trained model, autonomous strategy, live execution EA, or claim of trading
 profitability.
 
@@ -25,6 +25,9 @@ profitability.
   validation-only calibration, explicit HOLD policy, metrics, explanations, and artifact hashes.
 - Candidate/Challenger/Champion/Retired local registry with evidence-required manual promotion and
   a lightweight SQLite experiment audit trail.
+- A separate Quant development layer with strict experiment configs, content-addressed reports,
+  resumable suites and walk-forward folds, feature ablation, calibration/threshold/stability/drift
+  diagnostics, compute detection, protected tuning preparation, and run comparison.
 - SQLite WAL schema and transactional migrations, with PostgreSQL migration boundaries documented.
 - Dataset manifests, label definitions, immutable model metadata, JSON logging, YAML configuration,
   and deterministic risk-veto foundation.
@@ -34,7 +37,8 @@ Read [the architecture](docs/architecture.md), [indicator research](docs/indicat
 [feature contract](docs/features.md), [dataset contract](docs/datasets.md),
 [label contract](docs/labels.md), [Quant Agent](docs/quant_agent.md),
 [model training](docs/model_training.md), [model registry](docs/model_registry.md), and
-[runbook](docs/runbook.md) before running models.
+[runbook](docs/runbook.md) before running models. The exact user-run sequence is in
+[Phase 5 local runs](docs/phase5_local_runs.md).
 
 ## Setup (Windows PowerShell)
 
@@ -59,8 +63,8 @@ python -m mypy src/axq
 python scripts/init_db.py --path runtime/smoke.sqlite3
 ```
 
-These checks do not connect to a broker or train a model. Phase 4 tests use only tiny deterministic
-fits.
+These checks do not connect to a broker or run serious training. Model tests use only tiny,
+deterministic temporary fits.
 
 ## Download and validate a small sample
 
@@ -98,8 +102,8 @@ tests/                   deterministic tiny-data tests
 agents/ master/ risk/    reserved boundaries for later phased implementations
 execution/ mt5/          reserved for Phase 11 execution protocol and EA
 datasets/                immutable Phase 3 dataset build/inspection commands
-training/quant/          Phase 4 config-driven training and frozen evaluation CLIs
-tuning/ evaluation/      reserved for local experiments; never run automatically
+training/quant/          Phase 4 training plus Phase 5 experiment/suite/walk-forward/ablation CLIs
+tuning/ evaluation/      reserved boundaries; Phase 5 tuning is explicit and never automatic
 backtest/ models/        reserved for Phase 12 and registered artifacts
 monitoring/              reserved for health/watchdog services
 ```
@@ -110,4 +114,4 @@ Use chronological splits, fit preprocessing on training data only, and account f
 horizons with gaps/purging. Every feature must be available at prediction time. All model output is
 advisory; deterministic risk controls and the EA retain veto power. Failures block new positions.
 Serious training, large tuning, DTW indexing, image generation, and multi-year backtests are
-user-run local jobs in later reviewed phases.
+user-run local jobs under the reviewed Phase 5 workflow.

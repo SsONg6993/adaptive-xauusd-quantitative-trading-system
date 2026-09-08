@@ -1,0 +1,15 @@
+schema_version: "1.0"
+name: majority
+output_root: ../../../runtime/experiments/quant
+training:
+  architecture: majority
+  dataset_dir: ../../../datasets/generated/DATASET_ID
+  preprocessing: {imputation: median, scaler: none}
+  feature_selection: {}
+  random_seed: 42
+  class_weighting: none
+  calibration: {method: none}
+  hold_policy: {minimum_confidence: 0.50, explicit_neutral_class: true}
+  output_root: ../../../runtime/models/quant
+  device: cpu
+evaluation: {hold_thresholds: [0.40, 0.45, 0.50, 0.55, 0.60, 0.65, 0.70]}
