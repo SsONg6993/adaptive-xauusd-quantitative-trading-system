@@ -1,0 +1,57 @@
+.env
+.env.*
+!.env.example
+.venv/
+venv/
+__pycache__/
+*.py[cod]
+*.egg-info/
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+
+# Runtime state, databases, logs, and transient IPC
+runtime/
+logs/
+*.log
+*.sqlite
+*.sqlite3
+*.sqlite3-*
+*.db
+*.db-*
+*.ready.json
+*.ack.json
+*.tmp
+
+# Broker/API credentials and private key material
+credentials/
+secrets/
+*credentials*.json
+*credentials*.yaml
+*credentials*.yml
+*secrets*.json
+*secrets*.yaml
+*secrets*.yml
+*.pem
+*.key
+
+# Raw/generated datasets and feature outputs
+data/raw/
+data/processed/
+data/generated/
+datasets/generated/
+datasets/cache/
+
+# Models, training checkpoints, and generated artifacts
+artifacts/
+checkpoints/
+training/checkpoints/
+models/checkpoints/
+*.onnx
+*.pt
+*.pth
+*.ckpt
+*.safetensors
+*.joblib
+*.pkl
+*.pickle

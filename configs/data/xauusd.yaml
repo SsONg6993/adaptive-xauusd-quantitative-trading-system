@@ -1,0 +1,9 @@
+symbol_aliases: [XAUUSD, XAUUSDm, GOLD]
+canonical_symbol: XAUUSD
+timeframes: [M5, M15, H1, H4]
+timezone: UTC
+raw_format: csv
+timestamp_semantics: bar_open
+duplicate_policy: keep_last_then_report
+missing_bar_policy: report_never_forward_fill_ohlc
+required_columns: [timestamp, open, high, low, close, tick_volume, spread]

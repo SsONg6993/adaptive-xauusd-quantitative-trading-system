@@ -1,0 +1,16 @@
+# Runtime foundation (Phase 0/1/early Phase 2)
+numpy>=2.0,<3
+pandas>=2.2,<3
+pydantic>=2.9,<3
+PyYAML>=6.0,<7
+platformdirs>=4.3,<5
+MetaTrader5>=5.0.45; platform_system == "Windows"
+
+# Development verification
+pytest>=8.3,<9
+ruff>=0.8,<1
+mypy>=1.13,<2
+pandas-stubs>=2.2,<3
+
+# Heavy/optional ML dependencies are intentionally deferred. Install with:
+# pip install -e ".[future-ml]"

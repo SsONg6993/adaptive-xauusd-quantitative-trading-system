@@ -1,0 +1,11 @@
+feature_version: features-v2.0
+groups:
+  PRICE_ONLY: []
+  PRICE_ACTION_ONLY: [price_action]
+  PRICE_TREND: [price_action, trend]
+  PRICE_MOMENTUM: [price_action, momentum]
+  PRICE_VOLATILITY: [price_action, volatility]
+  PRICE_VOLUME: [price_action, volume]
+  MARKET_STRUCTURE: [price_action, market_structure, breakout]
+  MULTI_TIMEFRAME: [price_action, trend, momentum, volatility, volume, breakout, statistical, session, market_structure, multi_timeframe]
+  ALL_FEATURES: [price_action, trend, momentum, volatility, volume, breakout, statistical, session, market_structure, multi_timeframe]

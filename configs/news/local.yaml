@@ -1,0 +1,5 @@
+mt5_economic_calendar_enabled: true
+external_news_enabled: false
+local_nlp_enabled: false
+llm_enabled: false
+untrusted_text_max_chars: 2000

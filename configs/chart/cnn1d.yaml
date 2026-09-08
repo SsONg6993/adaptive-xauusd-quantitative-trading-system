@@ -1,0 +1,6 @@
+agent: chart
+architecture: cnn1d
+sequence_length: 50
+label_version: next-5-direction-v1
+device: auto
+random_seed: 42

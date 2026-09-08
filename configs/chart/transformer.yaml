@@ -1,0 +1,6 @@
+agent: chart
+architecture: transformer_encoder
+sequence_length: 100
+label_version: next-5-direction-v1
+device: auto
+random_seed: 42

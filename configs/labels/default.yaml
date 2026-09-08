@@ -1,0 +1,18 @@
+labels:
+  - version: next-1-direction-v1
+    kind: DIRECTION
+    horizon_bars: 1
+    neutral_threshold: 0.0
+  - version: next-5-direction-v1
+    kind: DIRECTION
+    horizon_bars: 5
+    neutral_threshold: 0.0001
+  - version: forward-return-10-v1
+    kind: FORWARD_RETURN
+    horizon_bars: 10
+  - version: triple-barrier-v1
+    kind: TRIPLE_BARRIER
+    horizon_bars: 20
+    take_profit_atr: 1.5
+    stop_loss_atr: 1.0
+    max_holding_bars: 20

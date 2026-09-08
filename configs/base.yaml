@@ -1,0 +1,56 @@
+environment: development
+symbols: [XAUUSD]
+timeframes: [M5, M15, H1, H4]
+database:
+  url: sqlite:///runtime/axq.sqlite3
+  busy_timeout_ms: 5000
+logging:
+  level: INFO
+  path: runtime/logs/axq.jsonl
+ipc:
+  mode: atomic_file
+  shared_dir: runtime/ipc
+  max_signal_age_seconds: 15
+  heartbeat_timeout_seconds: 10
+features:
+  version: features-v2.0
+  groups: [price_action, trend, momentum, volatility, volume, breakout, statistical, session, market_structure, multi_timeframe]
+  parameters:
+    trend_v2:
+      ma_periods: [20, 50, 200]
+      slope_period: 10
+      dmi_period: 14
+      aroon_period: 14
+      supertrend_period: 10
+      supertrend_multiplier: 3.0
+    momentum_v2:
+      rsi_period: 14
+      macd_fast: 12
+      macd_slow: 26
+      macd_signal: 9
+      stochastic_period: 14
+      stochastic_smooth_k: 3
+      stochastic_smooth_d: 3
+      cci_period: 20
+      roc_period: 10
+      williams_period: 14
+    volatility_v2:
+      atr_period: 14
+      rolling_period: 20
+      bollinger_deviations: 2.0
+      keltner_multiplier: 2.0
+    volume_v2:
+      period: 20
+      mfi_period: 14
+    breakout_v2:
+      period: 20
+      retest_tolerance: 0.001
+    statistical_v2:
+      period: 20
+    market_structure_v1:
+      left_bars: 2
+      right_bars: 2
+      level_lookback: 20
+      atr_period: 14
+llm_enabled: false
+external_news_enabled: false

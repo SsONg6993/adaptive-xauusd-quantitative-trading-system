@@ -1,0 +1,7 @@
+agent: quant
+architecture: logistic_regression
+feature_group: ALL_FEATURES
+label_version: next-5-direction-v1
+device: cpu
+random_seed: 42
+chronological_split: {train: 0.60, validation: 0.20, out_of_sample: 0.20}

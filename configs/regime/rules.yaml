@@ -1,0 +1,6 @@
+method: rules_v1
+adx_trending_threshold: 25
+atr_percentile_high: 0.85
+atr_percentile_low: 0.20
+breakout_lookback: 20
+abnormal_spread_percentile: 0.99
