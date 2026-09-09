@@ -1,4 +1,4 @@
-# System architecture (Phase 0-6 baseline)
+# System architecture (Phase 0-7 baseline)
 
 ## Safety invariant
 
@@ -25,6 +25,11 @@ historical replay adapters --┘                              |
                                     live MT5 sink or simulated execution sink
                                                                   |
                            execution feedback -> state + decision journal
+
+authoritative open position + exact execution/thesis linkage + safe readiness
+                           -> PositionManagementOutcome (Phase 7 Task 6)
+                              [NO_ACTION | HOLD | PROTECT | EXIT]
+                           -> future dedicated safety validation and transport
 ```
 
 Agent execution will use bounded timeouts and independent failures. The master excludes stale or
@@ -71,6 +76,14 @@ Startup readiness is a distinct operational gate after reconciliation. It requir
 market/account/position/order/exposure/broker-constraint state, resolved execution anomalies, and
 valid thesis continuity. Broker snapshots refresh shared state through normal `RuntimeEvent` and
 reducer paths. Recovery checkpoints accelerate restart but never replace transition history.
+
+Phase 7 Task 6 adds a separate pure decision core for already-open positions. It binds one
+authoritative position to its original intent/result and exact persisted broker linkage, current
+thesis/scenario state, optional evidence, fresh account/position/broker facts, reconciliation, and
+safe-resume state. Entry decisions are never interpreted as position actions. `HOLD_POSITION`
+generates no modification; `PROTECT_POSITION` can only request a monotonic broker-valid stop change;
+and `EXIT_POSITION` is an explicit request that still requires future safety validation and
+transport. Equivalent live/replay contexts use the same evaluator.
 
 ## Primary and intrabar paths
 

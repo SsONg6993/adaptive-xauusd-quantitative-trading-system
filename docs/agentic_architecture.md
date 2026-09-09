@@ -231,13 +231,27 @@ and appends superseding resolution reports. A separate safe-resume contract bloc
 canonical broker/runtime components are fresh, execution ambiguity is resolved, and thesis/intrabar
 continuity is valid. Neither reconciliation nor readiness changes Master, Discipline, or Risk.
 
-## Explicitly unimplemented after Phase 7 Task 4
+## Phase 7 Task 6 position-management core
 
-MT5/MQL5 execution-transport integration; broker snapshot acquisition; position management;
-a simulated broker/trade-P&L model;
-graceful shutdown/startup recovery; broker reconciliation; missing-candle backfill; persistent restart
-restoration; Ollama/local-LLM integration; chart vision; reflection/weekly learning; autonomous tool-
-or agent-gap detection; and autonomous architecture evolution.
+Position management is separate from entry selection. A strict content-addressed context binds one
+authoritative open position to its original execution intent/result, exact broker-object linkage,
+setup/thesis/scenario provenance, current lifecycle, optional evidence, component freshness,
+reconciliation, and safe-resume result. Missing linkage, stale state, incomplete continuity,
+UNKNOWN execution, or unresolved broker anomalies produce `NO_ACTION` rather than guessed management.
+
+The pure evaluator emits only `NO_ACTION`, `HOLD_POSITION`, `PROTECT_POSITION`, or `EXIT_POSITION`.
+HOLD creates no modification. V1 protection is limited to a policy-enabled, age-qualified,
+broker-valid stop movement toward break-even and cannot widen risk for either long or short
+positions. Invalidation/expiry can request exit, but neither protection nor exit is sent to a broker;
+a future dedicated safety boundary and transport must still validate it. Bearish evidence against a
+long may request exit but never silently reverses it into a short.
+
+## Explicitly unimplemented after Phase 7 Task 6
+
+MT5/MQL5 execution or position-action transport; broker snapshot acquisition; a simulated
+broker/trade-P&L model; missing-candle backfill; persistent orchestration around restart restoration;
+Ollama/local-LLM integration; chart vision; reflection/weekly learning; autonomous tool- or
+agent-gap detection; and autonomous architecture evolution.
 
 ## Deferred risks
 

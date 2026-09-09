@@ -9,8 +9,8 @@ The reference `DemoExecutionAdapter` is disabled by default, has explicit dry-ru
 modes, blocks live accounts, rechecks time/symbol/spread/slippage/price deviation immediately before
 submission, and never repairs or enlarges an upstream instruction. Its ledger port reserves the
 stable intent ID before transport; duplicate and uncertain submissions are not resent. The included
-ledger is in-memory for deterministic tests. Durable persistence and startup broker reconciliation
-remain required before unattended execution.
+ledger is in-memory for deterministic tests; Task 5 provides the durable SQLite implementation and
+startup reconciliation contracts required before any future unattended execution.
 
 Typed results distinguish `NO_ACTION`, submission/acceptance, partial/full fill, rejection,
 cancellation, expiry, transport failure, and dangerous `UNKNOWN` submission state. Actionable
@@ -30,3 +30,10 @@ manual/operator trades may exist. `ResumeReadiness` stays blocked for stale crit
 unresolved broker exposure, incomplete intrabar continuity, or expired theses. Recovery checkpoints
 and WAL flush support graceful shutdown, but committed transitions—not checkpoints—remain the
 source of truth after either graceful or crash recovery.
+
+Task 6 adds `src/axq/position_management/` as a separate pure boundary for already-open positions.
+It requires Task 5 safe readiness plus exact intent/result/broker-position linkage and emits only
+`NO_ACTION`, `HOLD_POSITION`, `PROTECT_POSITION`, or `EXIT_POSITION`. HOLD does not submit a change;
+V1 protection can only reduce risk toward break-even while satisfying stop/freeze constraints; and
+EXIT is not a reversal or broker command. Real position-action safety validation and transport remain
+unimplemented.

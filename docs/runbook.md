@@ -160,3 +160,20 @@ freshness checks pass.
    ledger. After a crash, replay committed execution transitions even when no checkpoint exists.
 
 Task 5 does not acquire MT5 snapshots, send orders, backfill candles, or manage positions.
+
+## Phase 7 Task 6 position-management evaluation
+
+1. Begin from one authoritative open `PositionState`. If there is no position, record `NO_ACTION`.
+2. Require the original `ExecutionIntent` and `ExecutionResult`, an exact persisted
+   `BrokerIntentLink`, and a resolved reconciliation finding for that intent and position. Never
+   recover linkage from similar price, time, side, or volume.
+3. Require Task 5 `ResumeStatus.SAFE`, fresh account/position/broker-constraint state, and complete
+   intrabar continuity. UNKNOWN execution or any unresolved broker anomaly records `NO_ACTION`.
+4. Bind the position to its existing setup, thesis, and scenario. Do not create a replacement thesis
+   or interpret a new Master direction as a position action.
+5. ACTIVE or CONFIRMED normally records `HOLD_POSITION`. INVALIDATED or policy-configured EXPIRED
+   state may record `EXIT_POSITION`; this is a request, not a broker close.
+6. WEAKENING may request `PROTECT_POSITION` only when policy, age, current price, and broker stop/
+   freeze constraints allow a monotonic stop move toward break-even. Never widen long or short risk.
+7. Append the immutable `PositionManagementOutcome` to the future decision journal chain. Task 6
+   contains no transport; a later dedicated safety validation must precede any broker modification.

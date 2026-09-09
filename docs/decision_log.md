@@ -216,3 +216,15 @@ do not silently rewrite earlier decisions.
   weaken deterministic fallbacks.
 - **Consequence:** No LLM, vision, reflection, automatic gap detection, or autonomous deployment is a
   Phase 6 dependency. Final OOS governance and manual promotion remain intact.
+
+## 2026-09-10 — Open-position management is a separate deterministic boundary
+
+- **Decision:** Manage an already-open position through a strict content-addressed context and pure
+  evaluator that emits only `NO_ACTION`, `HOLD_POSITION`, `PROTECT_POSITION`, or `EXIT_POSITION`.
+  Task 5 safe readiness and exact execution-to-position linkage are mandatory. V1 protection is
+  limited to a monotonic, policy-enabled, broker-valid move toward break-even.
+- **Reason:** Entry evidence cannot safely double as an exit, reversal, or trailing strategy, and
+  uncertain broker state must never trigger autonomous position changes.
+- **Consequence:** HOLD creates no modification, bearish evidence cannot silently reverse a long,
+  and protection/exit outcomes remain append-only journal facts that require a future dedicated
+  safety validation and transport. Scale-in/out, dynamic trailing, and broker submission are absent.
