@@ -14,7 +14,8 @@ Last updated: 2026-09-09
 | 5 | Local Quant Model Development | COMPLETE (framework only) |
 | Architecture migration | Tool-augmented agentic design + deterministic replay | APPROVED / DOCUMENTED |
 | 6 | Shared runtime state, agent contracts, deterministic kernel vertical slice | COMPLETE |
-| 7+ | Master, Discipline, execution, reflection, optional intelligence | NOT STARTED |
+| 7 | Master, Discipline, Risk, and execution integration | IN PROGRESS — TASKS 1–4 ONLY |
+| 8+ | Reflection and optional intelligence | NOT STARTED |
 
 Phases 0–4 established the local-first contracts, UTC market-data pipeline, causal versioned feature
 engine, immutable leakage-safe datasets/labels/splits, and manifest-bound Quant Agent training,
@@ -50,8 +51,8 @@ labels, and optional local model inference. Phase 6 adds versioned shared runtim
 deterministic evidence kernel above live-like/replay adapters. State includes market data
 plus MT5 balance, equity, margin, P/L, drawdown, positions, pending orders, exposure, and execution
 feedback. The implemented reducer, tools, specialists, scenario lifecycle, and evidence bundle serve
-live-like and replay identically. Future Master, Discipline, Risk, and execution integrations must
-preserve this shared-kernel rule.
+live-like and replay identically. The Phase 7 Master, Discipline, and Risk boundaries preserve this
+shared-kernel rule; future execution integration must do the same.
 
 Completed M5 bars establish or update primary theses. The implemented intrabar path consumes
 causally available ticks and M1 closes to confirm or invalidate an existing
@@ -62,6 +63,31 @@ The runtime journal records immutable events, states, feature/tool/agent artifac
 thesis/scenario states, and applied/duplicate/no-op/rejected outcomes. `JournalEventSource` rebuilds
 causal event order and parity tests require identical semantic traces. Database row sequences are
 storage order only and are excluded from content identity.
+
+Phase 7 Task 1 adds a pure, versioned Master evidence-fusion boundary. `FusionPolicy` deterministically
+weights eligible specialist evidence and applies separate score, confidence, uncertainty,
+within-agent contradiction, and cross-agent disagreement gates. `MasterProposal` is advisory and
+content-addressed; failed gates produce `HOLD`.
+
+Phase 7 Task 2 adds a pure, versioned Discipline Guard downstream of `MasterProposal`. It emits a
+content-addressed `PASS`, `REJECT`, `PAUSE`, or `NO_ACTION` outcome from explicit policy, causal
+discipline state, and stable setup/thesis context. It enforces duplicate, re-entry, position-count,
+trade-cap, cooldown, and consecutive-loss cadence rules without performing financial Risk, sizing,
+or execution. Only `PASS` is eligible for the downstream Risk boundary.
+
+Phase 7 Task 3 adds a pure, versioned financial Risk boundary. Only a Discipline `PASS` is evaluated.
+The boundary consumes bounded causal account, market, position/order-book, exposure, broker, stop,
+margin, slippage, and normalized drawdown facts. It reuses the validated broker-specification sizing
+primitive and emits a content-addressed `PASS`, `REJECT`, `NO_ACTION`, or `EMERGENCY_STOP` outcome.
+Only Risk `PASS` is eligible for execution; Risk itself does not create or submit an order.
+
+Phase 7 Task 4 adds a strict, versioned execution boundary. A pure builder carries only a linked
+Risk `PASS` into a content-addressed `ExecutionIntent`; disabled and dry-run modes never call a
+transport, and the demo-only adapter rejects live accounts and changed pre-submit conditions. The
+idempotency ledger reserves an intent before submission, and `UNKNOWN` explicitly blocks retry until
+future broker reconciliation. Typed execution results reuse the Phase 6 execution-feedback event and
+reducer path. No direct MT5/MQL5 sender, durable reconciliation store, simulated broker, or position
+management has been implemented.
 
 ## Important risks
 
@@ -74,16 +100,16 @@ storage order only and are excluded from content identity.
 - No claim of profitability, execution-ready trading, or autonomous learning exists.
 - Tick-history quality, broker event ordering, spread/slippage simulation, and deterministic replay
   of asynchronous slow-path context remain unresolved implementation risks.
-- Master fusion, Discipline Guard enforcement, agentic Risk integration, MT5 execution, position
-  management, simulated fills/P&L, reconciliation/restart, LLMs, vision, and reflection are absent.
+- MT5/MQL5 transport, position management, simulated fills/P&L, durable reconciliation/restart, LLMs, vision,
+  and reflection are absent.
 
 ## Working principle and next task
 
 Codex writes auditable local pipelines and runs tiny tests. The user runs serious training and large
-replays. Phase 6 is closed at evidence generation. The recommended first Phase 7 task is a design-and-
-contract slice for deterministic Master fusion that consumes `EvidenceBundle` and emits an auditable
-BUY/SELL/HOLD proposal without Discipline, Risk, sizing, or execution. Do not implement it without
-explicit Phase 7 approval.
+replays. Phase 7 Tasks 1–4 are isolated on `codex/phase-7-decision-execution`. The exact next Phase 7
+task is not approved. It must preserve the shared live/replay contracts and may not infer authority
+for MT5 connectivity, position management, simulated brokerage, reconciliation, or later-phase
+intelligence.
 
 ## Roadmap
 

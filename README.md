@@ -37,6 +37,9 @@ autonomous strategy, live execution EA, or claim of trading profitability.
   tick/M1 confirmation or invalidation, entry-eligibility evidence, and explicit continuity status.
 - An append-only SQLite runtime journal with immutable semantic records, causal/event/parent/previous
   linkage, duplicate/no-op/rejection outcomes, replay readers, and parity tests.
+- Deterministic Master fusion, Discipline, financial Risk, and execution-entry contracts. The
+  demo-safe execution adapter is disabled by default, idempotent by stable intent ID, explicitly
+  represents unknown submissions, and returns feedback through the shared runtime reducer.
 - SQLite WAL schema and transactional migrations, with PostgreSQL migration boundaries documented.
 - Dataset manifests, label definitions, immutable model metadata, JSON logging, YAML configuration,
   and deterministic risk-veto foundation.
@@ -112,7 +115,7 @@ tests/                   deterministic tiny-data tests
 src/axq/agents/          Phase 6 specialist contracts, memory, scenarios, deterministic baselines
 src/axq/runtime/         Phase 6 event/state/reducer/kernel/journal/replay contracts
 src/axq/tools/           fact-only tools and optional predictive-model adapter
-master/ risk/ execution/ reserved Phase 7 integration boundaries
+master/ risk/ execution/ Phase 7 integration boundaries and operator-facing documentation
 datasets/                immutable Phase 3 dataset build/inspection commands
 training/quant/          Phase 4 training plus Phase 5 experiment/suite/walk-forward/ablation CLIs
 tuning/ evaluation/      reserved boundaries; Phase 5 tuning is explicit and never automatic
@@ -129,7 +132,8 @@ Serious training, large tuning, DTW indexing, image generation, and multi-year b
 user-run local jobs under the reviewed Phase 5 workflow.
 
 Predictive ML is preserved as an optional `OptionalPredictiveModelTool`/Challenger input. It does
-not control the runtime and is not required for V1. Phase 6 deliberately stops at `EvidenceBundle`:
-Master fusion, Discipline Guard, agentic Risk integration, MT5/simulated execution, restart recovery,
-LLM reasoning, and reflection remain unimplemented. The Phase 6 completion plan lives under
-`docs/superpowers/plans/`.
+not control the runtime and is not required for V1. The isolated Phase 7 worktree now extends the
+Phase 6 evidence kernel through deterministic Master, Discipline, Risk, execution intent, and typed
+execution feedback without merging or committing them. Direct MT5/MQL5 transport, a simulated
+broker, durable restart reconciliation, position management, LLM reasoning, and reflection remain
+unimplemented. The Phase 6 completion plan lives under `docs/superpowers/plans/`.

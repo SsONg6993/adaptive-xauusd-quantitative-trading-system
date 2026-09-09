@@ -95,20 +95,29 @@ content-addressed. `EvidenceKernel` evaluates tools, invokes specialists in fixe
 memories, and emits a deterministic `EvidenceBundle`. An optional-agent failure degrades or abstains
 through structured evidence; it does not fabricate facts. Phase 6 stops here.
 
-## Master, Discipline, Risk, and execution (not implemented)
+## Master, Discipline, and Risk baselines and downstream authority
 
-The future Master will produce bullish/bearish evidence, contradiction, disagreement, uncertainty, setup quality,
-and a BUY/SELL/HOLD proposal. Reliability weights are fixed/versioned initially and cannot adapt
-online.
+Phase 7 Task 1 implements pure deterministic Master evidence fusion. It produces normalized bullish
+and bearish support, within-agent contradiction, cross-agent disagreement, uncertainty, confidence,
+and an advisory BUY/SELL/HOLD `MasterProposal`. `FusionPolicy` weights and gates are fixed, versioned,
+and content-addressed; they cannot adapt online.
 
-The future Discipline Guard will apply versioned deterministic limits for duplicates, simultaneous positions, trade and
-session caps, cooldowns, consecutive losses, daily R loss, and one primary new-entry decision per M5
-candle while still permitting a later intrabar confirmation of that candle's scenario. Rejected and
-held opportunities are logged.
+Phase 7 Task 2 implements the deterministic Discipline Guard as a pure boundary downstream of
+`MasterProposal`. Explicit versioned policy and causal state govern stable proposal/setup/thesis
+duplicates, simultaneous positions, daily/session trade caps, ordinary and stop-loss cooldowns,
+consecutive-loss pauses, and tightly bounded re-entry. It emits `PASS`, `REJECT`, `PAUSE`, or
+`NO_ACTION`; only `PASS` may proceed to downstream Risk. It does not calculate financial risk, size a
+position, or authorize execution. Demo policy content explicitly declares that a non-loss exit resets
+the loss streak; applying that recorded transition belongs to the future event/state integration and
+is not hidden inside the pure evaluator.
 
-Future Risk integration will consume the proposal and shared account/position/order state, calculate size from broker
-specifications, and vetoes stale state, excess exposure/loss/drawdown/spread/slippage, invalid stops,
-health failures, or kill-switch state. The EA performs final broker validation and protection.
+Phase 7 Task 3 implements the separate deterministic financial Risk boundary. Only Discipline
+`PASS` enters evaluation. Versioned policy gates causal freshness, account completeness and
+consistency, free margin, margin level, normalized drawdown, position/order commitments, projected
+lot exposure, spread/slippage, stop direction/distance, broker stop/freeze constraints, and the kill
+switch. Broker-specification sizing reuses the established risk-budget and downward lot-step
+normalization primitive. Risk `PASS` is merely eligible for the separate execution boundary; Risk
+creates no broker instruction. The future EA retains final broker validation and protection.
 
 ## Implemented shared path and future paths
 
@@ -116,9 +125,12 @@ The implemented live-like/replay semantic path is:
 
 `RuntimeEvent -> reducer -> tools -> specialists -> scenario lifecycle -> EvidenceBundle`
 
-`RuntimeStreamRunner` is the single harness. Only clocks, event sources, external adapters,
-persistence backends, and future execution sinks may differ. Replay-only strategy logic is rejected.
-The future bounded fast path will append Master → Discipline → Risk → execution sink → feedback.
+`EvidenceBundle -> MasterProposal -> DisciplineOutcome -> RiskOutcome -> ExecutionIntent -> ExecutionResult`
+
+`RuntimeStreamRunner` remains the Phase 6 harness. Only clocks, event sources, external adapters,
+persistence backends, and execution transports may differ. Replay-only strategy logic is rejected.
+Task 4 establishes the shared intent/result contract and feeds results back through the runtime
+event reducer; later orchestration may append the adapter without changing upstream decisions.
 
 The slow path performs news/macro enrichment, similarity work, attribution, reflection, and candidate
 change generation. It publishes immutable, effective-at snapshots. It cannot mutate live policies or
@@ -150,7 +162,7 @@ replay-from-journal readiness, not a broker/P&L backtest engine.
 |---|---|
 | State reducer, tools, agents, scenario lifecycle, evidence/trace writer | `Clock` |
 | Same | market/account/order/context `EventSource` |
-| Same plus future Master/Discipline/Risk | MT5 or deterministic simulated `ExecutionSink` (future) |
+| Same through `ExecutionIntent`/`ExecutionResult` | MQL5 or deterministic simulated execution transport (future) |
 | Same | durable live journal or immutable replay input reader |
 
 Parity tests feed identical canonical events through live-like and journal-replay adapters and
@@ -200,10 +212,23 @@ Phase 3 datasets and final OOS governance, Phase 4 trainer/inference identity, P
 orchestration, registry promotion rules, current feature formulas, and future MQL5 hard-safety
 authority are not weakened or replaced by this migration.
 
-## Explicitly unimplemented after Phase 6
+## Phase 7 Task 4 execution-entry boundary
 
-Master evidence fusion; Discipline Guard enforcement; deterministic Risk integration into this
-runtime; MT5 execution-adapter integration; position management; a simulated broker/trade-P&L model;
+Only a linked Risk `PASS` may become a deterministic `ExecutionIntent`. That contract retains the
+EvidenceBundle, Master, Discipline, Risk, setup, thesis, scenario, symbol, direction, approved size,
+entry, stop, causal times, policy, and broker-symbol provenance. Execution cannot invent direction,
+increase volume, widen the approved stop, or add an unapproved target.
+
+`ExecutionAdapter.execute(intent)` is shared by live and replay orchestration. Its transport is the
+replaceable port. The demo reference adapter is disabled by default, blocks live-account submission,
+rechecks bounded pre-submit observations, reserves the intent ID before transport, and returns an
+explicit `UNKNOWN` state when acknowledgement is uncertain. It never retries a partial remainder or
+an unknown submission. Results convert to the existing runtime `EXECUTION_FEEDBACK` event.
+
+## Explicitly unimplemented after Phase 7 Task 4
+
+MT5/MQL5 execution-transport integration; durable idempotency/reconciliation; position management;
+a simulated broker/trade-P&L model;
 graceful shutdown/startup recovery; broker reconciliation; missing-candle backfill; persistent restart
 restoration; Ollama/local-LLM integration; chart vision; reflection/weekly learning; autonomous tool-
 or agent-gap detection; and autonomous architecture evolution.

@@ -162,6 +162,29 @@ do not silently rewrite earlier decisions.
 - **Consequence:** Exact duplicates are auditable no-ops, snapshot mismatches reject, and journal
   replay can reconstruct Phase 6 traces without revising history.
 
+## 2026-09-09 — Phase 7 Risk is a separate deterministic final veto
+
+- **Decision:** Only Discipline `PASS` enters the versioned financial Risk boundary. Risk consumes
+  bounded causal runtime/account/broker facts, performs deterministic safety vetoes and sizing, and
+  emits `PASS`, `REJECT`, `NO_ACTION`, or `EMERGENCY_STOP`; it never creates a broker instruction.
+- **Reason:** Behavioral cadence, financial survival, and broker execution require separate
+  authorities and independently auditable outcomes.
+- **Consequence:** Missing or stale state fails closed, sizing reuses the established broker-spec
+  primitive, equivalent live/replay inputs have identical identities, and only Risk `PASS` can reach
+  a future execution boundary.
+
+## 2026-09-09 — Phase 7 execution is provenance-bound and demo-safe
+
+- **Decision:** Only a linked Risk `PASS` becomes a content-addressed `ExecutionIntent`. The shared
+  adapter contract is disabled by default; the reference adapter permits demo accounts only and
+  rechecks bounded pre-submit facts without altering direction, volume, stop, or thesis identity.
+- **Reason:** Transport retries, changed broker conditions, and uncertain acknowledgements must not
+  bypass Master, Discipline, Risk, or produce duplicate orders.
+- **Consequence:** Stable intent IDs are reserved before submission. Duplicate and `UNKNOWN`
+  submissions are never resent without future reconciliation; partial remainders are reported, not
+  automatically resubmitted. Results enter the existing runtime execution-feedback path. Direct
+  MT5/MQL5 transport and durable recovery remain unimplemented.
+
 ## 2026-09-09 — Restart recovery is a future safety gate
 
 - **Decision:** Unattended runtime may resume only after journal flush/cursor restoration, MT5

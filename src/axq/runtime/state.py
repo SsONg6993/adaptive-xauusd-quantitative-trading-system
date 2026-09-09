@@ -272,6 +272,9 @@ class ExecutionStatus(StrEnum):
     PARTIALLY_FILLED = "PARTIALLY_FILLED"
     FILLED = "FILLED"
     CANCELLED = "CANCELLED"
+    EXPIRED = "EXPIRED"
+    FAILED = "FAILED"
+    UNKNOWN = "UNKNOWN"
     CLOSED = "CLOSED"
 
 
@@ -288,6 +291,7 @@ class ExecutionFeedbackState(RuntimeStateModel):
     filled_volume_lots: FiniteFloat | None = Field(default=None, ge=0)
     requested_price: FiniteFloat | None = Field(default=None, gt=0)
     fill_price: FiniteFloat | None = Field(default=None, gt=0)
+    spread_points: FiniteFloat | None = Field(default=None, ge=0)
     slippage_points: FiniteFloat | None = None
     commission: FiniteFloat | None = None
     swap: FiniteFloat | None = None

@@ -16,9 +16,11 @@ live MT5 adapters -----------┐
 historical replay adapters --┘                              |
                               tools -> specialist agents -> scenario lifecycle
                                                          -> EvidenceBundle
-                                                         -> [Phase 7: Master
-                                                             -> Discipline Guard
-                                                             -> deterministic Risk veto]
+                                                         -> MasterProposal (Phase 7 Task 1)
+                                                         -> DisciplineOutcome (Phase 7 Task 2)
+                                                         -> RiskOutcome (Phase 7 Task 3)
+                                                         -> ExecutionIntent (Phase 7 Task 4)
+                                                         -> ExecutionAdapter -> ExecutionResult
                                                                   |
                                     live MT5 sink or simulated execution sink
                                                                   |
@@ -44,17 +46,20 @@ kernel and receive the same typed semantic trace. The implemented shared path is
 
 `RuntimeEvent -> reducer -> tools -> specialists -> scenario lifecycle -> EvidenceBundle`
 
-Clocks, event/data sources, external adapters, persistence backends, and future execution sinks may
-differ. Replay-only strategy logic is forbidden. Future Master fusion, Discipline Guard, Risk, and
-execution must be added after this shared path and used unchanged by both modes.
+Only the clock, source, external adapters, persistence backend, and execution transport may differ.
+Replay-only strategy logic is forbidden. The pure Phase 7 Master, Discipline, and Risk boundaries
+consume the same evidence, policies, causal contexts, and states in either mode. Future execution
+must be added after this shared path and used unchanged by both modes.
 
 Every event records observation time, causal availability time, source sequence/version, and a
 content-derived identity. Replay orders by availability and stable sequence; it never reconstructs
 future context from final data. Slow-path news/LLM/historical context is replayed as the exact as-of
 snapshot available live. The fast path reads the latest valid snapshot and never waits for it.
 
-A simulated execution sink is not implemented. When added, it must return the normal execution-
-feedback contract and must not contain alternative entry, Master, Discipline, or Risk logic.
+A simulated execution sink is not implemented. When added, it must consume the shared
+`ExecutionIntent`, return the normal execution-feedback contract, and contain no alternative entry,
+Master, Discipline, or Risk logic. The Task 4 demo adapter is a guarded boundary around an injected
+transport, not a broker simulator or direct MT5 implementation.
 
 ## Primary and intrabar paths
 
@@ -83,7 +88,7 @@ Master, Discipline, Risk, registry governance, or immutable final OOS. See
 
 Ordinary `AgentInput` is deliberately account-free. Market specialists cannot inspect balance,
 equity, margin, P/L, positions, orders, or exposure; those values remain in shared runtime state for
-future Discipline/Risk components with explicit authority.
+the Discipline/Risk components with explicit authority.
 
 ## Technology choices
 

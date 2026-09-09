@@ -155,6 +155,8 @@ _EXECUTION_PROGRESS = {
 _TERMINAL_EXECUTION_STATUSES = {
     ExecutionStatus.REJECTED,
     ExecutionStatus.CANCELLED,
+    ExecutionStatus.EXPIRED,
+    ExecutionStatus.FAILED,
     ExecutionStatus.CLOSED,
 }
 
