@@ -4,9 +4,22 @@ This is an independent XAUUSD Multi-Agent Trading System. The repository, Git hi
 configuration, and versioned manifests are the source of truth. Do not reuse unrelated previous EA
 code.
 
+The approved post-Phase-5 direction is a tool-augmented agentic system: tools calculate facts,
+specialist agents form hypotheses, the Master fuses evidence, the Discipline Guard controls repeated
+or impulsive behavior, deterministic risk controls survival, and MT5 executes. Predictive ML is an
+optional specialist tool/Challenger, not a mandatory V1 decision dependency.
+
 Python is the intelligence layer. The future MQL5 EA is the broker-facing execution and hard-safety
 layer. Core production inference remains local-first; paid LLM and news APIs are optional and must
 not be required. Deterministic risk controls have final veto authority.
+
+Live operation and historical replay must share one deterministic decision kernel. Market tools,
+agent contracts and state transitions, Master fusion, Discipline Guard, and Risk logic must not be
+reimplemented as a simplified backtest strategy. Only clocks, event/data sources, broker/account
+adapters, and execution sinks may differ. Shared state includes market snapshots, MT5 account state,
+positions, pending orders, exposure, P/L/drawdown, and execution feedback. Completed M5 bars establish
+or update primary theses; tick/M1/microstructure events may causally confirm or invalidate an existing
+scenario between M5 closes, and replay must support the same event path.
 
 Serious ML/DL training, tuning, large backtests, walk-forward experiments, large indexing, and
 GPU-heavy jobs are run locally by the user unless explicitly requested otherwise. Codex should
@@ -20,6 +33,15 @@ retraining—not uncontrolled per-trade online mutation.
 Every major phase ends with tests, documentation, a Git checkpoint, and a stop before the next
 phase. Before architecture changes, inspect `docs/project_status.md`, the relevant entries in
 `docs/decision_log.md`, tests, manifests, recent commits, and Graphify context when present.
+
+Phase 6 now implements the deterministic evidence vertical slice: canonical runtime events and
+shared state, clocks and ordered sources, a pure reducer, causal fact tools, specialist evidence and
+memory, the M5/intrabar thesis lifecycle, deterministic specialist baselines, `EvidenceKernel`, and
+an append-only journal with live-like/replay parity. The shared semantic path is
+`RuntimeEvent -> reducer -> tools -> specialists -> scenario lifecycle -> EvidenceBundle`.
+Master fusion, Discipline Guard enforcement, agentic Risk integration, broker/simulated execution,
+position management, restart recovery, LLM reasoning, reflection, and autonomous evolution are not
+implemented. Do not infer those capabilities from their documented future interfaces.
 
 ## Repository-start workflow
 

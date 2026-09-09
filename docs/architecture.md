@@ -1,4 +1,4 @@
-# System architecture (Phase 0-5 baseline)
+# System architecture (Phase 0-6 baseline)
 
 ## Safety invariant
 
@@ -11,19 +11,18 @@ positions retain broker-side SL/TP protection.
 ## Runtime flow and trust boundaries
 
 ```text
-MT5 bars/calendar -> ingestion -> validation -> immutable snapshot
-                                      |
-            chart / quant / similarity / news agents (Python, untrusted advice)
-                                      |
-                          regime + weighted master
-                                      |
-                 deterministic Python risk gate (final veto)
-                                      |
-               durable atomic-file instruction + heartbeat
-                                      |
-               MQL5 execution EA (second validation/veto)
-                                      |
-                                    broker
+live MT5 adapters -----------┐
+                             ├-> shared runtime state -> deterministic decision kernel
+historical replay adapters --┘                              |
+                              tools -> specialist agents -> scenario lifecycle
+                                                         -> EvidenceBundle
+                                                         -> [Phase 7: Master
+                                                             -> Discipline Guard
+                                                             -> deterministic Risk veto]
+                                                                  |
+                                    live MT5 sink or simulated execution sink
+                                                                  |
+                           execution feedback -> state + decision journal
 ```
 
 Agent execution will use bounded timeouts and independent failures. The master excludes stale or
@@ -32,6 +31,59 @@ never an instruction channel. Paid LLM and news integrations are disabled by def
 
 Each decision chain carries snapshot, prediction, master-decision, risk-decision, instruction,
 order, and broker-ticket identifiers. JSON logs and database rows reconstruct the chain.
+
+Shared runtime state is broader than price data. It contains the causal market snapshot; MT5
+balance, equity, free margin, floating P/L, daily realized/unrealized P/L, and drawdown; open
+positions; pending orders; directional/aggregate exposure; broker constraints; component freshness;
+and execution acknowledgements, rejections, and fills where available.
+
+## Shared deterministic kernel and replay invariant
+
+There is one analytical implementation. Live-like and replay inject ordered events into the same
+kernel and receive the same typed semantic trace. The implemented shared path is:
+
+`RuntimeEvent -> reducer -> tools -> specialists -> scenario lifecycle -> EvidenceBundle`
+
+Clocks, event/data sources, external adapters, persistence backends, and future execution sinks may
+differ. Replay-only strategy logic is forbidden. Future Master fusion, Discipline Guard, Risk, and
+execution must be added after this shared path and used unchanged by both modes.
+
+Every event records observation time, causal availability time, source sequence/version, and a
+content-derived identity. Replay orders by availability and stable sequence; it never reconstructs
+future context from final data. Slow-path news/LLM/historical context is replayed as the exact as-of
+snapshot available live. The fast path reads the latest valid snapshot and never waits for it.
+
+A simulated execution sink is not implemented. When added, it must return the normal execution-
+feedback contract and must not contain alternative entry, Master, Discipline, or Risk logic.
+
+## Primary and intrabar paths
+
+A completed M5 candle is the default primary-decision cadence and may create, replace, or invalidate
+a thesis. Higher-timeframe facts remain available only after candle close. Between M5 closes,
+causally available ticks, completed M1 bars, and later microstructure facts may update an existing
+scenario as developing, confirmed, invalidated, expired, or entry-eligible; they may not silently
+create an unrelated thesis.
+
+An intrabar update references the existing thesis/hypothesis identities. A reversal requires a
+distinct hypothesis identity; invalidated or expired theses cannot be revived. `ENTRY_ELIGIBLE` is
+evidence state, not a proposal or execution permission. `ContinuityStatus` preserves whether the
+intrabar path is complete or missing, and replay uses the identical transition function.
+
+## Tool-augmented agents and optional ML
+
+Tools are fact producers: indicators, structure, sessions, similarity, event proximity, spread, and
+context. Agents have bounded objectives/observations, persistent hypotheses,
+evidence for and against, confidence, invalidation, freshness, previous-state comparison, and
+abstention. Master is structured evidence fusion, not majority voting or an unconstrained LLM.
+
+The Phase 4/5 Quant stack remains intact as an optional predictive-model tool. It may contribute
+structured Quant evidence only after reviewed results, is not required for V1, and cannot bypass
+Master, Discipline, Risk, registry governance, or immutable final OOS. See
+[agentic architecture](agentic_architecture.md).
+
+Ordinary `AgentInput` is deliberately account-free. Market specialists cannot inspect balance,
+equity, margin, P/L, positions, orders, or exposure; those values remain in shared runtime state for
+future Discipline/Risk components with explicit authority.
 
 ## Technology choices
 

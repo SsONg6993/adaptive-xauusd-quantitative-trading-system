@@ -1,4 +1,4 @@
-# Phase 0-5 runbook
+# Phase 0-6 runbook
 
 ## Data lifecycle
 
@@ -99,3 +99,45 @@ threshold optimization, retraining loop, or online learning.
 
 Exact commands, compute categories, and output locations are in
 [Phase 5 local runs](phase5_local_runs.md).
+
+## Phase 6 deterministic evidence runtime
+
+Use only canonical UTC `RuntimeEvent` objects. Live-like and replay operation must both traverse:
+
+`RuntimeEvent -> reducer -> tools -> specialists -> scenario lifecycle -> EvidenceBundle`
+
+Events order by `(available_at, source_sequence, event_id)`. Only completed M5 events can establish a
+primary thesis; completed M1 and tick events may update an existing thesis. Do not treat
+`ENTRY_ELIGIBLE` as trade permission. Missing intrabar history must remain explicit through
+`ContinuityStatus`, and missing/unknown account or broker values must remain `None` with freshness
+status rather than becoming numeric zero.
+
+`SQLiteRuntimeJournal` stores append-only `JournalRecord` rows. UPDATE and DELETE are blocked by
+triggers. The journal records runtime events/state, feature snapshots, tool results, agent inputs,
+evidence and memory, bundles, thesis/scenario states, and `JournalOutcome` values. Exact duplicates
+are journaled as `DUPLICATE` without a second semantic step; no-ops and rejected events are also
+recorded. A duplicate event with a different feature snapshot is rejected. Keep journal databases
+under ignored `runtime/`; database row sequences are not semantic IDs.
+
+Lightweight verification only:
+
+```powershell
+& '.\.venv\Scripts\python.exe' -m pytest --basetemp=.pytest_tmp
+& '.\.venv\Scripts\python.exe' -m ruff check .
+& '.\.venv\Scripts\python.exe' -m mypy src/axq
+& '.\.venv\Scripts\python.exe' -m pip check
+git diff --check
+graphify query "How do live and replay share the Phase 6 evidence kernel?" --budget 2500
+```
+
+Phase 6 has no broker connection or execution sink. Do not use the journal/replay fixture as a P&L
+backtest. Master, Discipline, Risk integration, simulated/live execution, and restart recovery are
+Phase 7+ work.
+
+## Future restart and reconciliation gate
+
+Before unattended operation, implement graceful shutdown and journal flush, persist the last causal
+cursor, reconcile MT5 account/positions/orders and execution feedback at startup, resync open
+positions, backfill missing candles, preserve explicit missing-intrabar continuity, enforce thesis
+and scenario TTLs, and validate freshness. New entries must remain disabled until reconciliation and
+freshness checks pass.

@@ -1,9 +1,9 @@
 # Adaptive XAUUSD Multi-Agent Trading System
 
-Production-oriented, local-first foundation for a measurable multi-agent MT5 trading system. The
-current repository intentionally stops after the Phase 5 local Quant development framework. There is no
-production-trained model, autonomous strategy, live execution EA, or claim of trading
-profitability.
+Production-oriented, local-first foundation for a measurable, tool-augmented multi-agent MT5 trading
+system. Phases 0–6 are complete through the deterministic evidence vertical slice. There is no
+production-trained model,
+autonomous strategy, live execution EA, or claim of trading profitability.
 
 ## Current capabilities
 
@@ -28,12 +28,22 @@ profitability.
 - A separate Quant development layer with strict experiment configs, content-addressed reports,
   resumable suites and walk-forward folds, feature ablation, calibration/threshold/stability/drift
   diagnostics, compute detection, protected tuning preparation, and run comparison.
+- Canonical, immutable `RuntimeEvent` and `SharedRuntimeState` contracts covering market data,
+  account/equity/margin/P&L, positions, pending orders, exposure, broker constraints, freshness, and
+  execution feedback without converting unknown broker values to zero.
+- One implemented live-like/replay evidence path: ordered events → pure reducer → causal fact tools →
+  deterministic specialists → M5/intrabar scenario lifecycle → content-addressed `EvidenceBundle`.
+- Persistent `AgentMemory`, structured `AgentEvidence`, completed-M5 thesis creation, bounded
+  tick/M1 confirmation or invalidation, entry-eligibility evidence, and explicit continuity status.
+- An append-only SQLite runtime journal with immutable semantic records, causal/event/parent/previous
+  linkage, duplicate/no-op/rejection outcomes, replay readers, and parity tests.
 - SQLite WAL schema and transactional migrations, with PostgreSQL migration boundaries documented.
 - Dataset manifests, label definitions, immutable model metadata, JSON logging, YAML configuration,
   and deterministic risk-veto foundation.
 - Local-first defaults: LLM and external-news integrations are off.
 
-Read [the architecture](docs/architecture.md), [indicator research](docs/indicator_research.md),
+Read [the architecture](docs/architecture.md), [agentic architecture](docs/agentic_architecture.md),
+[indicator research](docs/indicator_research.md),
 [feature contract](docs/features.md), [dataset contract](docs/datasets.md),
 [label contract](docs/labels.md), [Quant Agent](docs/quant_agent.md),
 [model training](docs/model_training.md), [model registry](docs/model_registry.md), and
@@ -99,12 +109,14 @@ src/axq/data/            reusable cleaning, validation, synchronization
 src/axq/features/        versioned feature definitions and registry
 src/axq/                 contracts, config, logs, database, risk, versioning, model metadata
 tests/                   deterministic tiny-data tests
-agents/ master/ risk/    reserved boundaries for later phased implementations
-execution/ mt5/          reserved for Phase 11 execution protocol and EA
+src/axq/agents/          Phase 6 specialist contracts, memory, scenarios, deterministic baselines
+src/axq/runtime/         Phase 6 event/state/reducer/kernel/journal/replay contracts
+src/axq/tools/           fact-only tools and optional predictive-model adapter
+master/ risk/ execution/ reserved Phase 7 integration boundaries
 datasets/                immutable Phase 3 dataset build/inspection commands
 training/quant/          Phase 4 training plus Phase 5 experiment/suite/walk-forward/ablation CLIs
 tuning/ evaluation/      reserved boundaries; Phase 5 tuning is explicit and never automatic
-backtest/ models/        reserved for Phase 12 and registered artifacts
+backtest/ models/        reserved for deterministic replay adapters and registered artifacts
 monitoring/              reserved for health/watchdog services
 ```
 
@@ -115,3 +127,9 @@ horizons with gaps/purging. Every feature must be available at prediction time. 
 advisory; deterministic risk controls and the EA retain veto power. Failures block new positions.
 Serious training, large tuning, DTW indexing, image generation, and multi-year backtests are
 user-run local jobs under the reviewed Phase 5 workflow.
+
+Predictive ML is preserved as an optional `OptionalPredictiveModelTool`/Challenger input. It does
+not control the runtime and is not required for V1. Phase 6 deliberately stops at `EvidenceBundle`:
+Master fusion, Discipline Guard, agentic Risk integration, MT5/simulated execution, restart recovery,
+LLM reasoning, and reflection remain unimplemented. The Phase 6 completion plan lives under
+`docs/superpowers/plans/`.

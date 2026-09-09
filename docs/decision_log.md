@@ -93,3 +93,91 @@ do not silently rewrite earlier decisions.
 - **Consequence:** Every development fold fits fresh preprocessing, selection, model, and calibration;
   fold models remain unregistered evidence. Optuna accepts only validation or walk-forward-validation
   objectives, and model promotion stays manual.
+
+## 2026-09-09 — Tool-augmented agentic baseline; ML becomes optional
+
+- **Decision:** V1 decisions must not require predictive ML. Tools produce facts, stateful specialist
+  agents interpret them, and Phase 4/5 models remain optional `OptionalPredictiveModelTool` evidence
+  and Challenger artifacts.
+- **Reason:** Current experiments have not demonstrated stable enough temporal edge to make ML a
+  mandatory runtime dependency, while the causal data and governance work remains valuable.
+- **Consequence:** No current model is promoted automatically. The runtime remains useful when ML,
+  an LLM, news, or the internet is unavailable.
+
+## 2026-09-09 — One deterministic kernel for live and replay
+
+- **Decision:** Live and historical replay share tools, agent contracts/state transitions, Master
+  fusion, Discipline Guard, Risk logic, policy versions, and decision logging. Only clock,
+  event/data sources, external-state adapters, and execution sinks may differ.
+- **Reason:** A simplified parallel backtest strategy would drift from production behavior.
+- **Consequence:** Events are replayed in causal availability order. Simulated execution models
+  broker behavior and returns normal execution feedback; it contains no alternative strategy logic.
+
+## 2026-09-09 — Shared runtime state includes broker/account truth
+
+- **Decision:** Kernel state contains market snapshots and available MT5 balance, equity, free
+  margin, floating and daily realized/unrealized P/L, drawdown, positions, pending orders, exposure,
+  broker constraints, and execution feedback.
+- **Reason:** Master, Discipline, and Risk decisions cannot be faithfully reproduced from candles.
+- **Consequence:** State is versioned, UTC-timestamped, freshness-aware, and persisted with decision
+  traces. Missing mandatory broker state fails closed for execution.
+
+## 2026-09-09 — M5 thesis cadence with causal intrabar confirmation
+
+- **Decision:** Completed M5 candles normally establish/update the primary thesis. Causally available
+  ticks, completed M1 bars, or microstructure events may confirm or invalidate an existing scenario
+  and make it entry-eligible before the next M5 close.
+- **Reason:** Candle-close-only execution loses valid confirmation opportunities; unconstrained
+  tick-level thesis creation increases noise, duplicates, and replay mismatch.
+- **Consequence:** Intrabar events reference an existing `thesis_id`/`setup_id`, cannot see future
+  M1/M5 values, and traverse the same Master, Discipline, Risk, and logging path.
+
+## 2026-09-09 — Master, Discipline, Risk, and Reflection stay separate
+
+- **Decision:** Master is structured evidence fusion, real-time Discipline is deterministic, Risk is
+  an independent final veto, and Reflection may propose but never automatically apply changes.
+- **Reason:** Interpretation, behavioral control, survival constraints, and offline learning require
+  distinct authority and audit boundaries.
+- **Consequence:** HOLD/ABSTAIN is valid, rejected opportunities are logged, and changes follow
+  candidate → deterministic replay/walk-forward → explicit promotion.
+
+## 2026-09-09 — Phase 6 closes at deterministic evidence
+
+- **Decision:** The implemented shared semantic path is `RuntimeEvent -> reducer -> tools ->
+  specialists -> scenario lifecycle -> EvidenceBundle`; live-like and journal replay use the same
+  reducer, tools, specialists, scenario transitions, and trace identities.
+- **Reason:** Closing at evidence establishes causal live/replay parity without prematurely coupling
+  interpretation to trade authorization or broker behavior.
+- **Consequence:** Master fusion, Discipline Guard, agentic Risk, execution, position management, and
+  broker/P&L simulation remain explicitly unimplemented Phase 7+ work. Replay-only strategy logic is
+  prohibited.
+
+## 2026-09-09 — Append-only semantic runtime journal
+
+- **Decision:** Persist content-addressed `JournalRecord` payloads with event, parent, and previous
+  linkage plus explicit applied/duplicate/no-op/rejected outcomes. SQLite UPDATE and DELETE are
+  blocked; database row IDs do not affect semantic identity.
+- **Reason:** Live/replay parity and diagnosis require the exact causal facts, memory, evidence,
+  thesis/scenario states, and outcomes that existed at decision time.
+- **Consequence:** Exact duplicates are auditable no-ops, snapshot mismatches reject, and journal
+  replay can reconstruct Phase 6 traces without revising history.
+
+## 2026-09-09 — Restart recovery is a future safety gate
+
+- **Decision:** Unattended runtime may resume only after journal flush/cursor restoration, MT5
+  account/position/order reconciliation, missing-candle backfill, explicit continuity handling, TTL
+  evaluation, and freshness validation.
+- **Reason:** A process restart cannot safely infer broker truth or silently bridge missing intrabar
+  history.
+- **Consequence:** Phase 6 does not claim restart recovery; Phase 7+ entries must fail closed until the
+  reconciliation gate is implemented and satisfied.
+
+## 2026-09-09 — Local reasoning and self-improvement remain governed candidates
+
+- **Decision:** A future local LLM may sit behind stable evidence/memory contracts with bounded modes,
+  timeout, structured validation, provenance checks, and deterministic fallback. Evolution follows
+  experience → reflection → proposal → replay/shadow comparison → explicit promotion.
+- **Reason:** Reasoning experiments and agent/tool proposals must not mutate production behavior or
+  weaken deterministic fallbacks.
+- **Consequence:** No LLM, vision, reflection, automatic gap detection, or autonomous deployment is a
+  Phase 6 dependency. Final OOS governance and manual promotion remain intact.
