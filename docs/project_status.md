@@ -14,7 +14,7 @@ Last updated: 2026-09-09
 | 5 | Local Quant Model Development | COMPLETE (framework only) |
 | Architecture migration | Tool-augmented agentic design + deterministic replay | APPROVED / DOCUMENTED |
 | 6 | Shared runtime state, agent contracts, deterministic kernel vertical slice | COMPLETE |
-| 7 | Master, Discipline, Risk, and execution integration | IN PROGRESS — TASKS 1–4 ONLY |
+| 7 | Master, Discipline, Risk, and execution integration | IN PROGRESS — TASKS 1–5 ONLY |
 | 8+ | Reflection and optional intelligence | NOT STARTED |
 
 Phases 0–4 established the local-first contracts, UTC market-data pipeline, causal versioned feature
@@ -89,6 +89,14 @@ future broker reconciliation. Typed execution results reuse the Phase 6 executio
 reducer path. No direct MT5/MQL5 sender, durable reconciliation store, simulated broker, or position
 management has been implemented.
 
+Phase 7 Task 5 adds append-only SQLite execution transitions, deterministic exact-linkage broker
+reconciliation, canonical broker-state refresh events, recovery checkpoints, and a separate
+fail-closed safe-resume gate. Reservations and results survive process restart; terminal and UNKNOWN
+intents cannot be resubmitted. Reconciliation resolutions append a new report that supersedes the
+prior report. Checkpoints are recovery anchors only—the transition history remains authoritative.
+Freshness, unresolved exposure anomalies, missing intrabar continuity, and expired theses block new
+entries. Actual MT5/MQL5 transport and startup data acquisition remain unimplemented.
+
 ## Important risks
 
 - The prior real sample is tiny, class-imbalanced, and its OOS results have already been viewed.
@@ -100,13 +108,13 @@ management has been implemented.
 - No claim of profitability, execution-ready trading, or autonomous learning exists.
 - Tick-history quality, broker event ordering, spread/slippage simulation, and deterministic replay
   of asynchronous slow-path context remain unresolved implementation risks.
-- MT5/MQL5 transport, position management, simulated fills/P&L, durable reconciliation/restart, LLMs, vision,
+- MT5/MQL5 transport, position management, simulated fills/P&L, automated broker snapshot acquisition, LLMs, vision,
   and reflection are absent.
 
 ## Working principle and next task
 
 Codex writes auditable local pipelines and runs tiny tests. The user runs serious training and large
-replays. Phase 7 Tasks 1–4 are isolated on `codex/phase-7-decision-execution`. The exact next Phase 7
+replays. Phase 7 Tasks 1–5 are isolated on `codex/phase-7-decision-execution`. The exact next Phase 7
 task is not approved. It must preserve the shared live/replay contracts and may not infer authority
 for MT5 connectivity, position management, simulated brokerage, reconciliation, or later-phase
 intelligence.

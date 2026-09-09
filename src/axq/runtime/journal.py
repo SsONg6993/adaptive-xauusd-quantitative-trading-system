@@ -210,6 +210,8 @@ class RuntimeJournal(Protocol):
 
     def records(self) -> tuple[JournalEntry, ...]: ...
 
+    def sync(self) -> None: ...
+
 
 _SCHEMA = """
 CREATE TABLE IF NOT EXISTS runtime_journal (
@@ -330,6 +332,11 @@ class SQLiteRuntimeJournal:
                 event = RuntimeEvent.model_validate(entry.record.decode())
                 values[event.event_id] = event
         return iter(sorted(values.values(), key=lambda event: event.ordering_key))
+
+    def sync(self) -> None:
+        """Flush committed WAL content without changing semantic journal history."""
+        with self._connect() as connection:
+            connection.execute("PRAGMA wal_checkpoint(FULL)")
 
     def feature_snapshots(self) -> dict[str, CausalFeatureSnapshot]:
         values: dict[str, CausalFeatureSnapshot] = {}

@@ -141,3 +141,22 @@ cursor, reconcile MT5 account/positions/orders and execution feedback at startup
 positions, backfill missing candles, preserve explicit missing-intrabar continuity, enforce thesis
 and scenario TTLs, and validate freshness. New entries must remain disabled until reconciliation and
 freshness checks pass.
+
+## Phase 7 Task 5 recovery procedure
+
+1. Open `SQLiteExecutionLedger` on the ignored runtime database. Its append-only transitions, not a
+   recovery checkpoint, are the execution source of truth.
+2. Acquire one fresh broker snapshot through a future adapter. Do not enable entries while any
+   critical component is UNKNOWN, UNAVAILABLE, or STALE.
+3. Refresh shared state through the canonical market, account, positions, orders, exposure, and
+   broker-constraints runtime events.
+4. Reconcile using only exact intent/client, ticket, or persisted transport linkage. Do not match by
+   approximate price/time/direction/volume.
+5. Append the reconciliation report. A follow-up must name the immediately preceding report it
+   supersedes; never update an earlier UNKNOWN or CONFLICT row.
+6. Require `ResumeStatus.SAFE`. Any unresolved execution anomaly, missing intrabar continuity, or
+   expired execution-relevant thesis keeps new entries blocked.
+7. On graceful shutdown, append a recovery checkpoint and flush both runtime journal and execution
+   ledger. After a crash, replay committed execution transitions even when no checkpoint exists.
+
+Task 5 does not acquire MT5 snapshots, send orders, backfill candles, or manage positions.

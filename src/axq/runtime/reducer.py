@@ -91,6 +91,8 @@ def _validate_payload(event: RuntimeEvent) -> None:
         RuntimeEventType.ACCOUNT_UPDATED: AccountState,
         RuntimeEventType.POSITIONS_UPDATED: PositionBookState,
         RuntimeEventType.ORDERS_UPDATED: OrderBookState,
+        RuntimeEventType.EXPOSURE_UPDATED: ExposureState,
+        RuntimeEventType.BROKER_CONSTRAINTS_UPDATED: BrokerConstraints,
         RuntimeEventType.EXECUTION_FEEDBACK: ExecutionFeedbackState,
         RuntimeEventType.SLOW_CONTEXT_UPDATED: SlowContextState,
     }
@@ -264,6 +266,14 @@ def reduce_state(
         orders = OrderBookState.model_validate(event.payload)
         data["orders"] = orders
         component = orders.freshness
+    elif event.event_type is RuntimeEventType.EXPOSURE_UPDATED:
+        exposure = ExposureState.model_validate(event.payload)
+        data["exposure"] = exposure
+        component = exposure.freshness
+    elif event.event_type is RuntimeEventType.BROKER_CONSTRAINTS_UPDATED:
+        constraints = BrokerConstraints.model_validate(event.payload)
+        data["broker_constraints"] = constraints
+        component = constraints.freshness
     elif event.event_type is RuntimeEventType.EXECUTION_FEEDBACK:
         feedback = ExecutionFeedbackState.model_validate(event.payload)
         data["execution_feedback"] = _updated_execution_feedback(previous, feedback)

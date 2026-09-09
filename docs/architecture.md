@@ -61,6 +61,17 @@ A simulated execution sink is not implemented. When added, it must consume the s
 Master, Discipline, or Risk logic. The Task 4 demo adapter is a guarded boundary around an injected
 transport, not a broker simulator or direct MT5 implementation.
 
+Phase 7 Task 5 persists execution reservations/results/reconciliation as immutable SQLite
+transitions. Current execution state is reconstructed from those transitions; no mutable projection
+table exists. Broker reconciliation uses only exact persisted intent, ticket, transport, or client
+linkage. New reports append and supersede older reports rather than rewriting UNKNOWN or CONFLICT.
+`BROKER_ONLY` remains an operator-visible anomaly, not presumed corruption.
+
+Startup readiness is a distinct operational gate after reconciliation. It requires fresh canonical
+market/account/position/order/exposure/broker-constraint state, resolved execution anomalies, and
+valid thesis continuity. Broker snapshots refresh shared state through normal `RuntimeEvent` and
+reducer paths. Recovery checkpoints accelerate restart but never replace transition history.
+
 ## Primary and intrabar paths
 
 A completed M5 candle is the default primary-decision cadence and may create, replace, or invalidate

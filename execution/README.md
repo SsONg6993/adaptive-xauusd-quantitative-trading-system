@@ -16,3 +16,17 @@ Typed results distinguish `NO_ACTION`, submission/acceptance, partial/full fill,
 cancellation, expiry, transport failure, and dangerous `UNKNOWN` submission state. Actionable
 results convert into the existing Phase 6 `EXECUTION_FEEDBACK` event and reducer path. There is no
 direct MT5 order sender, simulated broker, position-management policy, or live-money capability.
+
+Task 5 adds `SQLiteExecutionLedger`, which records immutable reservations, results, and
+reconciliation reports in append-only SQLite transitions. A unique reservation constraint prevents
+restart duplicates. UNKNOWN remains reconciliation-required and cannot be resent. Each later
+reconciliation report explicitly supersedes the previous report; earlier anomalies are never
+updated or deleted.
+
+`BrokerRecoverySnapshot` contains canonical account, market, position, order, exposure, and broker
+constraint state plus explicit intent/ticket/transport linkage. Matching never uses approximate
+price, time, direction, or volume. Broker-only objects remain visible anomalies because legitimate
+manual/operator trades may exist. `ResumeReadiness` stays blocked for stale critical state,
+unresolved broker exposure, incomplete intrabar continuity, or expired theses. Recovery checkpoints
+and WAL flush support graceful shutdown, but committed transitions—not checkpoints—remain the
+source of truth after either graceful or crash recovery.

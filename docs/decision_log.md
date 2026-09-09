@@ -185,6 +185,18 @@ do not silently rewrite earlier decisions.
   automatically resubmitted. Results enter the existing runtime execution-feedback path. Direct
   MT5/MQL5 transport and durable recovery remain unimplemented.
 
+## 2026-09-09 — Execution recovery is append-only and fail-closed
+
+- **Decision:** Durable execution state is reconstructed from append-only SQLite transitions.
+  Reconciliation uses exact persisted linkage only; every later report explicitly supersedes the
+  previous report, and checkpoints are recovery anchors rather than authority.
+- **Reason:** Mutating UNKNOWN/CONFLICT history or heuristically pairing broker objects could hide
+  duplicate exposure after a crash or lost acknowledgement.
+- **Consequence:** UNKNOWN, broker-only/local-only objects, and ticket/direction/material-volume
+  conflicts block safe resume until a new semantic reconciliation record resolves them. Broker-only
+  remains a classifiable anomaly because manual trades may be legitimate. No mutable current-state
+  execution table exists.
+
 ## 2026-09-09 — Restart recovery is a future safety gate
 
 - **Decision:** Unattended runtime may resume only after journal flush/cursor restoration, MT5

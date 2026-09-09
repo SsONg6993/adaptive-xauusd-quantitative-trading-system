@@ -10,7 +10,9 @@ from pydantic import BaseModel, ConfigDict, Field, model_validator
 
 from axq.runtime.state import (
     AccountState,
+    BrokerConstraints,
     ExecutionFeedbackState,
+    ExposureState,
     MarketState,
     OrderBookState,
     PositionBookState,
@@ -28,6 +30,8 @@ class RuntimeEventType(StrEnum):
     ACCOUNT_UPDATED = "ACCOUNT_UPDATED"
     POSITIONS_UPDATED = "POSITIONS_UPDATED"
     ORDERS_UPDATED = "ORDERS_UPDATED"
+    EXPOSURE_UPDATED = "EXPOSURE_UPDATED"
+    BROKER_CONSTRAINTS_UPDATED = "BROKER_CONSTRAINTS_UPDATED"
     EXECUTION_FEEDBACK = "EXECUTION_FEEDBACK"
     SLOW_CONTEXT_UPDATED = "SLOW_CONTEXT_UPDATED"
 
@@ -37,6 +41,8 @@ EventPayload = (
     | AccountState
     | PositionBookState
     | OrderBookState
+    | ExposureState
+    | BrokerConstraints
     | ExecutionFeedbackState
     | SlowContextState
 )
@@ -73,6 +79,8 @@ class RuntimeEvent(BaseModel):
             RuntimeEventType.ACCOUNT_UPDATED: AccountState,
             RuntimeEventType.POSITIONS_UPDATED: PositionBookState,
             RuntimeEventType.ORDERS_UPDATED: OrderBookState,
+            RuntimeEventType.EXPOSURE_UPDATED: ExposureState,
+            RuntimeEventType.BROKER_CONSTRAINTS_UPDATED: BrokerConstraints,
             RuntimeEventType.EXECUTION_FEEDBACK: ExecutionFeedbackState,
             RuntimeEventType.SLOW_CONTEXT_UPDATED: SlowContextState,
         }

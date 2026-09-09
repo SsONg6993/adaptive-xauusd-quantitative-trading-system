@@ -40,6 +40,8 @@ autonomous strategy, live execution EA, or claim of trading profitability.
 - Deterministic Master fusion, Discipline, financial Risk, and execution-entry contracts. The
   demo-safe execution adapter is disabled by default, idempotent by stable intent ID, explicitly
   represents unknown submissions, and returns feedback through the shared runtime reducer.
+- Append-only SQLite execution recovery with exact-linkage broker reconciliation, canonical state
+  refresh events, deterministic recovery anchors, and a fail-closed startup readiness gate.
 - SQLite WAL schema and transactional migrations, with PostgreSQL migration boundaries documented.
 - Dataset manifests, label definitions, immutable model metadata, JSON logging, YAML configuration,
   and deterministic risk-veto foundation.
@@ -135,5 +137,5 @@ Predictive ML is preserved as an optional `OptionalPredictiveModelTool`/Challeng
 not control the runtime and is not required for V1. The isolated Phase 7 worktree now extends the
 Phase 6 evidence kernel through deterministic Master, Discipline, Risk, execution intent, and typed
 execution feedback without merging or committing them. Direct MT5/MQL5 transport, a simulated
-broker, durable restart reconciliation, position management, LLM reasoning, and reflection remain
+broker, actual broker snapshot acquisition, position management, LLM reasoning, and reflection remain
 unimplemented. The Phase 6 completion plan lives under `docs/superpowers/plans/`.

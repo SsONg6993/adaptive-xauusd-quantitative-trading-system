@@ -46,7 +46,7 @@ class ExecutionLedger(Protocol):
 
     def is_reserved(self, intent_id: str) -> bool: ...
 
-    def reserve(self, intent_id: str) -> bool: ...
+    def reserve(self, intent: ExecutionIntent) -> bool: ...
 
     def record(self, result: ExecutionResult) -> None: ...
 
@@ -64,10 +64,10 @@ class InMemoryExecutionLedger:
     def is_reserved(self, intent_id: str) -> bool:
         return intent_id in self._reserved
 
-    def reserve(self, intent_id: str) -> bool:
-        if intent_id in self._reserved:
+    def reserve(self, intent: ExecutionIntent) -> bool:
+        if intent.intent_id in self._reserved:
             return False
-        self._reserved.add(intent_id)
+        self._reserved.add(intent.intent_id)
         return True
 
     def record(self, result: ExecutionResult) -> None:
@@ -100,7 +100,7 @@ class DemoExecutionAdapter:
         prior = self._ledger.get(intent.intent_id)
         if prior is not None:
             return prior
-        if not self._ledger.reserve(intent.intent_id):
+        if not self._ledger.reserve(intent):
             result = self._unknown_result(intent, "reserved intent requires reconciliation")
             self._ledger.record(result)
             return result

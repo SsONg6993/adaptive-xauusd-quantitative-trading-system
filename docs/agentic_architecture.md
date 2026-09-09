@@ -225,9 +225,15 @@ rechecks bounded pre-submit observations, reserves the intent ID before transpor
 explicit `UNKNOWN` state when acknowledgement is uncertain. It never retries a partial remainder or
 an unknown submission. Results convert to the existing runtime `EXECUTION_FEEDBACK` event.
 
+Task 5 supplies durable append-only execution transitions and recovery anchors. Reconciliation uses
+only exact persisted broker linkage, treats broker-only objects as explicit classifiable anomalies,
+and appends superseding resolution reports. A separate safe-resume contract blocks new entries until
+canonical broker/runtime components are fresh, execution ambiguity is resolved, and thesis/intrabar
+continuity is valid. Neither reconciliation nor readiness changes Master, Discipline, or Risk.
+
 ## Explicitly unimplemented after Phase 7 Task 4
 
-MT5/MQL5 execution-transport integration; durable idempotency/reconciliation; position management;
+MT5/MQL5 execution-transport integration; broker snapshot acquisition; position management;
 a simulated broker/trade-P&L model;
 graceful shutdown/startup recovery; broker reconciliation; missing-candle backfill; persistent restart
 restoration; Ollama/local-LLM integration; chart vision; reflection/weekly learning; autonomous tool-
