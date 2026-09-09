@@ -228,3 +228,17 @@ do not silently rewrite earlier decisions.
 - **Consequence:** HOLD creates no modification, bearish evidence cannot silently reverse a long,
   and protection/exit outcomes remain append-only journal facts that require a future dedicated
   safety validation and transport. Scale-in/out, dynamic trailing, and broker submission are absent.
+
+## 2026-09-10 — Position actions require independent action-time safety
+
+- **Decision:** A `PositionManagementOutcome` cannot be transported directly. A separate immutable
+  action context rechecks current authoritative position, exact execution/broker linkage, Task 5
+  reconciliation/readiness, freshness, volume, and broker constraints. Only safety `PASS` creates a
+  content-addressed `MODIFY_PROTECTIVE_STOP` or full `CLOSE_POSITION` intent.
+- **Reason:** Broker/manual changes and elapsed time can invalidate an otherwise valid management
+  recommendation before transport. A close is not an opposing entry, and stop normalization must
+  never widen risk.
+- **Consequence:** HOLD produces no intent; uncertain facts fail closed as `REJECT` or
+  `EMERGENCY_BLOCK`. The runtime journal stores an idempotent append-only management → safety →
+  intent chain. Position-action transport/results, reversal, scale-in/out, and broker calls remain
+  unimplemented.

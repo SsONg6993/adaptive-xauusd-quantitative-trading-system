@@ -246,9 +246,26 @@ positions. Invalidation/expiry can request exit, but neither protection nor exit
 a future dedicated safety boundary and transport must still validate it. Bearish evidence against a
 long may request exit but never silently reverses it into a short.
 
-## Explicitly unimplemented after Phase 7 Task 6
+## Phase 7 Task 7 position-action safety boundary
 
-MT5/MQL5 execution or position-action transport; broker snapshot acquisition; a simulated
+`PositionManagementOutcome` says what should happen to an open position; it is not a broker action.
+Task 7 independently binds that recommendation to current authoritative position, account, broker,
+reconciliation, readiness, and exact execution-linkage facts. The pure boundary emits `NO_ACTION`,
+`PASS`, `REJECT`, or `EMERGENCY_BLOCK`. Only `PASS` can produce a `PositionActionIntent`.
+
+V1 position-action intents are limited to `MODIFY_PROTECTIVE_STOP` and `CLOSE_POSITION`. Stop
+modification rechecks current SL, directional monotonicity, original approved risk when no SL is
+present, point/tick normalization, stops/freeze distance, tradability, and fresh bid/ask facts.
+Normalization may only tighten risk. Close targets the exact linked broker position and its full
+current volume; it is never represented as a new opposing entry. Stable content identities and the
+typed runtime-journal chain are shared by live and replay.
+
+`PositionActionIntent` remains semantic input to a future transport. It is neither broker
+authorization nor evidence that a modification or close occurred.
+
+## Explicitly unimplemented after Phase 7 Task 7
+
+MT5/MQL5 entry or position-action transport and transport result; broker snapshot acquisition; a simulated
 broker/trade-P&L model; missing-candle backfill; persistent orchestration around restart restoration;
 Ollama/local-LLM integration; chart vision; reflection/weekly learning; autonomous tool- or
 agent-gap detection; and autonomous architecture evolution.

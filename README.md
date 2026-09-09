@@ -120,6 +120,7 @@ src/axq/agents/          Phase 6 specialist contracts, memory, scenarios, determ
 src/axq/runtime/         Phase 6 event/state/reducer/kernel/journal/replay contracts
 src/axq/tools/           fact-only tools and optional predictive-model adapter
 src/axq/position_management/ pure Phase 7 open-position evaluation contracts
+src/axq/position_actions/ Phase 7 action-time safety, intent, and journal-chain contracts
 master/ risk/ execution/ Phase 7 integration boundaries and operator-facing documentation
 datasets/                immutable Phase 3 dataset build/inspection commands
 training/quant/          Phase 4 training plus Phase 5 experiment/suite/walk-forward/ablation CLIs
@@ -138,7 +139,9 @@ user-run local jobs under the reviewed Phase 5 workflow.
 
 Predictive ML is preserved as an optional `OptionalPredictiveModelTool`/Challenger input. It does
 not control the runtime and is not required for V1. The isolated Phase 7 branch now extends the
-Phase 6 evidence kernel through deterministic Master, Discipline, Risk, execution/recovery, and
-already-open position management. Direct MT5/MQL5 transport, a simulated broker, actual broker
-snapshot acquisition, position-action transport, LLM reasoning, and reflection remain unimplemented.
+Phase 6 evidence kernel through deterministic Master, Discipline, Risk, execution/recovery,
+already-open position management, and the separate position-action safety boundary. Only a passed
+action-time safety outcome becomes a content-addressed modify-stop or full-close intent. Direct
+MT5/MQL5 transport, a simulated broker, actual broker snapshot acquisition, LLM reasoning, and
+reflection remain unimplemented. See [position actions](docs/position_actions.md).
 The phase implementation plans live under `docs/superpowers/plans/`.

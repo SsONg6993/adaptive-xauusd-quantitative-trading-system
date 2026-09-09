@@ -177,3 +177,21 @@ Task 5 does not acquire MT5 snapshots, send orders, backfill candles, or manage 
    freeze constraints allow a monotonic stop move toward break-even. Never widen long or short risk.
 7. Append the immutable `PositionManagementOutcome` to the future decision journal chain. Task 6
    contains no transport; a later dedicated safety validation must precede any broker modification.
+
+## Phase 7 Task 7 position-action safety
+
+1. Begin with an immutable `PositionManagementOutcome` and reacquire the latest authoritative
+   position/account/broker/reconciliation/readiness facts; do not transport the Task 6 outcome.
+2. Evaluate `PositionActionContext` with its exact content-addressed policy. HOLD/NO_ACTION maps to
+   safety `NO_ACTION`. Only safety `PASS` may create a `PositionActionIntent`.
+3. Treat unsafe recovery, UNKNOWN execution, unresolved anomaly, kill switch, or broken exact
+   intent/result/ticket/transport linkage as `EMERGENCY_BLOCK`. Stale/missing or broker-invalid
+   action facts produce `REJECT`. Neither result produces an intent.
+4. For stop protection, require fresh bid/ask and broker constraints, unchanged current SL, monotonic
+   risk reduction, and valid point/tick/stops/freeze distance. Tick normalization may only tighten.
+5. For exit, target only the exact-linked still-open broker position and request its full current
+   volume. Never express close as an opposing entry, reversal, partial close, or scale action.
+6. Append the management outcome, safety outcome, and optional passed intent with
+   `append_position_action_chain`. Equivalent retries recover the existing journal entries rather
+   than append a second semantic action. Keep the journal under ignored `runtime/`.
+7. Stop at the semantic intent. No MT5/MQL5 position modification or close transport exists in Task 7.

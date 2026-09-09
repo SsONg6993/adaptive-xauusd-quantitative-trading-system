@@ -29,7 +29,10 @@ historical replay adapters --┘                              |
 authoritative open position + exact execution/thesis linkage + safe readiness
                            -> PositionManagementOutcome (Phase 7 Task 6)
                               [NO_ACTION | HOLD | PROTECT | EXIT]
-                           -> future dedicated safety validation and transport
+                           -> PositionActionSafetyOutcome (Phase 7 Task 7)
+                              [NO_ACTION | PASS | REJECT | EMERGENCY_BLOCK]
+                           -> PositionActionIntent [MODIFY_STOP | CLOSE] only on PASS
+                           -> future position-action transport/result
 ```
 
 Agent execution will use bounded timeouts and independent failures. The master excludes stale or
@@ -84,6 +87,15 @@ safe-resume state. Entry decisions are never interpreted as position actions. `H
 generates no modification; `PROTECT_POSITION` can only request a monotonic broker-valid stop change;
 and `EXIT_POSITION` is an explicit request that still requires future safety validation and
 transport. Equivalent live/replay contexts use the same evaluator.
+
+Phase 7 Task 7 implements that separate action-time safety boundary. It rechecks the latest
+authoritative position snapshot, exact intent/result/ticket/transport linkage, reconciliation and
+safe-resume state, account/position/broker/price freshness, volume, and broker stop constraints.
+Only `PASS` creates a content-addressed `PositionActionIntent`; HOLD maps to `NO_ACTION`, while stale
+or unsafe facts produce `REJECT` or `EMERGENCY_BLOCK` with no intent. V1 intents can only tighten a
+protective stop or close the full exact-linked position. They cannot enter, reverse, scale, or
+authorize transport. The runtime journal records the management outcome, safety outcome, and intent
+as an idempotent append-only semantic chain whose database sequence is not identity.
 
 ## Primary and intrabar paths
 

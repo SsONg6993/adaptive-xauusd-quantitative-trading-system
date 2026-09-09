@@ -14,7 +14,7 @@ Last updated: 2026-09-10
 | 5 | Local Quant Model Development | COMPLETE (framework only) |
 | Architecture migration | Tool-augmented agentic design + deterministic replay | APPROVED / DOCUMENTED |
 | 6 | Shared runtime state, agent contracts, deterministic kernel vertical slice | COMPLETE |
-| 7 | Master, Discipline, Risk, execution, and position management | IN PROGRESS — TASKS 1–6 ONLY |
+| 7 | Master, Discipline, Risk, execution, recovery, and position actions | IN PROGRESS — TASKS 1–7 ONLY |
 | 8+ | Reflection and optional intelligence | NOT STARTED |
 
 Phases 0–4 established the local-first contracts, UTC market-data pipeline, causal versioned feature
@@ -104,6 +104,13 @@ lifecycle states request exit; and weakening may request only monotonic broker-v
 toward break-even. Outputs remain journal-ready requests without transport, reversal, scale-in/out,
 or mutation of Master, Discipline, Risk, Execution, runtime, or thesis state.
 
+Phase 7 Task 7 adds a separate deterministic action-time safety boundary downstream of position
+management. Strict policy/context/outcome/intent contracts recheck Task 5 safe readiness, resolved
+reconciliation, exact intent/result/position linkage, current ticket/symbol/side/volume, component
+freshness, and action-time broker facts. HOLD creates no intent; only safety `PASS` creates a
+content-addressed protective-stop modification or full-close intent. Management, safety, and intent
+are recoverable through idempotent append-only runtime-journal records. No broker call is made.
+
 ## Important risks
 
 - The prior real sample is tiny, class-imbalanced, and its OOS results have already been viewed.
@@ -115,15 +122,15 @@ or mutation of Master, Discipline, Risk, Execution, runtime, or thesis state.
 - No claim of profitability, execution-ready trading, or autonomous learning exists.
 - Tick-history quality, broker event ordering, spread/slippage simulation, and deterministic replay
   of asynchronous slow-path context remain unresolved implementation risks.
-- MT5/MQL5 transport, position-action safety/transport, simulated fills/P&L, automated broker
+- MT5/MQL5 transport, position-action transport/results, simulated fills/P&L, automated broker
   snapshot acquisition, LLMs, vision, and reflection are absent.
 
 ## Working principle and next task
 
 Codex writes auditable local pipelines and runs tiny tests. The user runs serious training and large
-replays. Phase 7 Tasks 1–6 are isolated on `codex/phase-7-decision-execution`. Task 7 is not approved.
-It must preserve the shared live/replay contracts and may not infer authority for MT5 connectivity,
-position-action transport, simulated brokerage, or later-phase intelligence.
+replays. Phase 7 Tasks 1–7 are isolated on `codex/phase-7-decision-execution`. Task 8 has not begun.
+Future work must preserve the shared live/replay contracts and may not infer authority for MT5
+connectivity, position-action transport, simulated brokerage, or later-phase intelligence.
 
 ## Roadmap
 
