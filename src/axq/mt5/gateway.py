@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import importlib
 from collections.abc import Callable, Mapping
+from pathlib import Path
 from typing import Protocol, cast
 
 from axq.mt5.contracts import MT5ConnectionError, MT5Constants
@@ -92,6 +93,11 @@ class MetaTrader5Gateway:
             raise MT5ConnectionError(f"MT5 initialize failed: {module.last_error()}")
         self._module = module
         self._connected = True
+
+    @property
+    def terminal_path(self) -> Path | None:
+        """Expose operational configuration for diagnostics, never semantic identity."""
+        return Path(self._terminal_path) if self._terminal_path is not None else None
 
     def close(self) -> None:
         if self._connected and self._module is not None:

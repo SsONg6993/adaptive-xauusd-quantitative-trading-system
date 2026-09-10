@@ -259,3 +259,16 @@ do not silently rewrite earlier decisions.
   resent automatically. Position actions have their own durable reservation/result transitions and
   can only address an exact ticket; live money, fuzzy symbol/ticket matching, reversal, scale-in,
   runtime orchestration, MQL5/IPC, and a simulated broker remain absent.
+
+## 2026-09-10 — Task 9 composes one restart-safe replay/shadow/demo runtime
+
+- **Decision:** Add a narrow `RuntimeOrchestrator` that restores committed semantic state, acquires
+  broker truth in live-like modes, performs exact reconciliation/readiness, invokes one injected
+  decision-cycle processor, dispatches only in DEMO, routes results through canonical events, and
+  coordinates checkpoint/flush/close. `DISABLED` is the checked-in default; there is no live mode.
+- **Reason:** Continuous demo operation and daily host restarts require deterministic sequencing,
+  but duplicating Master, Discipline, Risk, position-management, or broker semantics inside a loop
+  would break live/replay parity and auditability.
+- **Consequence:** Replay, shadow, and demo share semantic contracts. Shadow journals would-act
+  intents without mutation. DEMO reacquires readiness before every action; UNKNOWN or reconciliation
+  anomalies block autonomy. Runtime paths and terminal location remain operational metadata.

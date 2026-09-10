@@ -119,6 +119,14 @@ mutation, and `DEMO_ENABLED` revalidates a demo account and broker facts immedia
 `order_send`. Missing or uncertain acknowledgements are durably `UNKNOWN` and never automatically
 resent. No live-money mode, runtime loop, MQL5 EA, IPC bridge, or simulated broker is included.
 
+Phase 7 Task 9 adds `RuntimeOrchestrator`, a strict operational config, structured status/operator
+gates, and deterministic run summaries. Startup restores committed state/cursors/memory/thesis,
+then live-like modes acquire and reduce broker truth, reconcile exact execution linkage, and require
+SAFE readiness before processing. Replay, shadow, and demo use one decision-cycle port; only DEMO
+may dispatch through the existing Task 8 adapters, with a fresh readiness check before every
+mutation. Feedback returns through canonical runtime events. Graceful shutdown checkpoints and
+flushes all append-only stores before closing MT5. There remains no live-money mode.
+
 ## Important risks
 
 - The prior real sample is tiny, class-imbalanced, and its OOS results have already been viewed.
@@ -132,13 +140,14 @@ resent. No live-money mode, runtime loop, MQL5 EA, IPC bridge, or simulated brok
   of asynchronous slow-path context remain unresolved implementation risks.
 - Real-terminal demo mutation has not been exercised by automated validation; fake-gateway tests
   cover transport behavior without placing trades.
-- Continuous runtime orchestration, simulated fills/P&L, MQL5/IPC transport, automated resolution
+- A production scheduler/service host, simulated fills/P&L, MQL5/IPC transport, automated resolution
   of unknown broker outcomes, LLMs, vision, and reflection are absent.
 
 ## Working principle and next task
 
 Codex writes auditable local pipelines and runs tiny tests. The user runs serious training and large
-replays. Phase 7 Tasks 1–8 are isolated on `codex/phase-7-decision-execution`. Task 9 has not begun.
+replays. Phase 7 Tasks 1–9 are isolated on `codex/phase-7-decision-execution`. Phase 7 implementation
+is complete pending review/checkpoint; Phase 8 has not begun.
 Future work must preserve the shared live/replay contracts and may not infer authority for
 continuous execution, live-money support, simulated brokerage, or later-phase intelligence.
 

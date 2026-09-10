@@ -44,3 +44,9 @@ Task 8 keeps execution `DISABLED` by default. `DRY_RUN` performs current broker 
 and rejects non-demo accounts. Entry reuses `SQLiteExecutionLedger`; position actions use a
 dedicated append-only transport ledger. Missing or uncertain acknowledgements become durable
 `UNKNOWN` and are never automatically resent.
+
+Task 9 composes these boundaries in `RuntimeOrchestrator`. It restores durable state, reduces a
+fresh broker snapshot, reconciles exact linkage, and checks readiness before any Task 8 dispatch.
+Replay and shadow execute the identical upstream decision processor but do not invoke broker
+mutation. Broker results are journaled and returned through canonical `EXECUTION_FEEDBACK`; shared
+runtime state is never mutated directly by orchestration or MT5 adapter code.

@@ -217,6 +217,27 @@ snapshot adapter without changing Task 5 reconciliation semantics.
 7. For position actions, require the exact broker ticket and unchanged side, volume, and current SL.
    Close is full-volume against that ticket, never a free opposing order. Stop modification preserves
    broker TP and must remain monotonic.
-8. Runtime artifacts and SQLite files remain under ignored `runtime/`. Graceful Task 9 orchestration
-   must flush the runtime journal, entry ledger, and position-action ledger; Task 8 does not add that
-   service loop.
+8. Runtime artifacts and SQLite files remain under ignored `runtime/`. Task 9 now owns coordinated
+   flush/checkpoint/close behavior; Task 8 itself remains only the broker edge.
+
+## Phase 7 Task 9 runtime lifecycle
+
+1. Review `configs/runtime/demo.yaml`; leave `mode: DISABLED` until the exact symbol, policies, and
+   local paths are reviewed. Supply an MT5 terminal path only as environment-specific operational
+   configuration. Never store credentials in YAML.
+2. Construct the established EvidenceKernel/runner and decision-cycle processor, then inject the
+   runtime journal, execution ledger, position-action ledger, and the appropriate source/clock.
+3. Call `startup()`. In SHADOW/DEMO, do not accept decisions unless status reaches `SAFE` after
+   snapshot reduction, exact reconciliation, continuity/expiry checks, and ResumeReadiness.
+4. Use SHADOW before DEMO. Shadow journals the complete semantic would-act path but never invokes
+   entry or position-action adapters.
+5. In DEMO, every mutation causes another broker snapshot/reconciliation/readiness evaluation first.
+   UNKNOWN results block further autonomy and are never retried.
+6. A pause blocks new entries while allowing existing-position safety actions. Execution-disable or
+   kill switch blocks every mutation and cannot bypass Risk/readiness.
+7. Call `shutdown()` before planned host shutdown. It appends a recovery checkpoint, flushes all
+   three stores, and closes MT5. On crash restart, committed append-only history remains sufficient;
+   the checkpoint is only an anchor.
+
+See `docs/runtime_orchestration.md` for mode and sequence contracts. No checked-in command enables
+live money, and Task 9 does not add an unbounded polling daemon.

@@ -122,6 +122,21 @@ class EvidenceKernel:
     def state(self) -> SharedRuntimeState:
         return self._state
 
+    def restore(
+        self,
+        state: SharedRuntimeState,
+        memories: tuple[AgentMemory, ...] = (),
+    ) -> None:
+        """Restore committed semantic state before the next event is processed."""
+        if self._last_processed is not None:
+            raise RuntimeError("kernel restoration is only valid before event processing")
+        if memories:
+            names = tuple(item.agent_name for item in memories)
+            if set(names) != set(AGENT_ORDER) or len(names) != len(set(names)):
+                raise ValueError("restored memories require exactly the canonical specialists")
+        self._state = state
+        self._memories = {item.agent_name: item for item in memories}
+
     def process(
         self,
         event: RuntimeEvent,

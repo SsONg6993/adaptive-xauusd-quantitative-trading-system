@@ -284,10 +284,19 @@ The direct gateway is an adapter, not shared decision logic. Replay or a future 
 must consume the same entry/position-action intents and return compatible feedback without changing
 Master, Discipline, Risk, recovery, reconciliation, or journal semantics.
 
-## Explicitly unimplemented after Phase 7 Task 8
+## Phase 7 Task 9 deterministic orchestration
 
-live-money execution; a continuous runtime service; MQL5/IPC transport; a simulated broker/trade-P&L
-model; missing-candle backfill; persistent orchestration around restart restoration;
+`axq.orchestration` composes the shared event runner, semantic decision processor, recovery,
+append-only stores, and Task 8 adapter ports. `DISABLED` and `REPLAY` never connect or mutate;
+`SHADOW` reads broker truth and journals the full would-act path without dispatch; `DEMO` dispatches
+only after fresh reconciliation/readiness and operator gates. Entry and position-action feedback
+returns through canonical events. A deterministic summary makes Master/Discipline/Risk and action
+counts directly comparable between equivalent replay and live-like inputs.
+
+## Explicitly unimplemented after Phase 7 Task 9
+
+live-money execution; an OS service/watchdog host; MQL5/IPC transport; a simulated broker/trade-P&L
+model; a concrete missing-candle backfill adapter;
 Ollama/local-LLM integration; chart vision; reflection/weekly learning; autonomous tool- or
 agent-gap detection; and autonomous architecture evolution.
 

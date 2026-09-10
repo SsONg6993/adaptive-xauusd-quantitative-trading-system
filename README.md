@@ -1,7 +1,7 @@
 # Adaptive XAUUSD Multi-Agent Trading System
 
 Production-oriented, local-first foundation for a measurable, tool-augmented multi-agent MT5 trading
-system. Phases 0–6 are complete and Phase 7 Tasks 1–8 are implemented on the isolated branch. There is no
+system. Phases 0–6 are complete and Phase 7 Tasks 1–9 are implemented on the isolated branch. There is no
 production-trained model,
 autonomous strategy, live execution EA, or claim of trading profitability.
 
@@ -47,6 +47,9 @@ autonomous strategy, live execution EA, or claim of trading profitability.
 - Optional, lazy-loaded direct MetaTrader5 Python adapters for read-only broker snapshots, demo-only
   entries, protective-stop changes, and exact full closes. Execution is disabled by default;
   dry-run performs `order_check` without `order_send`, and there is no live-money mode.
+- Deterministic end-to-end orchestration for disabled, replay, shadow, and demo operation, including
+  startup reconciliation/readiness, shared decision-cycle dispatch, feedback reduction, bounded
+  snapshot refresh, structured status, operator gates, and graceful restart checkpoints.
 - SQLite WAL schema and transactional migrations, with PostgreSQL migration boundaries documented.
 - Dataset manifests, label definitions, immutable model metadata, JSON logging, YAML configuration,
   and deterministic risk-veto foundation.
@@ -56,8 +59,9 @@ Read [the architecture](docs/architecture.md), [agentic architecture](docs/agent
 [indicator research](docs/indicator_research.md),
 [feature contract](docs/features.md), [dataset contract](docs/datasets.md),
 [label contract](docs/labels.md), [Quant Agent](docs/quant_agent.md),
-[model training](docs/model_training.md), [model registry](docs/model_registry.md), and
-[runbook](docs/runbook.md) before running models. The exact user-run sequence is in
+[model training](docs/model_training.md), [model registry](docs/model_registry.md),
+[runtime orchestration](docs/runtime_orchestration.md), and [runbook](docs/runbook.md) before running
+models. The exact user-run sequence is in
 [Phase 5 local runs](docs/phase5_local_runs.md).
 
 ## Setup (Windows PowerShell)
@@ -125,6 +129,7 @@ src/axq/tools/           fact-only tools and optional predictive-model adapter
 src/axq/position_management/ pure Phase 7 open-position evaluation contracts
 src/axq/position_actions/ Phase 7 action-time safety, intent, and journal-chain contracts
 src/axq/mt5/            optional Task 8 gateway, snapshot, demo entry, and position-action adapters
+src/axq/orchestration/  Task 9 deterministic startup/event/decision/recovery composition service
 master/ risk/ execution/ Phase 7 integration boundaries and operator-facing documentation
 datasets/                immutable Phase 3 dataset build/inspection commands
 training/quant/          Phase 4 training plus Phase 5 experiment/suite/walk-forward/ablation CLIs
@@ -148,7 +153,8 @@ Phase 6 evidence kernel through deterministic Master, Discipline, Risk, executio
 already-open position management, and the separate position-action safety boundary. Only a passed
 action-time safety outcome becomes a content-addressed modify-stop or full-close intent. Task 8
 supplies a direct Python/MetaTrader5 demo transport and canonical snapshot provider behind
-replaceable ports. A simulated broker, continuous orchestration, live-money execution, MQL5/IPC
+replaceable ports. Task 9 composes these boundaries into one restart-safe service shared by replay,
+shadow, and demo modes. A simulated broker, live-money execution, MQL5/IPC
 transport, LLM reasoning, and reflection remain unimplemented. See
 [position actions](docs/position_actions.md).
 The phase implementation plans live under `docs/superpowers/plans/`.

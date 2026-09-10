@@ -20,7 +20,7 @@ from axq.runtime.journal import (
 )
 from axq.runtime.kernel import EvidenceBundle, EvidenceKernel
 from axq.runtime.source import EventSource
-from axq.runtime.state import UTCDateTime
+from axq.runtime.state import SharedRuntimeState, UTCDateTime
 from axq.tools import CausalFeatureSnapshot, ToolResult
 from axq.versioning import canonical_hash
 
@@ -124,6 +124,31 @@ class RuntimeStreamRunner:
     @property
     def steps(self) -> tuple[SemanticTraceStep, ...]:
         return tuple(self._steps)
+
+    @property
+    def state(self) -> SharedRuntimeState:
+        """Expose the immutable current state for orchestration and diagnostics."""
+        return self._kernel.state
+
+    @property
+    def thesis(self) -> ThesisState | None:
+        return self._thesis
+
+    def restore_thesis(self, thesis: ThesisState) -> None:
+        """Restore durable thesis continuity before accepting a new event."""
+        if self._steps or self._last is not None:
+            raise RuntimeError("thesis restoration is only valid before event processing")
+        self._thesis = thesis
+
+    def restore_runtime(
+        self,
+        state: SharedRuntimeState,
+        memories: tuple[AgentMemory, ...] = (),
+    ) -> None:
+        """Restore reducer cursors and specialist memory before event intake."""
+        if self._steps or self._last is not None:
+            raise RuntimeError("runtime restoration is only valid before event processing")
+        self._kernel.restore(state, memories)
 
     def _advance_clock(self, event: RuntimeEvent) -> None:
         if isinstance(self._clock, ReplayClock):

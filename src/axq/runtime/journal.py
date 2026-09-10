@@ -12,9 +12,18 @@ from typing import Literal, Protocol, cast
 from pydantic import BaseModel, ConfigDict, Field, model_validator
 
 from axq.agents import AgentEvidence, AgentInput, AgentMemory, ScenarioState, ThesisState
+from axq.discipline.contracts import DisciplineOutcome
+from axq.execution_boundary.contracts import ExecutionIntent, ExecutionResult
+from axq.execution_boundary.recovery_contracts import (
+    ReconciliationReport,
+    RecoveryCheckpoint,
+    ResumeReadiness,
+)
+from axq.master.contracts import MasterProposal
 from axq.position_actions.contracts import PositionActionIntent, PositionActionSafetyOutcome
 from axq.position_actions.transport import PositionActionTransportResult
 from axq.position_management import PositionManagementOutcome
+from axq.risk_boundary.contracts import RiskOutcome
 from axq.runtime.events import RuntimeEvent
 from axq.runtime.kernel import EvidenceBundle
 from axq.runtime.state import SharedRuntimeState, UTCDateTime
@@ -33,10 +42,18 @@ class JournalRecordType(StrEnum):
     EVIDENCE_BUNDLE = "EVIDENCE_BUNDLE"
     THESIS_STATE = "THESIS_STATE"
     SCENARIO_STATE = "SCENARIO_STATE"
+    MASTER_PROPOSAL = "MASTER_PROPOSAL"
+    DISCIPLINE_OUTCOME = "DISCIPLINE_OUTCOME"
+    RISK_OUTCOME = "RISK_OUTCOME"
+    EXECUTION_INTENT = "EXECUTION_INTENT"
+    EXECUTION_RESULT = "EXECUTION_RESULT"
     POSITION_MANAGEMENT_OUTCOME = "POSITION_MANAGEMENT_OUTCOME"
     POSITION_ACTION_SAFETY_OUTCOME = "POSITION_ACTION_SAFETY_OUTCOME"
     POSITION_ACTION_INTENT = "POSITION_ACTION_INTENT"
     POSITION_ACTION_TRANSPORT_RESULT = "POSITION_ACTION_TRANSPORT_RESULT"
+    RECONCILIATION_REPORT = "RECONCILIATION_REPORT"
+    RESUME_READINESS = "RESUME_READINESS"
+    RECOVERY_CHECKPOINT = "RECOVERY_CHECKPOINT"
     OUTCOME = "OUTCOME"
 
 
@@ -76,10 +93,18 @@ JournalSemantic = (
     | EvidenceBundle
     | ThesisState
     | ScenarioState
+    | MasterProposal
+    | DisciplineOutcome
+    | RiskOutcome
+    | ExecutionIntent
+    | ExecutionResult
     | PositionManagementOutcome
     | PositionActionSafetyOutcome
     | PositionActionIntent
     | PositionActionTransportResult
+    | ReconciliationReport
+    | ResumeReadiness
+    | RecoveryCheckpoint
     | JournalOutcome
 )
 
@@ -94,10 +119,18 @@ _MODEL_BY_RECORD_TYPE: dict[JournalRecordType, type[BaseModel]] = {
     JournalRecordType.EVIDENCE_BUNDLE: EvidenceBundle,
     JournalRecordType.THESIS_STATE: ThesisState,
     JournalRecordType.SCENARIO_STATE: ScenarioState,
+    JournalRecordType.MASTER_PROPOSAL: MasterProposal,
+    JournalRecordType.DISCIPLINE_OUTCOME: DisciplineOutcome,
+    JournalRecordType.RISK_OUTCOME: RiskOutcome,
+    JournalRecordType.EXECUTION_INTENT: ExecutionIntent,
+    JournalRecordType.EXECUTION_RESULT: ExecutionResult,
     JournalRecordType.POSITION_MANAGEMENT_OUTCOME: PositionManagementOutcome,
     JournalRecordType.POSITION_ACTION_SAFETY_OUTCOME: PositionActionSafetyOutcome,
     JournalRecordType.POSITION_ACTION_INTENT: PositionActionIntent,
     JournalRecordType.POSITION_ACTION_TRANSPORT_RESULT: PositionActionTransportResult,
+    JournalRecordType.RECONCILIATION_REPORT: ReconciliationReport,
+    JournalRecordType.RESUME_READINESS: ResumeReadiness,
+    JournalRecordType.RECOVERY_CHECKPOINT: RecoveryCheckpoint,
     JournalRecordType.OUTCOME: JournalOutcome,
 }
 
@@ -114,6 +147,11 @@ def _record_type(value: JournalSemantic) -> JournalRecordType:
         (EvidenceBundle, JournalRecordType.EVIDENCE_BUNDLE),
         (ThesisState, JournalRecordType.THESIS_STATE),
         (ScenarioState, JournalRecordType.SCENARIO_STATE),
+        (MasterProposal, JournalRecordType.MASTER_PROPOSAL),
+        (DisciplineOutcome, JournalRecordType.DISCIPLINE_OUTCOME),
+        (RiskOutcome, JournalRecordType.RISK_OUTCOME),
+        (ExecutionIntent, JournalRecordType.EXECUTION_INTENT),
+        (ExecutionResult, JournalRecordType.EXECUTION_RESULT),
         (PositionManagementOutcome, JournalRecordType.POSITION_MANAGEMENT_OUTCOME),
         (PositionActionSafetyOutcome, JournalRecordType.POSITION_ACTION_SAFETY_OUTCOME),
         (PositionActionIntent, JournalRecordType.POSITION_ACTION_INTENT),
@@ -121,6 +159,9 @@ def _record_type(value: JournalSemantic) -> JournalRecordType:
             PositionActionTransportResult,
             JournalRecordType.POSITION_ACTION_TRANSPORT_RESULT,
         ),
+        (ReconciliationReport, JournalRecordType.RECONCILIATION_REPORT),
+        (ResumeReadiness, JournalRecordType.RESUME_READINESS),
+        (RecoveryCheckpoint, JournalRecordType.RECOVERY_CHECKPOINT),
         (JournalOutcome, JournalRecordType.OUTCOME),
     )
     for model_type, record_type in types:
@@ -139,9 +180,13 @@ def _semantic_id(value: JournalSemantic) -> str:
         "evidence_id",
         "memory_id",
         "bundle_id",
+        "proposal_id",
         "safety_outcome_id",
         "intent_id",
         "outcome_id",
+        "report_id",
+        "readiness_id",
+        "checkpoint_id",
     )
     for field in fields:
         candidate = getattr(value, field, None)

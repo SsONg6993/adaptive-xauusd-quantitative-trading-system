@@ -105,6 +105,13 @@ canonical execution-feedback event family. Explicit internal/broker symbol mappi
 tickets are mandatory. `order_check` never predicts `order_send`; the latter response is
 authoritative. Uncertain submission is durable `UNKNOWN` with no automatic retry.
 
+Phase 7 Task 9 adds the orchestration shell around those existing boundaries. The shell restores
+durable runtime state/cursors/memory/thesis, reduces an authoritative broker snapshot, performs
+exact reconciliation and readiness evaluation, then passes each event through the same injected
+decision-cycle processor in replay, shadow, and demo. It journals existing semantic outputs rather
+than recreating their logic. Only DEMO can reach Task 8 mutation adapters, and current broker truth
+and readiness are reacquired immediately before each entry, protection, or close.
+
 ## Primary and intrabar paths
 
 A completed M5 candle is the default primary-decision cadence and may create, replace, or invalidate
