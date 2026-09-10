@@ -286,3 +286,16 @@ do not silently rewrite earlier decisions.
   while downstream Phase 7 semantics remain journaled by the orchestrator. Task 1 exposes only
   deterministic descriptive analytics; Reflection, proposals, graph/vector indexing, LLMs, tuning,
   and policy mutation remain outside scope.
+
+## 2026-09-11 — Daily reflection is causal, guarded, and append-only
+
+- **Decision:** Aggregate immutable experiences by half-open UTC day using `available_at`, under a
+  content-addressed diagnostic `ReflectionPolicy`. Persist immutable findings and explicit
+  `PASSED`, `INSUFFICIENT`, or `UNAVAILABLE` sample guards; revisions must append and name the latest
+  same-day reflection they supersede.
+- **Reason:** Reflection must distinguish knowledge time from trade time, avoid invented conclusions
+  from weak or missing samples, and retain an auditable history when source attribution is revised.
+- **Consequence:** Canonical JSON and exact experience IDs determine identity. Identical reruns are
+  idempotent. Daily findings remain descriptive and cannot tune Master, Discipline, Risk,
+  execution, or position-management behavior. Weekly reflection, proposals, graphs, RAG, LLMs, and
+  runtime mutation remain outside Task 2.

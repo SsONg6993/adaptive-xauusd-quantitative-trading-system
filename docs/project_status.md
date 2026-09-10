@@ -1,6 +1,6 @@
 # Project status
 
-Last updated: 2026-09-10
+Last updated: 2026-09-11
 
 ## Current phase status
 
@@ -15,7 +15,7 @@ Last updated: 2026-09-10
 | Architecture migration | Tool-augmented agentic design + deterministic replay | APPROVED / DOCUMENTED |
 | 6 | Shared runtime state, agent contracts, deterministic kernel vertical slice | COMPLETE |
 | 7 | Master, Discipline, Risk, execution, recovery, position actions, replay validation | COMPLETE |
-| 8 | Controlled learning and attribution | IN PROGRESS — TASK 1 COMPLETE |
+| 8 | Controlled learning and attribution | IN PROGRESS — TASKS 1–2 COMPLETE |
 | 9+ | Optional intelligence | NOT STARTED |
 
 Phases 0–4 established the local-first contracts, UTC market-data pipeline, causal versioned feature
@@ -38,6 +38,11 @@ Phase 8 Task 1 adds strict normalized experience contracts, exact-ID outcome att
 content-addressed replay-outcome artifact, and an append-only SQLite Experience Store. Its first
 corrected one-month baseline contains 37,183 complete experiences, including 166 completed trades;
 it performs descriptive analytics only and cannot reflect, propose, tune, or mutate policy.
+
+Phase 8 Task 2 adds immutable daily Reflection contracts, versioned diagnostic policy, explicit
+sample guards, deterministic UTC aggregation by `available_at`, and append-only SQLite revisions.
+The 30-day corrected baseline produced 122 measured findings and 378 guard records without changing
+any Phase 7 decision or policy. Reflection remains offline and observational.
 
 ## Verified state
 
@@ -141,6 +146,13 @@ missing links remain explicit rather than inferred. The experience store rejects
 idempotently accepts identical content, and fails closed on conflicting content under one ID.
 Counterfactual records are a separate `simulated=true` contract and are not generated in Task 1.
 
+Phase 8 Task 2 selects experiences through half-open UTC-day `available_at` intervals and creates
+content-addressed `DailyReflection` records. Findings cover supported direction, session, regime,
+confidence/outcome, excursion, rejection, exact-linked agent, position-management, and runtime
+patterns. Every diagnostic records `PASSED`, `INSUFFICIENT`, or `UNAVAILABLE`; unsupported facts are
+never represented as zero. Same-day revisions append and explicitly supersede the latest immutable
+record. Identical builds reuse the existing ID.
+
 ## Important risks
 
 - The prior real sample is tiny, class-imbalanced, and its OOS results have already been viewed.
@@ -149,19 +161,20 @@ Counterfactual records are a separate `simulated=true` contract and are not gene
 - Joblib artifacts are trusted-local only; hashes detect corruption but do not sandbox pickle.
 - Registry and suite-state files are not designed for concurrent writers to the same run directory.
 - Broker history depth, data gaps, spread anomalies, and multi-year regime coverage remain broker-specific.
-- No claim of profitability, live-money readiness, reflection, or autonomous learning exists.
+- No claim of profitability, live-money readiness, prescriptive learning, or autonomous learning exists.
 - Tick-history quality, broker event ordering, spread/slippage simulation, and deterministic replay
   of asynchronous slow-path context remain unresolved implementation risks.
 - Real-terminal demo mutation has not been exercised by automated validation; fake-gateway tests
   cover transport behavior without placing trades.
 - A production scheduler/service host, simulated fills/P&L, MQL5/IPC transport, automated resolution
-  of unknown broker outcomes, LLMs, vision, and reflection are absent.
+  of unknown broker outcomes, LLMs, vision, weekly reflection, and improvement proposals are absent.
 
 ## Working principle and next task
 
 Codex writes auditable local pipelines and runs bounded validation. The user runs serious training
-and large replays. Phase 8 Task 1 is isolated on `codex/phase-8-reflection-experience`; it stops at
-deterministic attribution and descriptive analytics. Task 2 has not begun.
+and large replays. Phase 8 Tasks 1–2 are isolated on `codex/phase-8-reflection-experience`; Task 2
+stops at deterministic daily observations and explicit sample guards. Task 3 may add deterministic
+weekly aggregation, but it must not tune or mutate trading policy.
 Future work must preserve the shared live/replay contracts and may not infer authority for
 continuous execution, live-money support, simulated brokerage, or later-phase intelligence.
 

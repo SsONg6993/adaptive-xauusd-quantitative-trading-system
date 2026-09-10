@@ -221,6 +221,24 @@ rebuild inserts are idempotent; a same-ID content conflict fails closed. The exp
 baseline validation guard, not production trading logic. Task 1 does not generate Reflection,
 counterfactual outcomes, proposals, scores, or policy changes.
 
+## Phase 8 Task 2 deterministic daily reflection
+
+Build the corrected one-month UTC range from the immutable Experience Store, then immediately show
+the concise aggregate report and one authoritative daily JSON record:
+
+```powershell
+python -m axq.reflection build-daily-reflections --experience-store runtime/phase8-task1/baseline-c/experiences.sqlite3 --reflection-store runtime/phase8-task2/daily-reflections.sqlite3 --start-date 2026-08-10 --through-date 2026-09-08
+python -m axq.reflection report --store runtime/phase8-task2/daily-reflections.sqlite3
+python -m axq.reflection show-daily-reflection --store runtime/phase8-task2/daily-reflections.sqlite3 --date 2026-08-10
+```
+
+The range is inclusive and each reflection selects inputs by `available_at` in `[00:00Z, next
+00:00Z)`. Use `--policy path/to/policy.json` to load a reviewed versioned diagnostic policy.
+Identical reruns reuse existing semantic IDs. If same-day source content changes, the new immutable
+record explicitly supersedes the latest stored record; prior records are never updated or deleted.
+The SQLite artifact belongs under ignored `runtime/`. Findings and guards are observations, not
+trading instructions, and this command has no path to mutate runtime policy.
+
 ## Phase 7 Task 8 direct MT5 demo transport
 
 1. Keep the execution policy `DISABLED` unless an operator has deliberately selected `DRY_RUN` or
