@@ -89,11 +89,15 @@ class DemoExecutionAdapter:
         ledger: ExecutionLedger,
         observation_provider: Callable[[ExecutionIntent], ExecutionObservation],
         transport: ExecutionTransport,
+        preflight_validator: (
+            Callable[[ExecutionIntent, ExecutionObservation], None] | None
+        ) = None,
     ) -> None:
         self._policy = policy
         self._ledger = ledger
         self._observation_provider = observation_provider
         self._transport = transport
+        self._preflight_validator = preflight_validator
 
     def execute(self, intent: ExecutionIntent) -> ExecutionResult:
         self._validate_policy_binding(intent)
@@ -105,18 +109,13 @@ class DemoExecutionAdapter:
             self._ledger.record(result)
             return result
 
-        if self._policy.mode in {ExecutionMode.DISABLED, ExecutionMode.DRY_RUN}:
-            reason = (
-                ExecutionReason.EXECUTION_DISABLED
-                if self._policy.mode is ExecutionMode.DISABLED
-                else ExecutionReason.DRY_RUN
-            )
+        if self._policy.mode is ExecutionMode.DISABLED:
             return self._record(
                 self._known_result(
                     intent,
                     status=ExecutionResultStatus.NO_ACTION,
-                    reason_code=reason,
-                    reason=reason.value,
+                    reason_code=ExecutionReason.EXECUTION_DISABLED,
+                    reason=ExecutionReason.EXECUTION_DISABLED.value,
                     event_time=intent.available_at,
                 )
             )
@@ -129,6 +128,26 @@ class DemoExecutionAdapter:
         preflight = self._preflight(intent, observation)
         if preflight is not None:
             return self._record(preflight)
+
+        try:
+            if self._preflight_validator is not None:
+                self._preflight_validator(intent, observation)
+        except TransportFailure as exc:
+            return self._record(
+                self._failed_result(intent, str(exc), observation.available_at, observation)
+            )
+
+        if self._policy.mode is ExecutionMode.DRY_RUN:
+            return self._record(
+                self._known_result(
+                    intent,
+                    status=ExecutionResultStatus.NO_ACTION,
+                    reason_code=ExecutionReason.DRY_RUN,
+                    reason=ExecutionReason.DRY_RUN.value,
+                    event_time=observation.available_at,
+                    observation=observation,
+                )
+            )
 
         try:
             report = self._transport.submit(intent, observation)

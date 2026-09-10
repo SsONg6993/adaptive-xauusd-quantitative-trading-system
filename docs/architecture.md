@@ -3,7 +3,7 @@
 ## Safety invariant
 
 The system is an evidence pipeline, not an autonomous risk authority. Python may propose a
-`BUY`, `SELL`, or `HOLD`; deterministic risk code may only approve or veto it; the MT5 EA
+`BUY`, `SELL`, or `HOLD`; deterministic risk code may only approve or veto it; the broker transport
 independently revalidates every approved instruction. Any ambiguity, stale data, missing model,
 unhealthy dependency, malformed message, or broken heartbeat produces **no new trade**. Existing
 positions retain broker-side SL/TP protection.
@@ -32,7 +32,7 @@ authoritative open position + exact execution/thesis linkage + safe readiness
                            -> PositionActionSafetyOutcome (Phase 7 Task 7)
                               [NO_ACTION | PASS | REJECT | EMERGENCY_BLOCK]
                            -> PositionActionIntent [MODIFY_STOP | CLOSE] only on PASS
-                           -> future position-action transport/result
+                           -> MT5 demo position-action transport/result (Phase 7 Task 8)
 ```
 
 Agent execution will use bounded timeouts and independent failures. The master excludes stale or
@@ -67,7 +67,8 @@ snapshot available live. The fast path reads the latest valid snapshot and never
 A simulated execution sink is not implemented. When added, it must consume the shared
 `ExecutionIntent`, return the normal execution-feedback contract, and contain no alternative entry,
 Master, Discipline, or Risk logic. The Task 4 demo adapter is a guarded boundary around an injected
-transport, not a broker simulator or direct MT5 implementation.
+transport, not a broker simulator. Task 8 implements a direct MetaTrader5 Python demo transport
+behind that same port; it does not change the decision kernel.
 
 Phase 7 Task 5 persists execution reservations/results/reconciliation as immutable SQLite
 transitions. Current execution state is reconstructed from those transitions; no mutable projection
@@ -96,6 +97,13 @@ or unsafe facts produce `REJECT` or `EMERGENCY_BLOCK` with no intent. V1 intents
 protective stop or close the full exact-linked position. They cannot enter, reverse, scale, or
 authorize transport. The runtime journal records the management outcome, safety outcome, and intent
 as an idempotent append-only semantic chain whose database sequence is not identity.
+
+Phase 7 Task 8 adds broker-edge adapters only. `MT5BrokerSnapshotProvider` creates the established
+recovery snapshot and canonical state-refresh events. Entry uses the existing execution ledger and
+feedback path; position actions use a separate append-only reservation/result ledger and the same
+canonical execution-feedback event family. Explicit internal/broker symbol mapping and exact broker
+tickets are mandatory. `order_check` never predicts `order_send`; the latter response is
+authoritative. Uncertain submission is durable `UNKNOWN` with no automatic retry.
 
 ## Primary and intrabar paths
 
@@ -133,12 +141,12 @@ the Discipline/Risk components with explicit authority.
 | Intelligence | Python 3.11+, pandas/NumPy, Pydantic | mature local analytics and strict message validation |
 | ML later | scikit-learn; optional XGBoost/LightGBM/PyTorch/ONNX Runtime | CPU baselines plus local GPU training and portable inference |
 | Broker data | official `MetaTrader5` Python package | direct bounded bar retrieval from the local terminal |
-| Execution | MQL5 EA | broker-native order checks, SL/TP, trailing, and protection after Python fails |
+| Execution | direct MetaTrader5 Python, demo-only (Task 8); future MQL5/IPC adapter | smallest testable boundary now; transport remains swappable |
 | Persistence | SQLite in WAL mode behind a small adapter | zero-service V1 deployment; explicit repository boundaries allow PostgreSQL later |
 | Configuration | YAML + environment overrides | reviewable defaults; secrets remain environment-only |
 | Contracts | Pydantic schema v1 messages | reject unknown/malformed fields and constrain ranges |
 | Logs | JSON Lines | searchable, append-friendly, correlation-ready |
-| IPC | atomic files in MT5 Common Files, ACK/state files | no DLL, port, or WebRequest allow-list; durable and debuggable at M5 cadence |
+| IPC | deferred; future adapter must preserve current intents/results | Task 8 does not introduce a second protocol |
 
 MetaQuotes documents that MT5 bar times are UTC and that availability is limited by terminal chart
 history, so ingestion uses timezone-aware UTC inputs and validates returned coverage
@@ -163,22 +171,22 @@ Python owns data retrieval/normalization, feature computation, local model infer
 performance, regime classification, master aggregation, deterministic account-level risk policy,
 instruction persistence, experiments, and observability. Python never assumes an order executed.
 
-The EA owns final symbol/account inspection, instruction age/idempotency validation, current spread,
-broker stop/freeze levels, deterministic volume recalculation/capping, `OrderCheck`, placement,
-broker result logging, SL/TP, trailing/breakeven, and protection of open positions during a Python
-outage. The EA rejects rather than repairs materially invalid instructions.
+Task 8's direct gateway owns final demo-account, symbol, current tick, volume-grid, and stop/freeze
+inspection plus `order_check`/`order_send` translation. It never recalculates or enlarges an approved
+instruction. A future MQL5 hard-safety adapter may own broker-native outage protection, but must
+consume the same immutable intents and return the same result/recovery contracts.
 
 ## IPC decision
 
 | Option | Deployment | Recovery/audit | V1 assessment |
 |---|---|---|---|
-| Atomic file queue | built into Python/MQL5; shared Common Files directory | durable, inspectable, replay-protected | **selected** |
+| Atomic file queue | built into Python/MQL5; shared Common Files directory | durable, inspectable, replay-protected | deferred future option |
 | Local HTTP | simple Python server; MT5 URL allow-list and request lifecycle | good APIs, extra service/configuration | viable V2 |
 | Native socket | low latency | framing, reconnect, auth, partial-message handling | unnecessary at bar cadence |
 | Named pipe | Windows-local and fast | reconnect/overlapped I/O complexity | viable if throughput grows |
 | ZeroMQ | strong messaging patterns | external DLL/binding/deployment dependency | defer |
 
-Protocol: Python writes a versioned JSON document to a temporary file, flushes it, then atomically
+Possible future protocol: Python writes a versioned JSON document to a temporary file, flushes it, then atomically
 renames it to `<idempotency_key>.ready.json`. The EA processes each key at most once and emits an
 immutable ACK/result file. Both sides write heartbeat state; an instruction expires quickly and is
 never replayed after restart. Directories are access-controlled to the VPS service account. Future

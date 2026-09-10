@@ -14,8 +14,9 @@ startup reconciliation contracts required before any future unattended execution
 
 Typed results distinguish `NO_ACTION`, submission/acceptance, partial/full fill, rejection,
 cancellation, expiry, transport failure, and dangerous `UNKNOWN` submission state. Actionable
-results convert into the existing Phase 6 `EXECUTION_FEEDBACK` event and reducer path. There is no
-direct MT5 order sender, simulated broker, position-management policy, or live-money capability.
+results convert into the existing Phase 6 `EXECUTION_FEEDBACK` event and reducer path. Task 8 adds a
+direct demo-only MetaTrader5 Python sender behind this port; there is no simulated broker or
+live-money capability.
 
 Task 5 adds `SQLiteExecutionLedger`, which records immutable reservations, results, and
 reconciliation reports in append-only SQLite transitions. A unique reservation constraint prevents
@@ -35,5 +36,11 @@ Task 6 adds `src/axq/position_management/` as a separate pure boundary for alrea
 It requires Task 5 safe readiness plus exact intent/result/broker-position linkage and emits only
 `NO_ACTION`, `HOLD_POSITION`, `PROTECT_POSITION`, or `EXIT_POSITION`. HOLD does not submit a change;
 V1 protection can only reduce risk toward break-even while satisfying stop/freeze constraints; and
-EXIT is not a reversal or broker command. Real position-action safety validation and transport remain
-unimplemented.
+EXIT is not a reversal or broker command. Task 7 independently validates action-time safety; Task 8
+then translates only its passed intent into an exact-ticket demo stop modification or full close.
+
+Task 8 keeps execution `DISABLED` by default. `DRY_RUN` performs current broker preflight and
+`order_check` without mutation. `DEMO_ENABLED` repeats these facts immediately before `order_send`
+and rejects non-demo accounts. Entry reuses `SQLiteExecutionLedger`; position actions use a
+dedicated append-only transport ledger. Missing or uncertain acknowledgements become durable
+`UNKNOWN` and are never automatically resent.

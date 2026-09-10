@@ -146,7 +146,7 @@ freshness checks pass.
 
 1. Open `SQLiteExecutionLedger` on the ignored runtime database. Its append-only transitions, not a
    recovery checkpoint, are the execution source of truth.
-2. Acquire one fresh broker snapshot through a future adapter. Do not enable entries while any
+2. Acquire one fresh broker snapshot through `MT5BrokerSnapshotProvider`. Do not enable entries while any
    critical component is UNKNOWN, UNAVAILABLE, or STALE.
 3. Refresh shared state through the canonical market, account, positions, orders, exposure, and
    broker-constraints runtime events.
@@ -159,7 +159,8 @@ freshness checks pass.
 7. On graceful shutdown, append a recovery checkpoint and flush both runtime journal and execution
    ledger. After a crash, replay committed execution transitions even when no checkpoint exists.
 
-Task 5 does not acquire MT5 snapshots, send orders, backfill candles, or manage positions.
+Task 5 itself does not send orders, backfill candles, or manage positions; Task 8 supplies the
+snapshot adapter without changing Task 5 reconciliation semantics.
 
 ## Phase 7 Task 6 position-management evaluation
 
@@ -194,4 +195,28 @@ Task 5 does not acquire MT5 snapshots, send orders, backfill candles, or manage 
 6. Append the management outcome, safety outcome, and optional passed intent with
    `append_position_action_chain`. Equivalent retries recover the existing journal entries rather
    than append a second semantic action. Keep the journal under ignored `runtime/`.
-7. Stop at the semantic intent. No MT5/MQL5 position modification or close transport exists in Task 7.
+7. Stop at the semantic intent. Task 8 transport is a separate boundary and must independently
+   repeat exact-ticket and broker-fact validation.
+
+## Phase 7 Task 8 direct MT5 demo transport
+
+1. Keep the execution policy `DISABLED` unless an operator has deliberately selected `DRY_RUN` or
+   `DEMO_ENABLED`. Task 8 has no live-money mode.
+2. Configure one explicit `MT5SymbolMapping`, for example canonical `XAUUSD` to the exact Market
+   Watch symbol. Never auto-discover a suffix or substitute `GOLD` heuristically.
+3. Use `MetaTrader5Gateway` only on the local Windows host with the intended terminal already logged
+   in. `MT5BrokerSnapshotProvider.capture()` is read-only and feeds Task 5 through
+   `broker_snapshot_runtime_events`.
+4. Run `DRY_RUN` first. It connects, validates account/symbol/tick/volume/stop or exact position,
+   and calls `order_check`; it must not call `order_send` or any position-changing operation.
+5. `DEMO_ENABLED` must re-read the account and submission facts immediately before mutation. A
+   passing `order_check` is not acceptance; preserve the authoritative `order_send` retcode/result.
+6. Never retry an entry, stop change, or close whose result is `UNKNOWN`. Inspect the append-only
+   entry or position-action ledger, take a fresh snapshot, and append explicit reconciliation before
+   considering later action.
+7. For position actions, require the exact broker ticket and unchanged side, volume, and current SL.
+   Close is full-volume against that ticket, never a free opposing order. Stop modification preserves
+   broker TP and must remain monotonic.
+8. Runtime artifacts and SQLite files remain under ignored `runtime/`. Graceful Task 9 orchestration
+   must flush the runtime journal, entry ledger, and position-action ledger; Task 8 does not add that
+   service loop.

@@ -260,13 +260,34 @@ Normalization may only tighten risk. Close targets the exact linked broker posit
 current volume; it is never represented as a new opposing entry. Stable content identities and the
 typed runtime-journal chain are shared by live and replay.
 
-`PositionActionIntent` remains semantic input to a future transport. It is neither broker
-authorization nor evidence that a modification or close occurred.
+`PositionActionIntent` is semantic input to the Task 8 transport. It is neither broker authorization
+nor evidence that a modification or close occurred; only the broker result records that outcome.
 
-## Explicitly unimplemented after Phase 7 Task 7
+## Phase 7 Task 8 direct MT5 demo transport
 
-MT5/MQL5 entry or position-action transport and transport result; broker snapshot acquisition; a simulated
-broker/trade-P&L model; missing-candle backfill; persistent orchestration around restart restoration;
+The optional `axq.mt5` package isolates the external MetaTrader5 module behind `MT5Gateway` and
+loads it only when connected. A configured `MT5SymbolMapping` is exact and content-addressed; no
+symbol discovery or fuzzy suffix matching occurs. `MT5BrokerSnapshotProvider` maps current account,
+tick, positions, pending orders, exposure, and broker constraints into `BrokerRecoverySnapshot`,
+then reuses canonical runtime events and the reducer.
+
+Entry composes `MT5ExecutionTransport` with the existing `DemoExecutionAdapter` and
+`SQLiteExecutionLedger`. Position modification/close uses a dedicated
+`PositionActionTransportResult` and append-only SQLite transition ledger. Both reserve the stable
+intent before mutation, repeat broker/account/position validation immediately before `order_send`,
+and persist uncertain outcomes as `UNKNOWN`. Dry-run reaches `order_check` but cannot call
+`order_send`; demo-enabled rejects live, contest, and unknown account modes. A close includes the
+exact position ticket, opposite order type, and exact full volume, so it cannot become a reversal or
+exposure increase. Protective changes preserve TP and can only tighten the exact position stop.
+
+The direct gateway is an adapter, not shared decision logic. Replay or a future MQL5/IPC transport
+must consume the same entry/position-action intents and return compatible feedback without changing
+Master, Discipline, Risk, recovery, reconciliation, or journal semantics.
+
+## Explicitly unimplemented after Phase 7 Task 8
+
+live-money execution; a continuous runtime service; MQL5/IPC transport; a simulated broker/trade-P&L
+model; missing-candle backfill; persistent orchestration around restart restoration;
 Ollama/local-LLM integration; chart vision; reflection/weekly learning; autonomous tool- or
 agent-gap detection; and autonomous architecture evolution.
 

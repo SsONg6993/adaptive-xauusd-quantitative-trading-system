@@ -255,6 +255,7 @@ class BrokerConstraints(RuntimeStateModel):
     as_of: UTCDateTime
     freshness: ComponentFreshness
     trade_allowed: bool | None = None
+    digits: int | None = Field(default=None, ge=0, le=12)
     volume_min: FiniteFloat | None = Field(default=None, gt=0)
     volume_max: FiniteFloat | None = Field(default=None, gt=0)
     volume_step: FiniteFloat | None = Field(default=None, gt=0)

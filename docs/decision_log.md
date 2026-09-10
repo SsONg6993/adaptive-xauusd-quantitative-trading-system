@@ -242,3 +242,20 @@ do not silently rewrite earlier decisions.
   `EMERGENCY_BLOCK`. The runtime journal stores an idempotent append-only management → safety →
   intent chain. Position-action transport/results, reversal, scale-in/out, and broker calls remain
   unimplemented.
+
+## 2026-09-10 — Task 8 uses a swappable direct MetaTrader5 demo gateway
+
+- **Decision:** Implement a narrow lazy-loaded `MT5Gateway` with direct Python `order_check` then
+  `order_send` adapters for demo entries, monotonic protective-stop changes, and exact full closes.
+  Broker snapshots enter the existing recovery snapshot, runtime-event, and reducer path. Execution
+  remains `DISABLED` by default; `DRY_RUN` performs the complete preflight and `order_check` but no
+  mutating broker call.
+- **Reason:** This closes the smallest testable broker boundary while preserving all upstream
+  Master, Discipline, Risk, intent, recovery, reconciliation, and journaling contracts for a future
+  MQL5/IPC transport.
+- **Consequence:** Demo mode must be proven from the current account immediately before mutation.
+  Broker acceptance is authoritative even after a passing check. An exception, absent response, or
+  uninterpretable acknowledgement after submission becomes append-only `UNKNOWN` and is never
+  resent automatically. Position actions have their own durable reservation/result transitions and
+  can only address an exact ticket; live money, fuzzy symbol/ticket matching, reversal, scale-in,
+  runtime orchestration, MQL5/IPC, and a simulated broker remain absent.

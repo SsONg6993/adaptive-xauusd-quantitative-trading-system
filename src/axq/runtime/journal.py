@@ -13,6 +13,7 @@ from pydantic import BaseModel, ConfigDict, Field, model_validator
 
 from axq.agents import AgentEvidence, AgentInput, AgentMemory, ScenarioState, ThesisState
 from axq.position_actions.contracts import PositionActionIntent, PositionActionSafetyOutcome
+from axq.position_actions.transport import PositionActionTransportResult
 from axq.position_management import PositionManagementOutcome
 from axq.runtime.events import RuntimeEvent
 from axq.runtime.kernel import EvidenceBundle
@@ -35,6 +36,7 @@ class JournalRecordType(StrEnum):
     POSITION_MANAGEMENT_OUTCOME = "POSITION_MANAGEMENT_OUTCOME"
     POSITION_ACTION_SAFETY_OUTCOME = "POSITION_ACTION_SAFETY_OUTCOME"
     POSITION_ACTION_INTENT = "POSITION_ACTION_INTENT"
+    POSITION_ACTION_TRANSPORT_RESULT = "POSITION_ACTION_TRANSPORT_RESULT"
     OUTCOME = "OUTCOME"
 
 
@@ -77,6 +79,7 @@ JournalSemantic = (
     | PositionManagementOutcome
     | PositionActionSafetyOutcome
     | PositionActionIntent
+    | PositionActionTransportResult
     | JournalOutcome
 )
 
@@ -94,6 +97,7 @@ _MODEL_BY_RECORD_TYPE: dict[JournalRecordType, type[BaseModel]] = {
     JournalRecordType.POSITION_MANAGEMENT_OUTCOME: PositionManagementOutcome,
     JournalRecordType.POSITION_ACTION_SAFETY_OUTCOME: PositionActionSafetyOutcome,
     JournalRecordType.POSITION_ACTION_INTENT: PositionActionIntent,
+    JournalRecordType.POSITION_ACTION_TRANSPORT_RESULT: PositionActionTransportResult,
     JournalRecordType.OUTCOME: JournalOutcome,
 }
 
@@ -113,6 +117,10 @@ def _record_type(value: JournalSemantic) -> JournalRecordType:
         (PositionManagementOutcome, JournalRecordType.POSITION_MANAGEMENT_OUTCOME),
         (PositionActionSafetyOutcome, JournalRecordType.POSITION_ACTION_SAFETY_OUTCOME),
         (PositionActionIntent, JournalRecordType.POSITION_ACTION_INTENT),
+        (
+            PositionActionTransportResult,
+            JournalRecordType.POSITION_ACTION_TRANSPORT_RESULT,
+        ),
         (JournalOutcome, JournalRecordType.OUTCOME),
     )
     for model_type, record_type in types:

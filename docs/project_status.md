@@ -14,7 +14,7 @@ Last updated: 2026-09-10
 | 5 | Local Quant Model Development | COMPLETE (framework only) |
 | Architecture migration | Tool-augmented agentic design + deterministic replay | APPROVED / DOCUMENTED |
 | 6 | Shared runtime state, agent contracts, deterministic kernel vertical slice | COMPLETE |
-| 7 | Master, Discipline, Risk, execution, recovery, and position actions | IN PROGRESS — TASKS 1–7 ONLY |
+| 7 | Master, Discipline, Risk, execution, recovery, and position actions | IN PROGRESS — TASKS 1–8 ONLY |
 | 8+ | Reflection and optional intelligence | NOT STARTED |
 
 Phases 0–4 established the local-first contracts, UTC market-data pipeline, causal versioned feature
@@ -111,6 +111,14 @@ freshness, and action-time broker facts. HOLD creates no intent; only safety `PA
 content-addressed protective-stop modification or full-close intent. Management, safety, and intent
 are recoverable through idempotent append-only runtime-journal records. No broker call is made.
 
+Phase 7 Task 8 adds a narrow lazy-loaded `MT5Gateway`, direct MetaTrader5 Python demo adapters, and a
+read-only `MT5BrokerSnapshotProvider`. Entry reuses the existing execution boundary and durable
+ledger. Protective-stop and full-close actions use a dedicated append-only transport result/ledger
+path. `DISABLED` is zero-touch, `DRY_RUN` performs complete preflight plus `order_check` without
+mutation, and `DEMO_ENABLED` revalidates a demo account and broker facts immediately before
+`order_send`. Missing or uncertain acknowledgements are durably `UNKNOWN` and never automatically
+resent. No live-money mode, runtime loop, MQL5 EA, IPC bridge, or simulated broker is included.
+
 ## Important risks
 
 - The prior real sample is tiny, class-imbalanced, and its OOS results have already been viewed.
@@ -122,15 +130,17 @@ are recoverable through idempotent append-only runtime-journal records. No broke
 - No claim of profitability, execution-ready trading, or autonomous learning exists.
 - Tick-history quality, broker event ordering, spread/slippage simulation, and deterministic replay
   of asynchronous slow-path context remain unresolved implementation risks.
-- MT5/MQL5 transport, position-action transport/results, simulated fills/P&L, automated broker
-  snapshot acquisition, LLMs, vision, and reflection are absent.
+- Real-terminal demo mutation has not been exercised by automated validation; fake-gateway tests
+  cover transport behavior without placing trades.
+- Continuous runtime orchestration, simulated fills/P&L, MQL5/IPC transport, automated resolution
+  of unknown broker outcomes, LLMs, vision, and reflection are absent.
 
 ## Working principle and next task
 
 Codex writes auditable local pipelines and runs tiny tests. The user runs serious training and large
-replays. Phase 7 Tasks 1–7 are isolated on `codex/phase-7-decision-execution`. Task 8 has not begun.
-Future work must preserve the shared live/replay contracts and may not infer authority for MT5
-connectivity, position-action transport, simulated brokerage, or later-phase intelligence.
+replays. Phase 7 Tasks 1–8 are isolated on `codex/phase-7-decision-execution`. Task 9 has not begun.
+Future work must preserve the shared live/replay contracts and may not infer authority for
+continuous execution, live-money support, simulated brokerage, or later-phase intelligence.
 
 ## Roadmap
 
