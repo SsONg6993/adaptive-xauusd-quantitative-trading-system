@@ -1,7 +1,7 @@
 # Adaptive XAUUSD Multi-Agent Trading System
 
 Production-oriented, local-first foundation for a measurable, tool-augmented multi-agent MT5 trading
-system. Phases 0–7 are complete and Phase 8 Tasks 1–2 are implemented on an isolated branch. There is no
+system. Phases 0–7 are complete and Phase 8 Tasks 1–3 are implemented on an isolated branch. There is no
 production-trained model,
 autonomous strategy, live execution EA, or claim of trading profitability.
 
@@ -56,6 +56,9 @@ autonomous strategy, live execution EA, or claim of trading profitability.
 - Immutable, content-addressed Daily Reflection contracts with deterministic `available_at` UTC-day
   aggregation, explicit sample guards, append-only supersession, canonical JSON, and a concise CLI.
   Findings are descriptive observations only and cannot tune or mutate runtime policy.
+- Deterministic ISO-week reflections with explicit completeness/provenance guards, evidence-backed
+  success/failure observations, and an append-only pattern-status lifecycle. Aggregation creates
+  only `OBSERVATION`; every later status requires an explicit operator or evaluation action.
 - SQLite WAL schema and transactional migrations, with PostgreSQL migration boundaries documented.
 - Dataset manifests, label definitions, immutable model metadata, JSON logging, YAML configuration,
   and deterministic risk-veto foundation.
@@ -138,7 +141,7 @@ src/axq/position_actions/ Phase 7 action-time safety, intent, and journal-chain 
 src/axq/mt5/            optional Task 8 gateway, snapshot, demo entry, and position-action adapters
 src/axq/orchestration/  Task 9 deterministic startup/event/decision/recovery composition service
 src/axq/experience/     Phase 8 exact attribution, immutable experiences, store, analytics, CLI
-src/axq/reflection/     Phase 8 deterministic daily findings, sample guards, store, CLI
+src/axq/reflection/     Phase 8 daily/weekly reflection, guarded patterns, lifecycle, stores, CLI
 master/ risk/ execution/ Phase 7 integration boundaries and operator-facing documentation
 datasets/                immutable Phase 3 dataset build/inspection commands
 training/quant/          Phase 4 training plus Phase 5 experiment/suite/walk-forward/ablation CLIs

@@ -46,3 +46,6 @@ unavailable. The findings comprised 30 agent-reliability, 25 session, 20 rejecti
 16 position-management, seven confidence-gap, and seven excursion observations. No regime finding
 was asserted because the required source fact was unavailable. Rebuilding the same range reused all
 30 IDs and produced byte-identical report JSON.
+
+Task 3 may consume the immutable terminal daily revisions for an ISO week. It validates every
+finding and Experience source ID again; daily records are never modified during weekly aggregation.

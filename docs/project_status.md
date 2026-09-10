@@ -15,7 +15,7 @@ Last updated: 2026-09-11
 | Architecture migration | Tool-augmented agentic design + deterministic replay | APPROVED / DOCUMENTED |
 | 6 | Shared runtime state, agent contracts, deterministic kernel vertical slice | COMPLETE |
 | 7 | Master, Discipline, Risk, execution, recovery, position actions, replay validation | COMPLETE |
-| 8 | Controlled learning and attribution | IN PROGRESS — TASKS 1–2 COMPLETE |
+| 8 | Controlled learning and attribution | IN PROGRESS — TASKS 1–3 COMPLETE |
 | 9+ | Optional intelligence | NOT STARTED |
 
 Phases 0–4 established the local-first contracts, UTC market-data pipeline, causal versioned feature
@@ -43,6 +43,11 @@ Phase 8 Task 2 adds immutable daily Reflection contracts, versioned diagnostic p
 sample guards, deterministic UTC aggregation by `available_at`, and append-only SQLite revisions.
 The 30-day corrected baseline produced 122 measured findings and 378 guard records without changing
 any Phase 7 decision or policy. Reflection remains offline and observational.
+
+Phase 8 Task 3 adds immutable ISO-week reflections, exact daily/Experience provenance validation,
+guarded success/failure observations, and an explicit append-only knowledge lifecycle. Its baseline
+contains four complete and one incomplete week, five success and 21 failure patterns, and no status
+promotion. Weekly output remains descriptive and cannot modify runtime or trading policy.
 
 ## Verified state
 
@@ -153,6 +158,12 @@ patterns. Every diagnostic records `PASSED`, `INSUFFICIENT`, or `UNAVAILABLE`; u
 never represented as zero. Same-day revisions append and explicitly supersede the latest immutable
 record. Identical builds reuse the existing ID.
 
+Phase 8 Task 3 resolves terminal daily supersession chains and aggregates Monday-to-Monday UTC
+weeks. Incomplete weeks remain auditable through exact present/missing dates and cannot emit
+patterns. Every pattern starts as `OBSERVATION`; later knowledge status is derived only from an
+explicit append-only operator/evaluation transition chain. There is no mutable current-status row
+and no automatic `VALIDATED` promotion.
+
 ## Important risks
 
 - The prior real sample is tiny, class-imbalanced, and its OOS results have already been viewed.
@@ -167,14 +178,14 @@ record. Identical builds reuse the existing ID.
 - Real-terminal demo mutation has not been exercised by automated validation; fake-gateway tests
   cover transport behavior without placing trades.
 - A production scheduler/service host, simulated fills/P&L, MQL5/IPC transport, automated resolution
-  of unknown broker outcomes, LLMs, vision, weekly reflection, and improvement proposals are absent.
+  of unknown broker outcomes, LLMs, vision, and improvement proposals are absent.
 
 ## Working principle and next task
 
 Codex writes auditable local pipelines and runs bounded validation. The user runs serious training
-and large replays. Phase 8 Tasks 1–2 are isolated on `codex/phase-8-reflection-experience`; Task 2
-stops at deterministic daily observations and explicit sample guards. Task 3 may add deterministic
-weekly aggregation, but it must not tune or mutate trading policy.
+and large replays. Phase 8 Tasks 1–3 are isolated on `codex/phase-8-reflection-experience`; Task 3
+stops at deterministic weekly observations and explicit lifecycle actions. The next task may define
+ImprovementProposal candidates, but proposals must remain non-mutating and require later validation.
 Future work must preserve the shared live/replay contracts and may not infer authority for
 continuous execution, live-money support, simulated brokerage, or later-phase intelligence.
 

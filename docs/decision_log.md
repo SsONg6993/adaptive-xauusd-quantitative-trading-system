@@ -299,3 +299,15 @@ do not silently rewrite earlier decisions.
   idempotent. Daily findings remain descriptive and cannot tune Master, Discipline, Risk,
   execution, or position-management behavior. Weekly reflection, proposals, graphs, RAG, LLMs, and
   runtime mutation remain outside Task 2.
+
+## 2026-09-11 — Weekly patterns begin as observations and advance only explicitly
+
+- **Decision:** Aggregate terminal Daily Reflections into ISO Monday-to-Monday UTC records, validate
+  every exact Experience source, and suppress patterns for incomplete weeks. New success/failure
+  patterns always start as `OBSERVATION`; later status changes are explicit immutable operator or
+  evaluation actions replayed as a linear chain.
+- **Reason:** Repeated evidence should be queryable without turning descriptive recurrence into
+  hidden truth, while incomplete coverage and revised daily attribution must remain auditable.
+- **Consequence:** Pattern keys bind only stable semantics and recur across weeks, while observation
+  IDs bind interval and evidence. Weekly revisions and lifecycle transitions append and supersede;
+  no mutable status, automatic validation, proposal, tuning, or runtime mutation exists.

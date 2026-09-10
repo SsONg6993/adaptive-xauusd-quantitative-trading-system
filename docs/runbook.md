@@ -239,6 +239,34 @@ record explicitly supersedes the latest stored record; prior records are never u
 The SQLite artifact belongs under ignored `runtime/`. Findings and guards are observations, not
 trading instructions, and this command has no path to mutate runtime policy.
 
+## Phase 8 Task 3 deterministic weekly reflection
+
+Build ISO-week reflections from the immutable daily-reflection and Experience stores, then display
+the aggregate summary and one authoritative weekly JSON record:
+
+```powershell
+python -m axq.reflection build-weekly-reflections --experience-store runtime/phase8-task1/baseline-c/experiences.sqlite3 --daily-store runtime/phase8-task2/daily-reflections.sqlite3 --weekly-store runtime/phase8-task3/weekly-reflections.sqlite3 --daily-policy-id reflection-policy-7b50a68850d575afb986 --start-week 2026-08-10 --through-week 2026-09-07
+python -m axq.reflection weekly-summary --store runtime/phase8-task3/weekly-reflections.sqlite3
+python -m axq.reflection show-weekly-reflection --store runtime/phase8-task3/weekly-reflections.sqlite3 --week-start 2026-08-10
+```
+
+Weeks use `[Monday 00:00Z, following Monday 00:00Z)`. Incomplete weeks remain immutable and emit an
+exact `WEEK_COMPLETENESS` guard listing present and missing daily periods; they generate no patterns.
+All generated success and failure patterns start as `OBSERVATION`. Rebuilding identical inputs is
+idempotent. Changed source content creates a superseding weekly reflection rather than modifying the
+earlier record.
+
+Only an explicit reviewed operator or evaluation action may advance or terminate pattern status:
+
+```powershell
+python -m axq.reflection transition-pattern --store runtime/phase8-task3/weekly-reflections.sqlite3 --pattern-id <pattern-id> --pattern-key <pattern-key> --from-status OBSERVATION --to-status HYPOTHESIS --effective-at 2026-09-14T00:00:00Z --action-kind OPERATOR --actor-id <operator-id> --action-id <review-id> --reason-code <reason-code>
+python -m axq.reflection show-pattern-history --store runtime/phase8-task3/weekly-reflections.sqlite3 --pattern-key <pattern-key>
+```
+
+Transitions are append-only and fail closed unless they extend the exact current lifecycle chain.
+Weekly reflection and pattern status remain descriptive; neither command tunes or mutates trading
+runtime behavior.
+
 ## Phase 7 Task 8 direct MT5 demo transport
 
 1. Keep the execution policy `DISABLED` unless an operator has deliberately selected `DRY_RUN` or

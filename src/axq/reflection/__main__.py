@@ -13,6 +13,7 @@ from axq.experience.store import SQLiteExperienceStore
 from axq.reflection.contracts import DailyReflection, ReflectionPolicy
 from axq.reflection.daily import build_daily_reflection
 from axq.reflection.store import SQLiteReflectionStore
+from axq.reflection.weekly_cli import handle_weekly_command, register_weekly_commands
 
 
 def _parser() -> argparse.ArgumentParser:
@@ -33,6 +34,7 @@ def _parser() -> argparse.ArgumentParser:
 
     report = commands.add_parser("report")
     report.add_argument("--store", type=Path, required=True)
+    register_weekly_commands(commands)
     return parser
 
 
@@ -158,6 +160,9 @@ def _report(args: argparse.Namespace) -> int:
 
 def main(argv: Sequence[str] | None = None) -> int:
     args = _parser().parse_args(argv)
+    weekly_result = handle_weekly_command(args)
+    if weekly_result is not None:
+        return weekly_result
     if args.command == "build-daily-reflections":
         return _build(args)
     if args.command == "show-daily-reflection":
