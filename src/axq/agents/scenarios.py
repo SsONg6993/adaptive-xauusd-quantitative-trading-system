@@ -11,6 +11,7 @@ from axq.agents.base import AgentInput, validate_agent_output
 from axq.agents.contracts import (
     AgentEvidence,
     AgentModel,
+    AgentStatus,
     DirectionalBias,
     EvidencePolarity,
     HypothesisRelationship,
@@ -432,6 +433,19 @@ def update_scenario(
         HypothesisStatus.EXPIRED,
     }
     previous_is_causally_expired = event.available_at >= previous.expires_at
+    if event.event_type is RuntimeEventType.M5_CLOSED and (
+        evidence.relationship is HypothesisRelationship.REVERSED
+    ):
+        if evidence.previous_hypothesis_id != previous.hypothesis_id:
+            raise ValueError("reversal does not reference current thesis hypothesis")
+        return _create_thesis(
+            event,
+            evidence,
+            policy,
+            scenario_definitions,
+            previous_memory=previous.agent_memory,
+            supersedes_thesis_id=previous.thesis_id,
+        )
     if (
         event.event_type is RuntimeEventType.M5_CLOSED
         and evidence.relationship is HypothesisRelationship.NEW
@@ -453,15 +467,27 @@ def update_scenario(
             previous_memory=previous_memory,
             supersedes_thesis_id=previous.thesis_id,
         )
-    if previous_is_terminal and event.event_type is not RuntimeEventType.M5_CLOSED:
-        return previous
-    if previous_is_causally_expired:
-        return _terminal_state(previous, event, expired=True)
-    if event.event_type is RuntimeEventType.M5_CLOSED and (
-        evidence.relationship is HypothesisRelationship.REVERSED
+    valid_continuing_status = evidence.hypothesis_status in {
+        HypothesisStatus.DEVELOPING,
+        HypothesisStatus.ACTIVE,
+        HypothesisStatus.CONFIRMED,
+        HypothesisStatus.WEAKENING,
+    }
+    valid_continuing_relationship = evidence.relationship in {
+        HypothesisRelationship.UNCHANGED,
+        HypothesisRelationship.STRENGTHENED,
+        HypothesisRelationship.WEAKENED,
+    }
+    if (
+        event.event_type is RuntimeEventType.M5_CLOSED
+        and previous.hypothesis_status is HypothesisStatus.EXPIRED
+        and evidence.status in {AgentStatus.READY, AgentStatus.DEGRADED}
+        and valid_continuing_status
+        and valid_continuing_relationship
+        and evidence.hypothesis_id == previous.hypothesis_id
+        and evidence.previous_hypothesis_id == previous.hypothesis_id
+        and evidence.thesis_id in {None, previous.thesis_id}
     ):
-        if evidence.previous_hypothesis_id != previous.hypothesis_id:
-            raise ValueError("reversal does not reference current thesis hypothesis")
         return _create_thesis(
             event,
             evidence,
@@ -470,6 +496,10 @@ def update_scenario(
             previous_memory=previous.agent_memory,
             supersedes_thesis_id=previous.thesis_id,
         )
+    if previous_is_terminal and event.event_type is not RuntimeEventType.M5_CLOSED:
+        return previous
+    if previous_is_causally_expired:
+        return _terminal_state(previous, event, expired=True)
     if evidence.hypothesis_id != previous.hypothesis_id or (
         evidence.thesis_id is not None and evidence.thesis_id != previous.thesis_id
     ):

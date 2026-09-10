@@ -290,6 +290,11 @@ class RuntimeStreamRunner:
             )
             raise
 
+    def reduce_only(self, event: RuntimeEvent) -> SharedRuntimeState:
+        """Apply a state refresh while preserving specialist memory unchanged."""
+        self._advance_clock(event)
+        return self._kernel.reduce_event(event)
+
     @staticmethod
     def _semantic_record(
         value: JournalSemantic,

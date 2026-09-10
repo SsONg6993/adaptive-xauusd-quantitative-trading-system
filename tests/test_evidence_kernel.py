@@ -132,6 +132,28 @@ def test_chart_agent_represents_hierarchical_mtf_conflict_as_uncertainty() -> No
     assert evidence.evidence_for and evidence.evidence_against
 
 
+def test_confirmed_specialist_weakens_when_confidence_crosses_confirmation_floor() -> None:
+    agent = ChartAgent()
+    strong = _result(
+        ToolCategory.STRUCTURE,
+        {"h4_structure_bias": 1.0, "h1_structure_bias": 1.0},
+    )
+    developing, memory = agent.observe(_input(strong))
+    confirmed, memory = agent.observe(_input(strong, previous_memory=memory))
+    softer = _result(
+        ToolCategory.STRUCTURE,
+        {"h4_structure_bias": 1.0, "m15_structure_bias": 1.0},
+    )
+
+    weakened, memory = agent.observe(_input(softer, previous_memory=memory))
+
+    assert developing.hypothesis_status is HypothesisStatus.DEVELOPING
+    assert confirmed.hypothesis_status is HypothesisStatus.CONFIRMED
+    assert weakened.relationship is HypothesisRelationship.WEAKENED
+    assert weakened.hypothesis_status is HypothesisStatus.WEAKENING
+    assert memory.hypothesis_status is HypothesisStatus.WEAKENING
+
+
 def test_chart_agent_abstains_when_structure_is_unavailable() -> None:
     unavailable = _result(
         ToolCategory.STRUCTURE,

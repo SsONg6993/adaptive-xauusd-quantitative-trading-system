@@ -13,6 +13,7 @@ from axq.agents import (
     update_scenario,
 )
 from axq.runtime import (
+    AccountState,
     ComponentFreshness,
     FreshnessStatus,
     InMemoryEventSource,
@@ -179,6 +180,53 @@ def test_live_like_and_replay_use_same_kernel_and_semantic_ids() -> None:
     assert live.steps[-1].entry_eligibility is EntryEligibility.ELIGIBLE
 
 
+def test_post_expiry_successor_has_live_replay_semantic_parity() -> None:
+    events = (
+        _event(T0, 1),
+        _event(T0 + timedelta(minutes=5), 2),
+        _event(T0 + timedelta(minutes=10), 3),
+    )
+    snapshots = {event.event_id: _snapshot(event) for event in events}
+
+    def rollover_transition(
+        event: RuntimeEvent,
+        bundle: EvidenceBundle,
+        previous: ThesisState | None,
+    ) -> ThesisState | None:
+        return update_scenario(
+            event,
+            bundle.input_for("chart"),
+            bundle.by_agent("chart"),
+            previous,
+            policy=ScenarioPolicy(ttl_seconds=300, max_m5_bars=3),
+            scenario_definitions=DEFINITIONS,
+        )
+
+    live = RuntimeStreamRunner(
+        _kernel(),
+        SystemUTCClock(),
+        scenario_transition=rollover_transition,
+    )
+    replay = RuntimeStreamRunner(
+        _kernel(),
+        ReplayClock(T0),
+        scenario_transition=rollover_transition,
+    )
+    first_thesis_id = None
+    for index, event in enumerate(events):
+        live.process(event, snapshots[event.event_id])
+        replay.process(event, snapshots[event.event_id])
+        if index == 0:
+            assert live.thesis is not None
+            first_thesis_id = live.thesis.thesis_id
+
+    assert live.steps == replay.steps
+    assert live.thesis == replay.thesis
+    assert live.thesis is not None
+    assert live.thesis.thesis_id != first_thesis_id
+    assert live.thesis.supersedes_thesis_id == first_thesis_id
+
+
 def test_journaled_events_replay_to_identical_bundle_ids(tmp_path) -> None:
     events = (_event(T0, 1), _event(T0 + timedelta(minutes=5), 2))
     snapshots = {event.event_id: _snapshot(event) for event in events}
@@ -323,3 +371,48 @@ def test_specialist_inputs_remain_account_free_and_optional_ml_is_not_required()
     ).lower()
     assert "balance" not in serialized
     assert "equity" not in serialized
+
+
+def test_reduce_only_broker_refresh_preserves_next_decision_semantics() -> None:
+    first = _event(T0, 1)
+    second = _event(T0 + timedelta(minutes=5), 3)
+    at = T0 + timedelta(minutes=1)
+    account_event = RuntimeEvent(
+        event_type=RuntimeEventType.ACCOUNT_UPDATED,
+        event_time=at,
+        observed_at=at,
+        available_at=at,
+        source="replay-account",
+        source_version="1.0",
+        source_sequence=2,
+        symbol="XAUUSD",
+        payload=AccountState(
+            source="replay-account",
+            account_id="replay",
+            as_of=at,
+            freshness=ComponentFreshness(
+                component="account",
+                status=FreshnessStatus.AVAILABLE,
+                observed_at=at,
+                available_at=at,
+                stale_after_ms=300_000,
+            ),
+            balance=10_000.0,
+            equity=10_000.0,
+            free_margin=10_000.0,
+            used_margin=0.0,
+            margin_level=1_000_000.0,
+        ),
+    )
+    evaluated = _kernel()
+    reduced = _kernel()
+    evaluated.process(first, feature_snapshot=_snapshot(first))
+    reduced.process(first, feature_snapshot=_snapshot(first))
+
+    evaluated.process(account_event)
+    reduced.reduce_event(account_event)
+
+    evaluated_next = evaluated.process(second, feature_snapshot=_snapshot(second))
+    reduced_next = reduced.process(second, feature_snapshot=_snapshot(second))
+    assert evaluated.state == reduced.state
+    assert evaluated_next.bundle_id == reduced_next.bundle_id

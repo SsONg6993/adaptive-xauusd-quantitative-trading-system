@@ -18,7 +18,7 @@ from axq.agents import (
     QuantitativeAgent,
     SpecialistAgent,
 )
-from axq.runtime.events import RuntimeEvent
+from axq.runtime.events import RuntimeEvent, RuntimeEventType
 from axq.runtime.reducer import reduce_state
 from axq.runtime.state import SharedRuntimeState, UTCDateTime
 from axq.tools import CausalFeatureSnapshot, ToolCatalog, ToolInput
@@ -185,3 +185,14 @@ class EvidenceKernel:
         }
         self._last_processed = (event.event_id, snapshot_id, bundle)
         return bundle
+
+    def reduce_event(self, event: RuntimeEvent) -> SharedRuntimeState:
+        """Reduce a non-decision state refresh without invoking specialists."""
+        if event.event_type in {
+            RuntimeEventType.M5_CLOSED,
+            RuntimeEventType.M1_CLOSED,
+            RuntimeEventType.TICK,
+        }:
+            raise ValueError("decision-capable market events require kernel processing")
+        self._state = reduce_state(self._state, event, now=event.available_at)
+        return self._state

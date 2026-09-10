@@ -402,6 +402,169 @@ def test_new_m5_can_supersede_an_expired_thesis_with_a_distinct_identity() -> No
     assert current.began_at == new_event.available_at
 
 
+def test_same_hypothesis_m5_rolls_expired_thesis_without_mutating_predecessor() -> None:
+    original = _create()
+    expired = _update(
+        original,
+        event_type=RuntimeEventType.M5_CLOSED,
+        relationship=HypothesisRelationship.UNCHANGED,
+        lifecycle=HypothesisStatus.ACTIVE,
+        fact_name="m5_structure",
+        minutes=15,
+        sequence=2,
+    )
+    predecessor_snapshot = expired.model_dump(mode="json")
+    rollover_event = _event(
+        RuntimeEventType.M5_CLOSED,
+        at=T0 + timedelta(minutes=20),
+        sequence=3,
+    )
+    rollover_input, rollover_evidence = _agent_pair(
+        rollover_event,
+        relationship=HypothesisRelationship.UNCHANGED,
+        lifecycle=HypothesisStatus.CONFIRMED,
+        previous_hypothesis_id=expired.hypothesis_id,
+        thesis_id=expired.thesis_id,
+    )
+
+    successor = update_scenario(
+        rollover_event,
+        rollover_input,
+        rollover_evidence,
+        expired,
+        policy=POLICY,
+        scenario_definitions=SCENARIOS,
+    )
+
+    assert successor is not None
+    assert expired.model_dump(mode="json") == predecessor_snapshot
+    assert expired.hypothesis_status is HypothesisStatus.EXPIRED
+    assert successor.thesis_id != expired.thesis_id
+    assert successor.supersedes_thesis_id == expired.thesis_id
+    assert successor.hypothesis_id == expired.hypothesis_id
+    assert successor.hypothesis == expired.hypothesis
+    assert successor.began_at == rollover_event.available_at
+    assert successor.expires_at == rollover_event.available_at + timedelta(
+        seconds=POLICY.ttl_seconds
+    )
+    assert successor.m5_bars_observed == 1
+    assert successor.entry_eligibility is EntryEligibility.WATCHING
+    assert all(item.status is ScenarioStatus.WATCHING for item in successor.scenarios)
+    assert all(item.parent_thesis_id == successor.thesis_id for item in successor.scenarios)
+
+
+@pytest.mark.parametrize("event_type", [RuntimeEventType.M1_CLOSED, RuntimeEventType.TICK])
+def test_intrabar_cannot_create_same_hypothesis_successor(
+    event_type: RuntimeEventType,
+) -> None:
+    expired = _update(
+        _create(),
+        event_type=RuntimeEventType.TICK,
+        relationship=HypothesisRelationship.STRENGTHENED,
+        lifecycle=HypothesisStatus.CONFIRMED,
+        fact_name="micro_break",
+        minutes=16,
+        sequence=2,
+    )
+    event = _event(event_type, at=T0 + timedelta(minutes=17), sequence=3)
+    agent_input, evidence = _agent_pair(
+        event,
+        relationship=HypothesisRelationship.UNCHANGED,
+        lifecycle=HypothesisStatus.CONFIRMED,
+        previous_hypothesis_id=expired.hypothesis_id,
+        thesis_id=expired.thesis_id,
+    )
+
+    assert update_scenario(event, agent_input, evidence, expired, policy=POLICY) is expired
+
+
+def test_same_hypothesis_successor_does_not_churn_on_next_m5() -> None:
+    expired = _update(
+        _create(),
+        event_type=RuntimeEventType.TICK,
+        relationship=HypothesisRelationship.STRENGTHENED,
+        lifecycle=HypothesisStatus.ACTIVE,
+        fact_name="micro_break",
+        minutes=16,
+        sequence=2,
+    )
+    rollover_event = _event(
+        RuntimeEventType.M5_CLOSED,
+        at=T0 + timedelta(minutes=20),
+        sequence=3,
+    )
+    rollover_input, rollover_evidence = _agent_pair(
+        rollover_event,
+        relationship=HypothesisRelationship.UNCHANGED,
+        lifecycle=HypothesisStatus.ACTIVE,
+        previous_hypothesis_id=expired.hypothesis_id,
+        thesis_id=expired.thesis_id,
+    )
+    successor = update_scenario(
+        rollover_event,
+        rollover_input,
+        rollover_evidence,
+        expired,
+        policy=POLICY,
+        scenario_definitions=SCENARIOS,
+    )
+    assert successor is not None
+
+    continued = _update(
+        successor,
+        event_type=RuntimeEventType.M5_CLOSED,
+        relationship=HypothesisRelationship.UNCHANGED,
+        lifecycle=HypothesisStatus.ACTIVE,
+        fact_name="m5_structure",
+        minutes=25,
+        sequence=4,
+    )
+
+    assert continued.thesis_id == successor.thesis_id
+    assert continued.supersedes_thesis_id == expired.thesis_id
+    assert continued.m5_bars_observed == 2
+
+
+def test_reversal_after_expiry_preserves_reversed_semantics() -> None:
+    expired = _update(
+        _create(),
+        event_type=RuntimeEventType.TICK,
+        relationship=HypothesisRelationship.STRENGTHENED,
+        lifecycle=HypothesisStatus.ACTIVE,
+        fact_name="micro_break",
+        minutes=16,
+        sequence=2,
+    )
+    reverse_event = _event(
+        RuntimeEventType.M5_CLOSED,
+        at=T0 + timedelta(minutes=20),
+        sequence=3,
+    )
+    reverse_input, reverse_evidence = _agent_pair(
+        reverse_event,
+        hypothesis_id="hyp-b",
+        hypothesis="bearish_reversal",
+        relationship=HypothesisRelationship.REVERSED,
+        lifecycle=HypothesisStatus.DEVELOPING,
+        previous_hypothesis_id=expired.hypothesis_id,
+    )
+
+    reversed_state = update_scenario(
+        reverse_event,
+        reverse_input,
+        reverse_evidence,
+        expired,
+        policy=POLICY,
+        scenario_definitions=SCENARIOS,
+    )
+
+    assert reversed_state is not None
+    assert reversed_state.relationship is HypothesisRelationship.REVERSED
+    assert reversed_state.hypothesis_id == "hyp-b"
+    assert reversed_state.thesis_id != expired.thesis_id
+    assert reversed_state.supersedes_thesis_id == expired.thesis_id
+
+
 def test_m5_same_thesis_preserves_id_and_reversal_requires_distinct_id() -> None:
     previous = _create()
     continued = _update(

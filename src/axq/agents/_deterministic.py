@@ -180,7 +180,10 @@ class DeterministicSpecialistAgent:
         relationship = HypothesisRelationship.UNCHANGED
         if delta >= 0.1:
             relationship = HypothesisRelationship.STRENGTHENED
-        elif delta <= -0.1:
+        elif delta <= -0.1 or (
+            previous.hypothesis_status is HypothesisStatus.CONFIRMED
+            and confidence < 0.7
+        ):
             relationship = HypothesisRelationship.WEAKENED
         lifecycle = (
             HypothesisStatus.WEAKENING
