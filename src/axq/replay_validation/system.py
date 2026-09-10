@@ -76,6 +76,13 @@ from axq.replay_validation.execution import (
     ReplayPosition,
     ReplaySide,
 )
+from axq.replay_validation.outcomes import (
+    ReplayActionApplication,
+    ReplayEventContext,
+    ReplayFillOutcome,
+    ReplayOutcomeArtifact,
+    ReplayTradeOutcome,
+)
 from axq.risk_boundary import RiskContext, default_demo_risk_policy
 from axq.runtime import (
     AccountState,
@@ -93,7 +100,7 @@ from axq.runtime import (
     RuntimeEventType,
     initial_runtime_state,
 )
-from axq.runtime.journal import SQLiteRuntimeJournal
+from axq.runtime.journal import JournalRecordType, SQLiteRuntimeJournal
 from axq.runtime.kernel import EvidenceBundle, EvidenceKernel
 from axq.runtime.replay import RuntimeStreamRunner, SemanticTraceStep
 from axq.schemas import Signal
@@ -104,6 +111,12 @@ MANIFEST_ID = "phase7-system-replay-features-v1"
 SOURCE_VERSION = "phase7-system-replay-v1"
 STOP_PLACEMENT_MODEL = "ATR_2_V1"
 MARGIN_MODEL = "XAUUSD_100OZ_LEVERAGE_100_V1"
+ATTRIBUTION_JOURNAL_RECORD_TYPES = frozenset(
+    {
+        JournalRecordType.RUNTIME_EVENT,
+        JournalRecordType.AGENT_EVIDENCE,
+    }
+)
 
 
 def _fresh(component: str, at: datetime) -> ComponentFreshness:
@@ -733,7 +746,13 @@ def run_system_replay(data_dir: Path, output_dir: Path, *, months: int = 1) -> P
     journal = SQLiteRuntimeJournal(output_dir / "runtime.sqlite3")
     execution_ledger = SQLiteExecutionLedger(output_dir / "execution.sqlite3")
     action_ledger = SQLitePositionActionTransportLedger(output_dir / "position-actions.sqlite3")
-    runner = RuntimeStreamRunner(kernel, clock, scenario_transition=_scenario_transition)
+    runner = RuntimeStreamRunner(
+        kernel,
+        clock,
+        journal=journal,
+        retained_record_types=ATTRIBUTION_JOURNAL_RECORD_TYPES,
+        scenario_transition=_scenario_transition,
+    )
     context = _ReplayContext(book=book, runner=runner)
     position_cache: dict[str, PositionManagementContext] = {}
 
@@ -783,6 +802,11 @@ def run_system_replay(data_dir: Path, output_dir: Path, *, months: int = 1) -> P
     fills: list[ReplayFill] = []
     duplicate_suppression = 0
     action_types: list[str] = []
+    replay_fill_outcomes: list[ReplayFillOutcome] = []
+    replay_trade_outcomes: list[ReplayTradeOutcome] = []
+    replay_action_applications: list[ReplayActionApplication] = []
+    replay_event_contexts: list[ReplayEventContext] = []
+    queued_action_positions: dict[str, tuple[str, PositionActionType]] = {}
     cycles = []
     thesis_states: list[ThesisState] = []
     for row_number, (_, row) in enumerate(frame.iterrows()):
@@ -800,7 +824,31 @@ def run_system_replay(data_dir: Path, output_dir: Path, *, months: int = 1) -> P
         transport = book.process_bar(bar)
         fills.extend(transport.fills)
         closed_trades.extend(transport.closed_trades)
+        applied_close_by_position: dict[str, str] = {}
+        for action_id in transport.applied_action_ids:
+            position_id, action_type = queued_action_positions[action_id]
+            replay_action_applications.append(
+                ReplayActionApplication(
+                    position_action_intent_id=action_id,
+                    position_id=position_id,
+                    action_type=action_type,
+                    applied_at=bar.opened_at,
+                )
+            )
+            if action_type is PositionActionType.CLOSE_POSITION:
+                if position_id in applied_close_by_position:
+                    raise RuntimeError("multiple close actions applied to one replay position")
+                applied_close_by_position[position_id] = action_id
         for trade in transport.closed_trades:
+            source_action_id = applied_close_by_position.get(trade.position_id)
+            if trade.exit_reason == "POSITION_ACTION_CLOSE" and source_action_id is None:
+                raise RuntimeError("replay close has no exact position-action linkage")
+            replay_trade_outcomes.append(
+                ReplayTradeOutcome.from_replay(
+                    trade,
+                    source_position_action_intent_id=source_action_id,
+                )
+            )
             signed = 1 if trade.side is ReplaySide.BUY else -1
             pnl = (trade.exit_price - trade.entry_price) / 0.01 * trade.volume_lots * signed
             context.balance += pnl
@@ -837,6 +885,12 @@ def run_system_replay(data_dir: Path, output_dir: Path, *, months: int = 1) -> P
             )
             assert context.results is not None
             context.results[intent.intent_id] = result
+            replay_fill_outcomes.append(
+                ReplayFillOutcome.from_replay(
+                    fill,
+                    execution_result_id=result.result_id,
+                )
+            )
             if execution_ledger.reserve(intent):
                 execution_ledger.record(result)
             feedback = execution_result_to_runtime_event(
@@ -871,6 +925,14 @@ def run_system_replay(data_dir: Path, output_dir: Path, *, months: int = 1) -> P
                 sequence += 1
         market_event = _event(RuntimeEventType.M5_CLOSED, states["market"], available_at, sequence)
         sequence += 1
+        replay_event_contexts.append(
+            ReplayEventContext(
+                runtime_event_id=market_event.event_id,
+                available_at=available_at,
+                session=_session_id(row),
+                regime=None,
+            )
+        )
         snapshots[market_event.event_id] = _snapshot(row)
         cycle = service.process_event(market_event)
         cycles.append(cycle)
@@ -919,6 +981,8 @@ def run_system_replay(data_dir: Path, output_dir: Path, *, months: int = 1) -> P
                     decision_available_at=cycle.available_at,
                     action_intent_id=action.intent_id,
                 )
+            if queued:
+                queued_action_positions[action.intent_id] = (stable, action.action_type)
             duplicate_suppression += int(not queued)
 
     service.shutdown()
@@ -1086,6 +1150,18 @@ def run_system_replay(data_dir: Path, output_dir: Path, *, months: int = 1) -> P
         },
     }
     metrics["artifact_id"] = f"replay-{canonical_hash(metrics)[:20]}"
+    ReplayOutcomeArtifact(
+        source_metrics_id=str(metrics["artifact_id"]),
+        input_sha256=str(metrics["input"]["m5_sha256"]),
+        entry_model=ENTRY_MODEL,
+        stop_model=STOP_MODEL,
+        spread_model=SPREAD_MODEL,
+        slippage_points=1.0,
+        fills=tuple(replay_fill_outcomes),
+        trades=tuple(replay_trade_outcomes),
+        action_applications=tuple(replay_action_applications),
+        event_contexts=tuple(replay_event_contexts),
+    ).write(output_dir / "replay-outcomes.json")
     path = output_dir / "metrics.json"
     path.write_text(
         json.dumps(metrics, sort_keys=True, separators=(",", ":"), ensure_ascii=True) + "\n",

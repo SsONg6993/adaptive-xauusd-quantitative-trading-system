@@ -281,6 +281,34 @@ def test_duplicate_event_is_journaled_without_second_decision_record(tmp_path) -
     assert outcomes[-1].status is JournalOutcomeStatus.DUPLICATE
 
 
+def test_runtime_runner_can_retain_only_attribution_semantics(tmp_path) -> None:
+    event = _event(T0, 1)
+    snapshot = _snapshot(event)
+    journal = SQLiteRuntimeJournal(tmp_path / "runtime.sqlite3")
+    runner = RuntimeStreamRunner(
+        _kernel(),
+        ReplayClock(T0),
+        journal=journal,
+        retained_record_types=frozenset({JournalRecordType.AGENT_EVIDENCE}),
+    )
+
+    filtered = runner.process(event, snapshot)
+    unjournaled = RuntimeStreamRunner(_kernel(), ReplayClock(T0)).process(
+        event,
+        snapshot,
+    )
+
+    assert filtered == unjournaled
+    records = journal.records()
+    assert len(records) == len(AGENT_ORDER)
+    assert {item.record.record_type for item in records} == {
+        JournalRecordType.AGENT_EVIDENCE
+    }
+    assert tuple(item.record.semantic_id for item in records) == tuple(
+        item.evidence_id for item in filtered.bundle.evidence
+    )
+
+
 def test_duplicate_event_with_different_snapshot_is_rejected_and_journaled(
     tmp_path,
 ) -> None:

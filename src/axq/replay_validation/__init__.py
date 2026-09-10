@@ -13,6 +13,13 @@ from axq.replay_validation.execution import (
     ReplayPosition,
     ReplaySide,
 )
+from axq.replay_validation.outcomes import (
+    ReplayActionApplication,
+    ReplayEventContext,
+    ReplayFillOutcome,
+    ReplayOutcomeArtifact,
+    ReplayTradeOutcome,
+)
 from axq.replay_validation.system import compare_replays, load_replay_frame, run_system_replay
 
 __all__ = [
@@ -27,6 +34,11 @@ __all__ = [
     "ReplayFill",
     "ReplayPosition",
     "ReplaySide",
+    "ReplayActionApplication",
+    "ReplayEventContext",
+    "ReplayFillOutcome",
+    "ReplayOutcomeArtifact",
+    "ReplayTradeOutcome",
     "compare_replays",
     "load_replay_frame",
     "run_system_replay",

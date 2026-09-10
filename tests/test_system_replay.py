@@ -8,8 +8,19 @@ from axq.replay_validation import (
     ReplayExecutionBook,
     ReplaySide,
 )
+from axq.replay_validation.system import ATTRIBUTION_JOURNAL_RECORD_TYPES
+from axq.runtime.journal import JournalRecordType
 
 T0 = datetime(2026, 8, 3, 10, 0, tzinfo=UTC)
+
+
+def test_system_replay_retains_exact_attribution_journal_semantics() -> None:
+    assert frozenset(
+        {
+            JournalRecordType.RUNTIME_EVENT,
+            JournalRecordType.AGENT_EVIDENCE,
+        }
+    ) == ATTRIBUTION_JOURNAL_RECORD_TYPES
 
 
 def _bar(offset: int, *, low: float = 2498.0, high: float = 2502.0) -> ReplayBar:

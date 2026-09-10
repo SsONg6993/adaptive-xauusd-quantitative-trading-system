@@ -1,7 +1,7 @@
 # Adaptive XAUUSD Multi-Agent Trading System
 
 Production-oriented, local-first foundation for a measurable, tool-augmented multi-agent MT5 trading
-system. Phases 0–6 are complete and Phase 7 Tasks 1–9 are implemented on the isolated branch. There is no
+system. Phases 0–7 are complete and Phase 8 Task 1 is implemented on an isolated branch. There is no
 production-trained model,
 autonomous strategy, live execution EA, or claim of trading profitability.
 
@@ -50,6 +50,10 @@ autonomous strategy, live execution EA, or claim of trading profitability.
 - Deterministic end-to-end orchestration for disabled, replay, shadow, and demo operation, including
   startup reconciliation/readiness, shared decision-cycle dispatch, feedback reduction, bounded
   snapshot refresh, structured status, operator gates, and graceful restart checkpoints.
+- Strict content-addressed experience contracts, exact-ID outcome attribution, a typed replay
+  outcome artifact, append-only SQLite Experience Store, and descriptive experience CLI. Actual
+  and counterfactual outcomes are structurally separate; Task 1 generates no reflections or policy
+  proposals.
 - SQLite WAL schema and transactional migrations, with PostgreSQL migration boundaries documented.
 - Dataset manifests, label definitions, immutable model metadata, JSON logging, YAML configuration,
   and deterministic risk-veto foundation.
@@ -130,6 +134,7 @@ src/axq/position_management/ pure Phase 7 open-position evaluation contracts
 src/axq/position_actions/ Phase 7 action-time safety, intent, and journal-chain contracts
 src/axq/mt5/            optional Task 8 gateway, snapshot, demo entry, and position-action adapters
 src/axq/orchestration/  Task 9 deterministic startup/event/decision/recovery composition service
+src/axq/experience/     Phase 8 exact attribution, immutable experiences, store, analytics, CLI
 master/ risk/ execution/ Phase 7 integration boundaries and operator-facing documentation
 datasets/                immutable Phase 3 dataset build/inspection commands
 training/quant/          Phase 4 training plus Phase 5 experiment/suite/walk-forward/ablation CLIs

@@ -14,8 +14,9 @@ Last updated: 2026-09-10
 | 5 | Local Quant Model Development | COMPLETE (framework only) |
 | Architecture migration | Tool-augmented agentic design + deterministic replay | APPROVED / DOCUMENTED |
 | 6 | Shared runtime state, agent contracts, deterministic kernel vertical slice | COMPLETE |
-| 7 | Master, Discipline, Risk, execution, recovery, and position actions | IN PROGRESS — TASKS 1–8 ONLY |
-| 8+ | Reflection and optional intelligence | NOT STARTED |
+| 7 | Master, Discipline, Risk, execution, recovery, position actions, replay validation | COMPLETE |
+| 8 | Controlled learning and attribution | IN PROGRESS — TASK 1 COMPLETE |
+| 9+ | Optional intelligence | NOT STARTED |
 
 Phases 0–4 established the local-first contracts, UTC market-data pipeline, causal versioned feature
 engine, immutable leakage-safe datasets/labels/splits, and manifest-bound Quant Agent training,
@@ -33,12 +34,18 @@ causal tick/M1 confirmation or invalidation; and `EvidenceKernel` emits a determ
 `EvidenceBundle`. Live-like and replay adapters use this same semantic path. Existing ML remains
 intact as an optional specialist tool/Challenger and cannot become mandatory or self-promoting.
 
+Phase 8 Task 1 adds strict normalized experience contracts, exact-ID outcome attribution, a
+content-addressed replay-outcome artifact, and an append-only SQLite Experience Store. Its first
+corrected one-month baseline contains 37,183 complete experiences, including 166 completed trades;
+it performs descriptive analytics only and cannot reflect, propose, tune, or mutate policy.
+
 ## Verified state
 
 - Stable Phase 4 checkpoint: `32132dd103087778fda88c1facf4159894aca653`.
 - Persistent-context checkpoint and Phase 5 base: `bf896ff03d98a405c532c1b8e5bd65e8e9a6725e`.
 - Phase 5 branch checkpoint: `3e7620c12b46efd476370c03b2a639111744a218`.
 - Phase 5 merge checkpoint: `9e15b750da98a484e013dea8552995d7127df428`.
+- Phase 7 replay-validation and Phase 8 base: `512feefefe21f6fd2bfecd8a652bd987e795e57d`.
 - Prior tiny real-data smoke only: 96 XAUUSD M5 rows, 52 TRAIN, 14 VALIDATION, 20 OOS, CPU Logistic
   Regression with sigmoid calibration and 60% actionable coverage.
 - Serious model training has **not** been performed. Smoke metrics are pipeline diagnostics and are
@@ -127,6 +134,13 @@ may dispatch through the existing Task 8 adapters, with a fresh readiness check 
 mutation. Feedback returns through canonical runtime events. Graceful shutdown checkpoints and
 flushes all append-only stores before closing MT5. There remains no live-money mode.
 
+Phase 8 Task 1 reconstructs `DecisionExperience`, `TradeExperience`,
+`RejectedDecisionExperience`, `PositionManagementExperience`, `RuntimeAnomalyExperience`, and
+`AgentContributionExperience` from existing Phase 7 records. Attribution uses exact semantic IDs;
+missing links remain explicit rather than inferred. The experience store rejects UPDATE/DELETE,
+idempotently accepts identical content, and fails closed on conflicting content under one ID.
+Counterfactual records are a separate `simulated=true` contract and are not generated in Task 1.
+
 ## Important risks
 
 - The prior real sample is tiny, class-imbalanced, and its OOS results have already been viewed.
@@ -135,7 +149,7 @@ flushes all append-only stores before closing MT5. There remains no live-money m
 - Joblib artifacts are trusted-local only; hashes detect corruption but do not sandbox pickle.
 - Registry and suite-state files are not designed for concurrent writers to the same run directory.
 - Broker history depth, data gaps, spread anomalies, and multi-year regime coverage remain broker-specific.
-- No claim of profitability, execution-ready trading, or autonomous learning exists.
+- No claim of profitability, live-money readiness, reflection, or autonomous learning exists.
 - Tick-history quality, broker event ordering, spread/slippage simulation, and deterministic replay
   of asynchronous slow-path context remain unresolved implementation risks.
 - Real-terminal demo mutation has not been exercised by automated validation; fake-gateway tests
@@ -145,9 +159,9 @@ flushes all append-only stores before closing MT5. There remains no live-money m
 
 ## Working principle and next task
 
-Codex writes auditable local pipelines and runs tiny tests. The user runs serious training and large
-replays. Phase 7 Tasks 1–9 are isolated on `codex/phase-7-decision-execution`. Phase 7 implementation
-is complete pending review/checkpoint; Phase 8 has not begun.
+Codex writes auditable local pipelines and runs bounded validation. The user runs serious training
+and large replays. Phase 8 Task 1 is isolated on `codex/phase-8-reflection-experience`; it stops at
+deterministic attribution and descriptive analytics. Task 2 has not begun.
 Future work must preserve the shared live/replay contracts and may not infer authority for
 continuous execution, live-money support, simulated brokerage, or later-phase intelligence.
 

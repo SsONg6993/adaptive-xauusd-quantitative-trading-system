@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from collections.abc import Callable, Iterator, Mapping
+from collections.abc import Callable, Collection, Iterator, Mapping
 from typing import Literal
 
 from pydantic import BaseModel, ConfigDict, Field, model_validator
@@ -14,6 +14,7 @@ from axq.runtime.journal import (
     JournalOutcome,
     JournalOutcomeStatus,
     JournalRecord,
+    JournalRecordType,
     JournalSemantic,
     RuntimeJournal,
     SQLiteRuntimeJournal,
@@ -111,11 +112,17 @@ class RuntimeStreamRunner:
         clock: RuntimeClock,
         *,
         journal: RuntimeJournal | None = None,
+        retained_record_types: Collection[JournalRecordType] | None = None,
         scenario_transition: ScenarioTransition | None = None,
     ) -> None:
         self._kernel = kernel
         self._clock = clock
         self._journal = journal
+        self._retained_record_types = (
+            frozenset(retained_record_types)
+            if retained_record_types is not None
+            else None
+        )
         self._scenario_transition = scenario_transition
         self._thesis: ThesisState | None = None
         self._steps: list[SemanticTraceStep] = []
@@ -163,7 +170,7 @@ class RuntimeStreamRunner:
         reason_code: str,
         message: str,
     ) -> None:
-        if self._journal is None:
+        if self._journal is None or not self._retains(JournalRecordType.OUTCOME):
             return
         outcome = JournalOutcome(
             status=status,
@@ -173,9 +180,17 @@ class RuntimeStreamRunner:
         if isinstance(self._journal, SQLiteRuntimeJournal):
             self._journal.append_outcome(event, outcome)
         else:
-            self._journal.append(
-                self._outcome_record(event, outcome)
-            )
+            self._journal.append(self._outcome_record(event, outcome))
+
+    def _retains(self, record_type: JournalRecordType) -> bool:
+        return (
+            self._retained_record_types is None
+            or record_type in self._retained_record_types
+        )
+
+    def _append_record(self, record: JournalRecord) -> None:
+        if self._journal is not None and self._retains(record.record_type):
+            self._journal.append(record)
 
     @staticmethod
     def _outcome_record(
@@ -224,11 +239,11 @@ class RuntimeStreamRunner:
                 item.agent_name: item for item in self._steps[-1].bundle.memories
             } if self._steps else {}
             if self._journal is not None:
-                self._journal.append(
+                self._append_record(
                     self._semantic_record(event, event.event_id)
                 )
                 if feature_snapshot is not None:
-                    self._journal.append(
+                    self._append_record(
                         self._semantic_record(
                             feature_snapshot,
                             event.event_id,
@@ -322,7 +337,7 @@ class RuntimeStreamRunner:
     ) -> None:
         if self._journal is None:
             return
-        self._journal.append(
+        self._append_record(
             self._semantic_record(
                 self._kernel.state,
                 event.event_id,
@@ -336,7 +351,7 @@ class RuntimeStreamRunner:
             else self._kernel.state.state_id
         )
         for result in _tool_results(bundle):
-            self._journal.append(
+            self._append_record(
                 self._semantic_record(
                     result,
                     event.event_id,
@@ -349,14 +364,14 @@ class RuntimeStreamRunner:
             bundle.memories,
             strict=True,
         ):
-            self._journal.append(
+            self._append_record(
                 self._semantic_record(
                     agent_input,
                     event.event_id,
                     parent_id=self._kernel.state.state_id,
                 )
             )
-            self._journal.append(
+            self._append_record(
                 self._semantic_record(
                     evidence,
                     event.event_id,
@@ -364,7 +379,7 @@ class RuntimeStreamRunner:
                 )
             )
             previous_memory = previous_memories.get(memory.agent_name)
-            self._journal.append(
+            self._append_record(
                 self._semantic_record(
                     memory,
                     event.event_id,
@@ -376,7 +391,7 @@ class RuntimeStreamRunner:
                     ),
                 )
             )
-        self._journal.append(
+        self._append_record(
             self._semantic_record(
                 bundle,
                 event.event_id,
@@ -384,7 +399,7 @@ class RuntimeStreamRunner:
             )
         )
         if thesis is not None:
-            self._journal.append(
+            self._append_record(
                 self._semantic_record(
                     thesis,
                     event.event_id,
@@ -403,7 +418,7 @@ class RuntimeStreamRunner:
             )
             for scenario in thesis.scenarios:
                 previous_scenario = previous_scenarios.get(scenario.scenario_id)
-                self._journal.append(
+                self._append_record(
                     self._semantic_record(
                         scenario,
                         event.event_id,

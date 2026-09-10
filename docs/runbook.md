@@ -198,6 +198,29 @@ snapshot adapter without changing Task 5 reconciliation semantics.
 7. Stop at the semantic intent. Task 8 transport is a separate boundary and must independently
    repeat exact-ticket and broker-fact validation.
 
+## Phase 8 Task 1 experience reconstruction
+
+From an activated environment with the worktree installed, run the corrected one-month replay into
+a new ignored output directory:
+
+```powershell
+python -m axq.replay_validation run --data-dir data/raw/mt5/xauusd-six-months --output-dir runtime/phase8-task1/baseline --months 1
+```
+
+Build the append-only store with the expected-trade gate, then display counts and descriptive
+metrics:
+
+```powershell
+python -m axq.experience build-experiences --runtime-journal runtime/phase8-task1/baseline/runtime.sqlite3 --execution-ledger runtime/phase8-task1/baseline/execution.sqlite3 --position-action-ledger runtime/phase8-task1/baseline/position-actions.sqlite3 --replay-outcomes runtime/phase8-task1/baseline/replay-outcomes.json --store runtime/phase8-task1/baseline/experiences.sqlite3 --expected-trades 166
+python -m axq.experience summary --store runtime/phase8-task1/baseline/experiences.sqlite3
+python -m axq.experience show-experiences --store runtime/phase8-task1/baseline/experiences.sqlite3 --type TRADE --limit 5
+```
+
+Use a new output directory for a new source run. Do not delete or update experience rows. Identical
+rebuild inserts are idempotent; a same-ID content conflict fails closed. The expected count is a
+baseline validation guard, not production trading logic. Task 1 does not generate Reflection,
+counterfactual outcomes, proposals, scores, or policy changes.
+
 ## Phase 7 Task 8 direct MT5 demo transport
 
 1. Keep the execution policy `DISABLED` unless an operator has deliberately selected `DRY_RUN` or

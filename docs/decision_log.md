@@ -272,3 +272,17 @@ do not silently rewrite earlier decisions.
 - **Consequence:** Replay, shadow, and demo share semantic contracts. Shadow journals would-act
   intents without mutation. DEMO reacquires readiness before every action; UNKNOWN or reconciliation
   anomalies block autonomy. Runtime paths and terminal location remain operational metadata.
+
+## 2026-09-10 — Phase 8 experiences are exact, immutable facts before reflection
+
+- **Decision:** Normalize Phase 7 journal, ledger, and replay outcomes into content-addressed actual
+  experience records joined only by persisted semantic IDs, then store them in append-only SQLite.
+  Counterfactual experiences use a separate explicitly simulated contract.
+- **Reason:** Reliability analysis and future reflection need queryable causal facts without fuzzy
+  timestamp inference, fabricated values, mutable history, or accidental mixing of actual and
+  simulated outcomes.
+- **Consequence:** Missing exact links produce explicit incomplete attribution. Replay validation
+  retains only fixed-size `RUNTIME_EVENT` and `AGENT_EVIDENCE` runner records needed by attribution,
+  while downstream Phase 7 semantics remain journaled by the orchestrator. Task 1 exposes only
+  deterministic descriptive analytics; Reflection, proposals, graph/vector indexing, LLMs, tuning,
+  and policy mutation remain outside scope.
