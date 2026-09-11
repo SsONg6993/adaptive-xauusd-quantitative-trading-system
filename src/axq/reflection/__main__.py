@@ -28,6 +28,10 @@ from axq.reflection.paired_evaluation_cli import (
     handle_paired_evaluation_command,
     register_paired_evaluation_commands,
 )
+from axq.reflection.paired_evaluation_review_cli import (
+    handle_paired_evaluation_review_command,
+    register_paired_evaluation_review_commands,
+)
 from axq.reflection.proposal_cli import handle_proposal_command, register_proposal_commands
 from axq.reflection.shared_kernel_candidate_cli import (
     handle_shared_kernel_candidate_command,
@@ -62,6 +66,7 @@ def _parser() -> argparse.ArgumentParser:
     register_candidate_replay_commands(commands)
     register_shared_kernel_candidate_commands(commands)
     register_paired_evaluation_commands(commands)
+    register_paired_evaluation_review_commands(commands)
     return parser
 
 
@@ -208,6 +213,9 @@ def main(argv: Sequence[str] | None = None) -> int:
     paired_result = handle_paired_evaluation_command(args)
     if paired_result is not None:
         return paired_result
+    paired_review_result = handle_paired_evaluation_review_command(args)
+    if paired_review_result is not None:
+        return paired_review_result
     if args.command == "build-daily-reflections":
         return _build(args)
     if args.command == "show-daily-reflection":

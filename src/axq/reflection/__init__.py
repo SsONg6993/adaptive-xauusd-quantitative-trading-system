@@ -84,6 +84,11 @@ from axq.reflection.paired_evaluation_contracts import (
     PairedParityStatus,
     canonical_decimal,
 )
+from axq.reflection.paired_evaluation_review_contracts import (
+    PairedEvaluationReview,
+    PairedEvaluationReviewDecision,
+)
+from axq.reflection.paired_evaluation_review_store import SQLitePairedEvaluationReviewStore
 from axq.reflection.paired_evaluation_service import (
     PairedEvaluationServiceOutcome,
     execute_paired_evaluation,
@@ -232,6 +237,9 @@ __all__ = [
     "PairedParityCheck",
     "PairedParityStatus",
     "SQLitePairedEvaluationStore",
+    "PairedEvaluationReview",
+    "PairedEvaluationReviewDecision",
+    "SQLitePairedEvaluationReviewStore",
     "canonical_decimal",
     "compare_paired_evidence",
     "execute_paired_evaluation",

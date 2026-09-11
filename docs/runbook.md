@@ -398,6 +398,23 @@ comparison. The candidate alone is checked against the unchanged stored criterio
 decimal `candidate - baseline` are evidence only. The CLI has no Final OOS input and does not replay,
 tune, promote, deploy, mutate runtime, or contact MT5. See `docs/paired_evaluation.md`.
 
+## Phase 8 Task 10 governed paired-result review
+
+Create a canonical `PairedEvaluationReview` JSON only after inspecting the exact paired result. The
+first review uses `previous_review_id: null`; a later review must name the current terminal ID.
+
+```powershell
+$env:PYTHONPATH = (Resolve-Path 'src')
+python -m axq.reflection record-paired-evaluation-review --store runtime/phase8-task10/governance.sqlite3 --review paired-review.json
+python -m axq.reflection show-paired-evaluation-review --store runtime/phase8-task10/governance.sqlite3 --review-id <review-id>
+python -m axq.reflection show-paired-evaluation-review-history --store runtime/phase8-task10/governance.sqlite3 --result-id <paired-result-id>
+python -m axq.reflection paired-evaluation-review-summary --store runtime/phase8-task10/governance.sqlite3
+```
+
+Do not reuse an old terminal ID to create a fork. A retry must use byte-equivalent semantic content,
+including the same strict-UTC `effective_at`. Review is evidence only and does not transition the
+proposal, change the comparison, execute a candidate, or access Final OOS/MT5.
+
 
 ## Phase 7 Task 8 direct MT5 demo transport
 

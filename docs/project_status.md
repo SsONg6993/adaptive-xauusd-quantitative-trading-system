@@ -1,6 +1,6 @@
 # Project status
 
-Last updated: 2026-09-11
+Last updated: 2026-09-12
 
 ## Current phase status
 
@@ -15,7 +15,7 @@ Last updated: 2026-09-11
 | Architecture migration | Tool-augmented agentic design + deterministic replay | APPROVED / DOCUMENTED |
 | 6 | Shared runtime state, agent contracts, deterministic kernel vertical slice | COMPLETE |
 | 7 | Master, Discipline, Risk, execution, recovery, position actions, replay validation | COMPLETE |
-| 8 | Controlled learning and attribution | IN PROGRESS — TASKS 1–9 COMPLETE |
+| 8 | Controlled learning and attribution | IN PROGRESS — TASKS 1–10 COMPLETE |
 | 9+ | Optional intelligence | NOT STARTED |
 
 Phases 0–4 established the local-first contracts, UTC market-data pipeline, causal versioned feature
@@ -76,6 +76,12 @@ policy/config, digest, and metric parity is explicit; mismatches are unavailable
 plan criterion evaluates only the candidate, while normalized decimal baseline/delta values remain
 evidence. The controlled fixture produced one PASS and one withheld Final-OOS UNAVAILABLE outcome;
 a later retry reused identical request/result/audit IDs and 4,161-byte result bytes.
+
+Phase 8 Task 10 adds a human-only review bridge over an exact immutable paired result. Reviews are
+content-addressed, strict-UTC, and stored as one append-only linear chain per result. Identical
+retries reuse the same review ID; stale or forked predecessors fail closed. Review records
+`ACCEPT_EVIDENCE`, `REJECT_EVIDENCE`, or `DEFER` only and cannot alter proposal status, paired-result
+bytes, criteria, runtime, deployment, Final OOS, or broker state.
 
 ## Verified state
 
@@ -228,6 +234,10 @@ policy and frozen candidate under the same persisted plan and manifests. Candida
 remain preregistered; decimal deltas are descriptive. Migration 013 persists immutable requests,
 source links, results, and audits, and the CLI exposes no Final OOS input.
 
+Phase 8 Task 10 appends operator review evidence to those immutable paired results. Exact authority
+and optional supporting-result links are revalidated. Current review state is derived by replaying
+the append-only predecessor chain; no mutable current row or proposal transition is introduced.
+
 ## Important risks
 
 - The prior real sample is tiny, class-imbalanced, and its OOS results have already been viewed.
@@ -248,8 +258,8 @@ source links, results, and audits, and the CLI exposes no Final OOS input.
 ## Working principle and next task
 
 Codex writes auditable local pipelines and runs bounded validation. The user runs serious training
-and large replays. Phase 8 Tasks 1–9 are isolated on `codex/phase-8-reflection-experience`; Task 9
-stops at a controlled comparison of frozen baseline/candidate evidence. Broader candidate
+and large replays. Phase 8 Tasks 1–10 are isolated on `codex/phase-8-reflection-experience`; Task 10
+stops at explicit human review of frozen comparison evidence. Broader candidate
 kinds or execution of real proposals require separate approval and must remain plan-bound and unable
 to change criteria retroactively or mutate production behavior implicitly.
 Future work must preserve the shared live/replay contracts and may not infer authority for

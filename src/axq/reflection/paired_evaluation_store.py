@@ -220,6 +220,20 @@ class SQLitePairedEvaluationStore:
             else PairedEvaluationResult.model_validate_json(row["record_json"])
         )
 
+    def result_by_id(self, result_id: str) -> PairedEvaluationResult | None:
+        """Return an immutable paired result by its semantic identity."""
+
+        with self._database.connect() as connection:
+            row = connection.execute(
+                "SELECT record_json FROM paired_evaluation_results WHERE result_id = ?",
+                (result_id,),
+            ).fetchone()
+        return (
+            None
+            if row is None
+            else PairedEvaluationResult.model_validate_json(row["record_json"])
+        )
+
     def results(self) -> tuple[PairedEvaluationResult, ...]:
         with self._database.connect() as connection:
             rows = connection.execute(

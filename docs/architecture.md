@@ -186,6 +186,11 @@ UNAVAILABLE. Final OOS has no input path and remains reporting-only as explicitl
 Append-only request/result/audit records provide deterministic retry recovery but confer no
 promotion, deployment, runtime, or broker authority.
 
+Task 10 adds a separate operator-review record downstream of the immutable paired result. It binds
+the exact governance identities and forms one append-only predecessor chain per result. The terminal
+review is replay-derived; it neither changes the paired artifact nor invokes the proposal lifecycle.
+No Final OOS, execution, deployment, runtime, or broker interface is reachable from this boundary.
+
 ## Python and MT5 boundaries
 
 Python owns data retrieval/normalization, feature computation, local model inference, agent

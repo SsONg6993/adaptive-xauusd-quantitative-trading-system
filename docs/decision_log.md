@@ -387,3 +387,15 @@ do not silently rewrite earlier decisions.
   is UNAVAILABLE. Final OOS remains structurally inaccessible. Migration 013 is append-only and
   deterministic retries reuse exact result bytes without replay, tuning, promotion, deployment,
   runtime mutation, broker access, or execution of the seven real proposals.
+
+## 2026-09-12 — Paired-result review is a linear human evidence chain
+
+- **Decision:** Append immutable `ACCEPT_EVIDENCE`, `REJECT_EVIDENCE`, or `DEFER` reviews only after
+  exact paired-result/request/proposal/candidate/plan verification. Include strict-UTC effective time
+  in semantic identity and require each later record to reference the current terminal review.
+- **Reason:** Human judgment must be auditable and retry-safe without permitting stale reviews to
+  fork history or conflating evidence acceptance with proposal promotion or deployment.
+- **Consequence:** Migration 014 has no mutable current-state table; terminal state is replayed from
+  immutable predecessors. Identical retries reuse IDs, while stale/forked histories fail closed.
+  Paired-result bytes and proposal status remain unchanged, and no Final OOS, execution, tuning,
+  runtime, deployment, or broker authority is introduced.
