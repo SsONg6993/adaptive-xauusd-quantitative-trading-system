@@ -191,6 +191,11 @@ the exact governance identities and forms one append-only predecessor chain per 
 review is replay-derived; it neither changes the paired artifact nor invokes the proposal lifecycle.
 No Final OOS, execution, deployment, runtime, or broker interface is reachable from this boundary.
 
+Task 11 adds a further permission boundary without joining authorization to action. An immutable
+record binds the current `CANDIDATE` proposal to its exact candidate, plan, paired result, and
+terminal accepted review. Authorization histories are linear and append-only, while proposal status
+continues to be derived solely from the separate `ProposalStatusTransition` history.
+
 ## Python and MT5 boundaries
 
 Python owns data retrieval/normalization, feature computation, local model inference, agent

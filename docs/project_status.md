@@ -15,7 +15,7 @@ Last updated: 2026-09-12
 | Architecture migration | Tool-augmented agentic design + deterministic replay | APPROVED / DOCUMENTED |
 | 6 | Shared runtime state, agent contracts, deterministic kernel vertical slice | COMPLETE |
 | 7 | Master, Discipline, Risk, execution, recovery, position actions, replay validation | COMPLETE |
-| 8 | Controlled learning and attribution | IN PROGRESS — TASKS 1–10 COMPLETE |
+| 8 | Controlled learning and attribution | IN PROGRESS — TASKS 1–11 COMPLETE |
 | 9+ | Optional intelligence | NOT STARTED |
 
 Phases 0–4 established the local-first contracts, UTC market-data pipeline, causal versioned feature
@@ -82,6 +82,11 @@ content-addressed, strict-UTC, and stored as one append-only linear chain per re
 retries reuse the same review ID; stale or forked predecessors fail closed. Review records
 `ACCEPT_EVIDENCE`, `REJECT_EVIDENCE`, or `DEFER` only and cannot alter proposal status, paired-result
 bytes, criteria, runtime, deployment, Final OOS, or broker state.
+
+Phase 8 Task 11 adds an operator authorization record downstream of a current terminal
+`ACCEPT_EVIDENCE` review. V1 permits only `CANDIDATE -> VALIDATED`, revalidates the proposal's
+replayed `CANDIDATE` status and exact governance linkage, and persists a strict append-only chain.
+Authorization remains permission only and cannot apply the proposal transition or deploy anything.
 
 ## Verified state
 
@@ -238,6 +243,10 @@ Phase 8 Task 10 appends operator review evidence to those immutable paired resul
 and optional supporting-result links are revalidated. Current review state is derived by replaying
 the append-only predecessor chain; no mutable current row or proposal transition is introduced.
 
+Phase 8 Task 11 appends transition authorization only after exact current-candidate and terminal
+accepted-review checks. The authorization history is replay-derived and separate from the proposal
+status-transition history; no lifecycle mutation occurs.
+
 ## Important risks
 
 - The prior real sample is tiny, class-imbalanced, and its OOS results have already been viewed.
@@ -258,8 +267,8 @@ the append-only predecessor chain; no mutable current row or proposal transition
 ## Working principle and next task
 
 Codex writes auditable local pipelines and runs bounded validation. The user runs serious training
-and large replays. Phase 8 Tasks 1–10 are isolated on `codex/phase-8-reflection-experience`; Task 10
-stops at explicit human review of frozen comparison evidence. Broader candidate
+and large replays. Phase 8 Tasks 1–11 are isolated on `codex/phase-8-reflection-experience`; Task 11
+stops at explicit permission to request a proposal transition. Broader candidate
 kinds or execution of real proposals require separate approval and must remain plan-bound and unable
 to change criteria retroactively or mutate production behavior implicitly.
 Future work must preserve the shared live/replay contracts and may not infer authority for

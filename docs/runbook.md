@@ -415,6 +415,23 @@ Do not reuse an old terminal ID to create a fork. A retry must use byte-equivale
 including the same strict-UTC `effective_at`. Review is evidence only and does not transition the
 proposal, change the comparison, execute a candidate, or access Final OOS/MT5.
 
+## Phase 8 Task 11 proposal-transition authorization
+
+Create an immutable authorization JSON only after confirming the proposal is still `CANDIDATE` and
+the referenced paired review is its current terminal `ACCEPT_EVIDENCE` review.
+
+```powershell
+$env:PYTHONPATH = (Resolve-Path 'src')
+python -m axq.reflection record-proposal-transition-authorization --store runtime/phase8-task11/governance.sqlite3 --authorization proposal-transition-authorization.json
+python -m axq.reflection show-proposal-transition-authorization --store runtime/phase8-task11/governance.sqlite3 --authorization-id <authorization-id>
+python -m axq.reflection show-proposal-transition-authorization-history --store runtime/phase8-task11/governance.sqlite3 --proposal-id <proposal-id>
+python -m axq.reflection proposal-transition-authorization-summary --store runtime/phase8-task11/governance.sqlite3
+```
+
+Use `previous_authorization_id: null` for the first record and the current terminal authorization ID
+for any later record. Recording permission does not run `transition-proposal`; lifecycle application
+requires a separate future operator action and a fresh eligibility check.
+
 
 ## Phase 7 Task 8 direct MT5 demo transport
 

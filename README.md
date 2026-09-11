@@ -1,7 +1,7 @@
 # Adaptive XAUUSD Multi-Agent Trading System
 
 Production-oriented, local-first foundation for a measurable, tool-augmented multi-agent MT5 trading
-system. Phases 0–7 are complete and Phase 8 Tasks 1–10 are implemented on an isolated branch. There
+system. Phases 0–7 are complete and Phase 8 Tasks 1–11 are implemented on an isolated branch. There
 is no production-trained model,
 autonomous strategy, live execution EA, or claim of trading profitability.
 
@@ -76,6 +76,8 @@ autonomous strategy, live execution EA, or claim of trading profitability.
   decimal-safe deltas are evidence only, with fail-closed parity and Final OOS withholding.
 - An append-only governed operator-review bridge over immutable paired results. Exact linear review
   histories record accept/reject/defer evidence judgments without promoting, deploying, or mutating.
+- An operator-authorized proposal-transition bridge that records exact accepted-evidence permission
+  for `CANDIDATE -> VALIDATED` without applying the lifecycle transition or deploying anything.
 - SQLite WAL schema and transactional migrations, with PostgreSQL migration boundaries documented.
 - Dataset manifests, label definitions, immutable model metadata, JSON logging, YAML configuration,
   and deterministic risk-veto foundation.
@@ -95,6 +97,7 @@ Read [the architecture](docs/architecture.md), [agentic architecture](docs/agent
 [shared-kernel candidate driver](docs/shared_kernel_candidate_driver.md),
 [paired evaluation](docs/paired_evaluation.md),
 [paired evaluation review](docs/paired_evaluation_review.md),
+[proposal transition authorization](docs/proposal_transition_authorization.md),
 and [runbook](docs/runbook.md) before running
 models. The exact user-run sequence is in
 [Phase 5 local runs](docs/phase5_local_runs.md).
@@ -204,4 +207,6 @@ exact stored plan. It does not rerun either side or introduce a delta acceptance
 [paired evaluation](docs/paired_evaluation.md).
 Task 10 appends explicit human evidence reviews without altering the paired result or proposal
 lifecycle. See [paired evaluation review](docs/paired_evaluation_review.md).
+Task 11 records explicit permission to request `CANDIDATE -> VALIDATED`; it does not apply that
+transition. See [proposal transition authorization](docs/proposal_transition_authorization.md).
 The phase implementation plans live under `docs/superpowers/plans/`.

@@ -104,6 +104,12 @@ from axq.reflection.proposal_contracts import (
     ProposalTargetComponent,
 )
 from axq.reflection.proposal_store import SQLiteImprovementProposalStore
+from axq.reflection.proposal_transition_authorization_contracts import (
+    ProposalTransitionAuthorization,
+)
+from axq.reflection.proposal_transition_authorization_store import (
+    SQLiteProposalTransitionAuthorizationStore,
+)
 from axq.reflection.proposals import (
     ProposalBuildResult,
     ProposalEligibilityAssessment,
@@ -254,6 +260,8 @@ __all__ = [
     "ProposalBuildResult",
     "ProposalEligibilityAssessment",
     "build_improvement_proposals",
+    "ProposalTransitionAuthorization",
+    "SQLiteProposalTransitionAuthorizationStore",
     "FailurePattern",
     "KnowledgeStatus",
     "PatternMetricSummary",

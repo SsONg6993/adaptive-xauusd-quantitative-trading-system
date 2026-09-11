@@ -399,3 +399,14 @@ do not silently rewrite earlier decisions.
   immutable predecessors. Identical retries reuse IDs, while stale/forked histories fail closed.
   Paired-result bytes and proposal status remain unchanged, and no Final OOS, execution, tuning,
   runtime, deployment, or broker authority is introduced.
+
+## 2026-09-12 — Accepted review authorizes permission, not a lifecycle mutation
+
+- **Decision:** Permit only an exact current `CANDIDATE` proposal and its terminal
+  `ACCEPT_EVIDENCE` paired review to support a content-addressed `CANDIDATE -> VALIDATED`
+  authorization. Store authorizations as a strict append-only linear chain per proposal.
+- **Reason:** Human acceptance should be usable as explicit permission while preserving separation
+  between evidence review, authorization, proposal lifecycle action, and deployment.
+- **Consequence:** Authorization time is strict UTC and part of identity. Identical retries reuse the
+  same record; stale/forked authorization history fails closed. The bridge never calls the proposal
+  transition API and has no Final OOS, evaluation, replay, tuning, runtime, deployment, or MT5 path.
