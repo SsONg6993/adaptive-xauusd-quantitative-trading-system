@@ -10,6 +10,10 @@ from datetime import date, timedelta
 from pathlib import Path
 
 from axq.experience.store import SQLiteExperienceStore
+from axq.reflection.candidate_replay_cli import (
+    handle_candidate_replay_command,
+    register_candidate_replay_commands,
+)
 from axq.reflection.contracts import DailyReflection, ReflectionPolicy
 from axq.reflection.daily import build_daily_reflection
 from axq.reflection.evaluation_cli import (
@@ -47,6 +51,7 @@ def _parser() -> argparse.ArgumentParser:
     register_proposal_commands(commands)
     register_evaluation_commands(commands)
     register_execution_commands(commands)
+    register_candidate_replay_commands(commands)
     return parser
 
 
@@ -184,6 +189,9 @@ def main(argv: Sequence[str] | None = None) -> int:
     execution_result = handle_execution_command(args)
     if execution_result is not None:
         return execution_result
+    candidate_replay_result = handle_candidate_replay_command(args)
+    if candidate_replay_result is not None:
+        return candidate_replay_result
     if args.command == "build-daily-reflections":
         return _build(args)
     if args.command == "show-daily-reflection":

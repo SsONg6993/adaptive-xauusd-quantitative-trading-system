@@ -342,6 +342,26 @@ when operational request/start/completion timestamps differ. This adapter neithe
 candidate and has no proposal-promotion, deployment, runtime, or broker authority. See
 `docs/evaluation_execution.md`.
 
+## Phase 8 Task 7 governed candidate replay
+
+Generate Task 6-compatible canonical metric samples from one exact controlled fixture. The shared
+store must already contain the exact CANDIDATE proposal, candidate spec, and evaluation plan:
+
+```powershell
+python -m axq.reflection run-candidate-replay --store runtime/phase8-task7/candidate-replay.sqlite3 --request candidate-replay-request.json --development-input development-replay-fixture.json --validation-input validation-replay-fixture.json --output-dir runtime/phase8-task7/artifacts --started-at 2026-09-11T12:00:00Z --completed-at 2026-09-11T12:00:01Z
+python -m axq.reflection show-candidate-replay --store runtime/phase8-task7/candidate-replay.sqlite3 --request-id <request-id>
+python -m axq.reflection candidate-replay-summary --store runtime/phase8-task7/candidate-replay.sqlite3
+```
+
+Supply only scopes required by the plan. Each fixture must reproduce the exact proposal/candidate/
+plan linkage and every preregistered metric key for its scope. The engine emits canonical sample
+files without aggregation; Task 6 consumes those files and owns result construction. Equivalent
+completed retries reuse stored artifact bytes and do not run the engine again.
+
+The command has no Final OOS argument. It cannot tune parameters, launch arbitrary code, promote a
+proposal, deploy, mutate runtime, contact a broker, or execute the seven baseline proposals. See
+`docs/candidate_replay_evaluation.md`.
+
 
 ## Phase 7 Task 8 direct MT5 demo transport
 

@@ -346,3 +346,17 @@ do not silently rewrite earlier decisions.
   and `completed_at`. Both remain strict-UTC audit facts. Equivalent semantic retries reuse exact
   request/result/audit IDs and result bytes. Append-only audits confer no tuning, proposal
   promotion, replay/challenger, deployment, runtime, or broker authority.
+
+## 2026-09-11 — Candidate replay begins with one governed fixture engine
+
+- **Decision:** Establish a narrow `CandidateReplayEngine` protocol with only the allowlisted
+  `CONTROLLED_REPLAY_FIXTURE_V1` implementation. Bind each request to an exact persisted CANDIDATE
+  proposal, candidate, plan, seed/environment, and content-digested DEVELOPMENT/VALIDATION causal
+  fixture; emit only Task 6 canonical sample artifacts for preregistered scope keys.
+- **Reason:** Producer-side replay governance and Task 6 compatibility can be proven without
+  prematurely injecting arbitrary candidate types into the already-validated Phase 7 kernel or
+  creating a plugin, tuning, deployment, broker, or Final OOS path.
+- **Consequence:** Requests, outputs, and terminal audits are append-only and content-addressed;
+  operational timestamps and output paths do not affect identity. Completed retries reuse exact
+  artifact bytes without rerunning the engine. Full Phase 7 candidate injection and real proposal
+  evaluation require separate approval.

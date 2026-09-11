@@ -1,5 +1,25 @@
 """Deterministic Phase 8 reflection contracts and services."""
 
+from axq.reflection.candidate_replay_contracts import (
+    CandidateReplayArtifactRef,
+    CandidateReplayAudit,
+    CandidateReplayEngineKind,
+    CandidateReplayRequest,
+    CandidateReplayStatus,
+    ControlledMetricValue,
+    ControlledReplayFixtureArtifact,
+    ControlledReplayObservation,
+)
+from axq.reflection.candidate_replay_engine import (
+    CandidateReplayEngine,
+    CandidateReplayEngineOutput,
+    ControlledReplayFixtureEngine,
+)
+from axq.reflection.candidate_replay_service import (
+    CandidateReplayOutcome,
+    execute_candidate_replay,
+)
+from axq.reflection.candidate_replay_store import SQLiteCandidateReplayStore
 from axq.reflection.contracts import (
     DailyReflection,
     FindingCategory,
@@ -82,6 +102,20 @@ from axq.reflection.weekly_contracts import (
 from axq.reflection.weekly_store import SQLiteWeeklyReflectionStore
 
 __all__ = [
+    "CandidateReplayArtifactRef",
+    "CandidateReplayAudit",
+    "CandidateReplayEngineKind",
+    "CandidateReplayRequest",
+    "CandidateReplayStatus",
+    "ControlledMetricValue",
+    "ControlledReplayFixtureArtifact",
+    "ControlledReplayObservation",
+    "CandidateReplayEngine",
+    "CandidateReplayEngineOutput",
+    "ControlledReplayFixtureEngine",
+    "CandidateReplayOutcome",
+    "execute_candidate_replay",
+    "SQLiteCandidateReplayStore",
     "DailyReflection",
     "FindingCategory",
     "FindingSignal",

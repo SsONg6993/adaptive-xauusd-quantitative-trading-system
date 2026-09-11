@@ -36,7 +36,7 @@ from axq.reflection.weekly_contracts import (
 NOW = datetime(2026, 9, 11, 12, 0, tzinfo=UTC)
 
 
-def persist_controlled_plan(path: Path):
+def persist_controlled_plan(path: Path, *, include_development: bool = False):
     policy = ImprovementProposalPolicy()
     proposal = ImprovementProposal(
         policy_id=policy.policy_id,
@@ -109,7 +109,22 @@ def persist_controlled_plan(path: Path):
         artifact_refs=(SemanticArtifactRef(semantic_id="candidate", sha256="a" * 64),),
         defined_at=NOW,
     )
+    optional_development = (
+        (
+            ValidationMetricSpec(
+                metric_key="development_expectancy",
+                name="Development expectancy",
+                unit="R",
+                aggregation="MEAN",
+                scope=MetricScope.DEVELOPMENT,
+                direction=MetricDirection.DESCRIPTIVE,
+            ),
+        )
+        if include_development
+        else ()
+    )
     metrics = (
+        *optional_development,
         ValidationMetricSpec(
             metric_key="validation_expectancy",
             name="Validation expectancy",

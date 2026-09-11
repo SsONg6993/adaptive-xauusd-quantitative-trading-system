@@ -15,7 +15,7 @@ Last updated: 2026-09-11
 | Architecture migration | Tool-augmented agentic design + deterministic replay | APPROVED / DOCUMENTED |
 | 6 | Shared runtime state, agent contracts, deterministic kernel vertical slice | COMPLETE |
 | 7 | Master, Discipline, Risk, execution, recovery, position actions, replay validation | COMPLETE |
-| 8 | Controlled learning and attribution | IN PROGRESS — TASKS 1–6 COMPLETE |
+| 8 | Controlled learning and attribution | IN PROGRESS — TASKS 1–7 COMPLETE |
 | 9+ | Optional intelligence | NOT STARTED |
 
 Phases 0–4 established the local-first contracts, UTC market-data pipeline, causal versioned feature
@@ -54,6 +54,12 @@ governance. Task 6 executes only exact stored plans over content-digested DEVELO
 metric-sample artifacts through `CANONICAL_METRIC_SAMPLES_V1`. Final OOS remains structurally
 unavailable, completed semantic retries reuse exact result bytes, and no candidate is tuned,
 promoted, deployed, or connected to runtime.
+
+Phase 8 Task 7 adds the governed producer side of that boundary. One allowlisted controlled-fixture
+engine causally emits exact Task 6 `CanonicalMetricSampleArtifact` records for DEVELOPMENT and
+VALIDATION only. Requests and terminal audits bind persisted proposal/candidate/plan identity,
+seed/environment, and canonical input/output digests; completed retries reuse output bytes. Full
+Phase 7 candidate injection and the seven baseline proposals remain untouched.
 
 ## Verified state
 
@@ -190,6 +196,11 @@ environment, and DEVELOPMENT/VALIDATION artifact IDs and byte digests. Operation
 strict UTC but excluded from semantic identities. Preregistered Final OOS metrics remain present as
 `UNAVAILABLE` / `FINAL_OOS_NOT_ACCESSED` without opening a Final OOS artifact.
 
+Phase 8 Task 7 adds immutable candidate replay requests and audits plus durable canonical sample
+artifacts. New requests require an exact currently-CANDIDATE proposal and stored plan. The only
+engine replays controlled causal metric observations; it neither aggregates nor changes parameters.
+Outputs pass unchanged into Task 6, while Final OOS remains structurally absent.
+
 ## Important risks
 
 - The prior real sample is tiny, class-imbalanced, and its OOS results have already been viewed.
@@ -204,15 +215,16 @@ strict UTC but excluded from semantic identities. Preregistered Final OOS metric
 - Real-terminal demo mutation has not been exercised by automated validation; fake-gateway tests
   cover transport behavior without placing trades.
 - A production scheduler/service host, simulated fills/P&L, MQL5/IPC transport, automated resolution
-  of unknown broker outcomes, LLMs, vision, and general replay/challenger evaluators are absent.
+  of unknown broker outcomes, LLMs, vision, full-kernel candidate injection, and general
+  replay/challenger evaluators are absent.
 
 ## Working principle and next task
 
 Codex writes auditable local pipelines and runs bounded validation. The user runs serious training
-and large replays. Phase 8 Tasks 1–6 are isolated on `codex/phase-8-reflection-experience`; Task 6
-stops at deterministic execution of reviewed canonical metric samples. Any later replay/challenger
-runner must remain separately approved, plan-bound, and unable to change criteria retroactively or
-mutate production behavior implicitly.
+and large replays. Phase 8 Tasks 1–7 are isolated on `codex/phase-8-reflection-experience`; Task 7
+stops at one controlled-fixture producer for canonical metric samples. Any full-kernel candidate or
+challenger runner must remain separately approved, plan-bound, and unable to change criteria
+retroactively or mutate production behavior implicitly.
 Future work must preserve the shared live/replay contracts and may not infer authority for
 continuous execution, live-money support, simulated brokerage, or later-phase intelligence.
 
