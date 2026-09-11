@@ -1,28 +1,28 @@
 # Graph Report - phase-8-reflection-experience  (2026-09-11)
 
 ## Corpus Check
-- 308 files · ~158,403 words
+- 323 files · ~165,604 words
 - Verdict: corpus is large enough that graph structure adds value.
 
 ## Summary
-- 3349 nodes · 10756 edges · 182 communities (141 shown, 40 thin omitted)
-- Extraction: 84% EXTRACTED · 16% INFERRED · 0% AMBIGUOUS · INFERRED: 1741 edges (avg confidence: 0.91)
+- 3475 nodes · 11247 edges · 165 communities (129 shown, 35 thin omitted)
+- Extraction: 83% EXTRACTED · 17% INFERRED · 0% AMBIGUOUS · INFERRED: 1872 edges (avg confidence: 0.91)
 - Token cost: 0 input · 0 output
 
 ## Graph Freshness
-- Built from commit: `4cc0cefc`
+- Built from commit: `ef969459`
 - Run `git rev-parse HEAD` and compare to check if the graph is stale.
 - Run `graphify update .` after code changes (no API cost).
 
 ## Community Hubs (Navigation)
-- DailyReflection
+- weekly_contracts.py
 - labels/__init__.py
-- ReflectionPolicy
+- reflection/__main__.py
 - axq/features/registry.py
 - trainer.py
-- indicators.py
+- default_registry
 - agents/__init__.py
-- update_scenario
+- timedelta
 - development/config.py
 - axq/config.py
 - test_runtime_orchestration.py
@@ -37,36 +37,36 @@
 - compute.py
 - drift.py
 - datasets/builder.py
-- JournalRecord
+- .validate_and_bind_identity
 - System architecture (Phase 0-7 baseline)
-- versioning.py
+- SQLiteWeeklyReflectionStore
 - dataset.py
-- RuntimeEvent
+- runtime/__init__.py
 - Architecture decision log
-- kernel.py
+- AgentStatus
 - README.md
 - test_risk_boundary.py
 - ToolResult
 - RuntimeOrchestrator
 - SQLiteExecutionLedger
-- timedelta
+- reduce_state
 - Global Constraints
-- attribution.py
+- experience/__init__.py
 - Phase 0-6 runbook
-- default_registry
+- MetricScope
 - Phase 2 feature contract
 - Phase 5 Quant Model-Development Design
 - Project status
 - SQLiteExperienceStore
-- OutcomeAttributionBuilder
+- attribution.py
 - quant/config.py
 - Indicator and quantitative-feature candidate research
 - Adaptive XAUUSD Multi-Agent Trading System
 - test_evidence_kernel.py
-- runtime/journal.py
+- PositionActionIntent
 - system.py
 - Phase 3 label contract
-- execution_boundary/__init__.py
+- ComponentFreshness
 - Repository instructions
 - _context
 - orchestration/contracts.py
@@ -91,123 +91,106 @@
 - test_execution_boundary.py
 - OperatorControls
 - MasterProposal
-- snapshot.py
+- MT5SnapshotError
 - SQLiteRuntimeJournal
-- datetime
-- test_feature_formulas.py
+- ensure_utc
+- preflight.py
 - discipline/__init__.py
 - reflection/__init__.py
 - Global Constraints
 - Database
-- processor.py
+- position_actions/evaluator.py
 - Global Constraints
 - ExecutionIntent
 - folds.py
 - test_agent_tools.py
 - Phase 7 deterministic runtime orchestration
 - _context
-- ReflectionModel
+- execution_boundary/__init__.py
 - Global Constraints
 - FakeMT5Module
 - evidence
 - features/analysis.py
 - FakeRunner
 - SQLiteImprovementProposalStore
-- SnapshotGateway
+- mt5/__init__.py
 - model_validator
 - Phase 8 Task 3 Deterministic Weekly Reflection and Pattern Lifecycle Design
 - Phase 7 Task 7: Position Action Safety and Journal Plan
 - MT5Gateway
 - PositionGateway
-- ReplayClock
+- runtime/journal.py
 - Position action safety
-- .probabilities
-- daily.py
+- position.py
+- ExecutionTransition
 - Signal
-- RuntimeStreamRunner
+- QuantAgent
 - datasets/__init__.py
 - LabelDefinition
-- session_features
-- test_experience_contracts.py
+- build_mt5_dataset.py
+- ExperienceProvenance
 - SQLiteProposalEvaluationStore
 - Global Constraints
-- CausalFeatureSnapshot
+- Phase 8 Task 6 Deterministic Evaluation Execution Adapter Design
 - Phase 8 Task 1 Experience Store Design
 - Phase 7 Task 8 Direct MT5 Transport Design
 - EntryGateway
 - Global constraints
 - LocalModelRegistry
-- position_management/contracts.py
+- processor.py
 - Phase 8 Task 4 Advisory Improvement Proposal Design
-- ComponentFreshness
-- ExperienceProvenance
 - Global Constraints
-- test_foundation.py
-- models.py
-- PositionState
+- test_daily_reflection.py
+- Global Constraints
+- DatasetManifest
+- Deterministic Evaluation Execution
+- test_runtime_state.py
 - Phase 8 Task 2 Deterministic Daily Reflection Design
 - Global Constraints
-- ExperienceType
-- run_event_stream
+- AttributionSources
 - Deterministic Daily Reflection
 - Phase 3 dataset contract
 - Global Constraints
-- SplitManifest
-- test_runtime_journal.py
-- DecisionCycle
+- datasets/preprocessing.py
 - risk_boundary/evaluator.py
 - Deterministic Weekly Reflection and Pattern Lifecycle
 - Advisory Improvement Proposals
-- test_experience_analytics_cli.py
-- breakout_features
-- .evaluate
-- price_action_features
+- .__init__
 - MetaTrader5Gateway
 - canonical_hash
 - test_quant_development_runner.py
 - .bind_identity
 - _MT5Module
 - Phase 8 Task 5 Proposal Evaluation Contract and Persistence Design
-- replay.py
-- EvidenceBundle
-- ContractAndRiskTests
 - Global Constraints
-- test_quant_development_config.py
-- MT5ConnectionError
-- MT5Constants
 - model_validator
 - model_validator
 - Proposal Evaluation
 - model_validator
 - .normalize_validate_and_bind_identity
 - .normalize_validate_and_bind_identity
-- EventSource
-- model_validator
-- .validate_and_bind_identity
+- RuntimeEvent
 - .bind_identity
 - model_validator
 - FakeGateway
 - .bind_identity
 - .terminal_path
 - .validate_and_bind_identity
-- FakeSnapshotProvider
-- .validate_and_bind_identity
-- .normalize_and_bind_identity
 - .validate_event
 - .validate_and_bind_identity
 - .validate_and_bind_identity
 
 ## God Nodes (most connected - your core abstractions)
-1. `canonical_hash()` - 157 edges
+1. `canonical_hash()` - 166 edges
 2. `RuntimeEvent` - 92 edges
 3. `Signal` - 92 edges
 4. `ExecutionIntent` - 64 edges
 5. `ExecutionResult` - 55 edges
-6. `run_system_replay()` - 50 edges
-7. `SQLiteExecutionLedger` - 48 edges
-8. `reduce_state()` - 48 edges
-9. `ComponentFreshness` - 47 edges
-10. `ToolResult` - 46 edges
+6. `SQLiteProposalEvaluationStore` - 53 edges
+7. `run_system_replay()` - 50 edges
+8. `ReflectionModel` - 49 edges
+9. `SQLiteExecutionLedger` - 48 edges
+10. `reduce_state()` - 48 edges
 
 ## Surprising Connections (you probably didn't know these)
 - `test_split_chronology_purge_and_embargo()` --calls--> `chronological_split()`  [INFERRED]
@@ -224,55 +207,55 @@
 ## Import Cycles
 - None detected.
 
-## Communities (182 total, 40 thin omitted)
+## Communities (165 total, 35 thin omitted)
 
-### Community 0 - "DailyReflection"
-Cohesion: 0.15
-Nodes (31): DailyReflection, build_weekly_reflection(), PatternMetricSummary, PatternSignalClass, StrEnum, WeeklyGuardKind, WeeklySampleGuard, _expected_dates() (+23 more)
+### Community 0 - "weekly_contracts.py"
+Cohesion: 0.08
+Nodes (75): DecisionExperience, TradeExperience, FindingCategory, FindingSignal, MetricFact, StrEnum, Immutable content-addressed contracts for deterministic daily reflection., ReflectionFinding (+67 more)
 
 ### Community 1 - "labels/__init__.py"
-Cohesion: 0.18
-Nodes (24): BarrierMode, CollisionPolicy, EntryReference, LabelKind, StrEnum, Versioned label contracts. Labels may look forward; features never may., ReturnMode, ThresholdMode (+16 more)
+Cohesion: 0.15
+Nodes (28): BarrierMode, CollisionPolicy, EntryReference, LabelKind, StrEnum, Versioned label contracts. Labels may look forward; features never may., ReturnMode, ThresholdMode (+20 more)
 
-### Community 2 - "ReflectionPolicy"
-Cohesion: 0.08
-Nodes (46): ReflectionPolicy, _build(), _days(), _emit(), _latest_records(), _load_policy(), main(), _parser() (+38 more)
+### Community 2 - "reflection/__main__.py"
+Cohesion: 0.06
+Nodes (60): DailyReflection, ReflectionPolicy, Any, register_evaluation_commands(), Any, register_execution_commands(), _build(), _days() (+52 more)
 
 ### Community 3 - "axq/features/registry.py"
 Cohesion: 0.12
 Nodes (18): Compatibility entry point; implementation lives in the installable axq package., Feature functions and registry., FeatureManifest, FeatureManifestEntry, BaseModel, Path, Canonical feature-manifest models., FeatureDefinition (+10 more)
 
 ### Community 4 - "trainer.py"
-Cohesion: 0.08
+Cohesion: 0.07
 Nodes (43): ModelRecord, BaseModel, Path, Immutable model metadata; activation is data, not a source-code edit., dump_artifact(), file_hash(), load_artifact(), Any (+35 more)
 
-### Community 5 - "indicators.py"
-Cohesion: 0.15
-Nodes (32): aroon(), atr(), cci(), directional_movement(), DataFrame, Series, Causal technical-indicator primitives with explicit warm-up semantics. All…, EMA seeded with the first period's SMA; invalid until index period-1. (+24 more)
+### Community 5 - "default_registry"
+Cohesion: 0.05
+Nodes (69): skipif, breakout_features(), Any, DataFrame, Donchian and breakout-state candidates using only past/current bars., aroon(), atr(), cci() (+61 more)
 
 ### Community 6 - "agents/__init__.py"
 Cohesion: 0.08
-Nodes (54): AgentInput, AgentReasoningBudget, model_validator, Protocol, Small shared specialist input and output-validation boundary., Interpret supplied facts without recomputing tools or authorizing execution., Verify evidence references exact causal tool facts from its input., Validate an agent output before applying its deterministic memory transition. (+46 more)
+Nodes (57): AgentInput, AgentReasoningBudget, model_validator, Protocol, Small shared specialist input and output-validation boundary., Interpret supplied facts without recomputing tools or authorizing execution., Verify evidence references exact causal tool facts from its input., Validate an agent output before applying its deterministic memory transition. (+49 more)
 
-### Community 7 - "update_scenario"
-Cohesion: 0.23
-Nodes (30): Apply one M5 or intrabar evidence event without consulting a clock., update_scenario(), StrEnum, RuntimeEventType, _agent_pair(), _create(), _event(), _market() (+22 more)
+### Community 7 - "timedelta"
+Cohesion: 0.26
+Nodes (29): Apply one M5 or intrabar evidence event without consulting a clock., update_scenario(), _agent_pair(), _create(), _event(), _market(), datetime, parametrize (+21 more)
 
 ### Community 8 - "development/config.py"
-Cohesion: 0.09
-Nodes (33): AblationConfig, EvaluationConfig, load_ablation_config(), load_experiment_config(), _load_mapping(), load_suite_config(), load_tuning_config(), load_walk_forward_config() (+25 more)
+Cohesion: 0.08
+Nodes (44): AblationConfig, development_run_id(), EvaluationConfig, ExperimentConfig, load_ablation_config(), load_experiment_config(), _load_mapping(), load_suite_config() (+36 more)
 
 ### Community 9 - "axq/config.py"
-Cohesion: 0.10
-Nodes (25): CompletedProcess, main(), HistoryBuildConfig, _load(), main(), _mapping(), Any, BaseModel (+17 more)
+Cohesion: 0.16
+Nodes (17): CompletedProcess, main(), _git_identity(), main(), _run_git(), AppConfig, DatabaseConfig, FeatureConfig (+9 more)
 
 ### Community 10 - "test_runtime_orchestration.py"
 Cohesion: 0.16
-Nodes (25): DecisionPlan, Existing semantic outputs assembled by an injected decision-cycle processor., FakeEntryAdapter, FakePositionActionAdapter, FakeProcessor, _fresh(), _intent(), _market_event() (+17 more)
+Nodes (24): DecisionPlan, Existing semantic outputs assembled by an injected decision-cycle processor., FakeEntryAdapter, FakePositionActionAdapter, FakeProcessor, FakeSnapshotProvider, _intent(), _market_event() (+16 more)
 
 ### Community 11 - "evaluate_predictions"
-Cohesion: 0.16
-Nodes (21): calibration_diagnostics(), compare_calibration_methods(), opportunity_utilization(), overfitting_report(), Any, DataFrame, ndarray, Series (+13 more)
+Cohesion: 0.19
+Nodes (19): calibration_diagnostics(), compare_calibration_methods(), opportunity_utilization(), Any, DataFrame, ndarray, Series, Descriptive Quant diagnostics that never select or promote a model. (+11 more)
 
 ### Community 12 - "ExperimentTracker"
 Cohesion: 0.27
@@ -299,39 +282,35 @@ Cohesion: 0.16
 Nodes (21): evaluate_challenger_evidence(), Any, Advisory Champion/Challenger evidence contract., _categorical_distribution(), distribution_drift(), feature_drift_report(), _finite(), ks_statistic() (+13 more)
 
 ### Community 22 - "datasets/builder.py"
-Cohesion: 0.13
-Nodes (20): main(), main(), DataFrame, Leakage-safe multi-timeframe alignment., Attach bars only when their UTC close time is at/before the base bar's UTC…, synchronize_completed_bars(), timeframe_delta(), DataFrame (+12 more)
-
-### Community 23 - "JournalRecord"
-Cohesion: 0.17
-Nodes (9): JournalEntry, JournalRecord, BaseModel, JournalSemantic, model_validator, Protocol, UTCDateTime, RuntimeJournal (+1 more)
+Cohesion: 0.08
+Nodes (29): main(), main(), main(), clean_candles(), DataFrame, Normalize types/order and deterministically keep the last duplicate bar., DataFrame, Leakage-safe multi-timeframe alignment. (+21 more)
 
 ### Community 24 - "System architecture (Phase 0-7 baseline)"
 Cohesion: 0.11
 Nodes (19): Data pipeline and synchronization, Database architecture, Dataset and label versioning, Failure states, Feature layer, IPC decision, Model registry, Primary and intrabar paths (+11 more)
 
-### Community 25 - "versioning.py"
+### Community 25 - "SQLiteWeeklyReflectionStore"
 Cohesion: 0.09
-Nodes (46): _build(), _emit(), handle_weekly_command(), _history(), _latest(), _policy(), date, Namespace (+38 more)
+Nodes (42): _build(), _emit(), handle_weekly_command(), _history(), _latest(), _policy(), date, Namespace (+34 more)
 
 ### Community 26 - "dataset.py"
-Cohesion: 0.09
-Nodes (23): DatasetManifest, BaseModel, Path, Immutable, content-derived Phase 3 dataset contract., LabelManifest, BaseModel, Path, Canonical label manifests. (+15 more)
+Cohesion: 0.10
+Nodes (28): DatasetManifest, BaseModel, Path, Immutable, content-derived Phase 3 dataset contract., load_training_dataset(), _parse_manifest(), Any, DataFrame (+20 more)
 
-### Community 27 - "RuntimeEvent"
+### Community 27 - "runtime/__init__.py"
 Cohesion: 0.12
-Nodes (42): BaseModel, datetime, Canonical runtime event envelopes for live and deterministic replay., RuntimeEvent, Versioned contracts and deterministic reduction for live and replay., Reduce a non-decision state refresh without invoking specialists., _account_update(), datetime (+34 more)
+Nodes (42): BrokerIntentLink, BrokerObjectKind, Immutable contracts for durable execution recovery and safe resume., _provenance_by_ticket(), Read-only MT5 broker snapshot acquisition into canonical recovery state., Immutable contracts for safe actions on authoritative open positions., Strict contracts for deterministic management of already-open positions., Strict contracts for the deterministic financial Risk boundary. (+34 more)
 
 ### Community 28 - "Architecture decision log"
 Cohesion: 0.06
-Nodes (34): 2026-09-08 — Calibrated three-way Quant output, 2026-09-08 — Chronological evaluation, 2026-09-08 — Conservative label ambiguity, 2026-09-08 — Controlled future learning and reporting, 2026-09-08 — Explicit model lifecycle, 2026-09-08 — Independent XAUUSD system, 2026-09-08 — Local-first operation, 2026-09-08 — Point-in-time market data (+26 more)
+Nodes (35): 2026-09-08 — Calibrated three-way Quant output, 2026-09-08 — Chronological evaluation, 2026-09-08 — Conservative label ambiguity, 2026-09-08 — Controlled future learning and reporting, 2026-09-08 — Explicit model lifecycle, 2026-09-08 — Independent XAUUSD system, 2026-09-08 — Local-first operation, 2026-09-08 — Point-in-time market data (+27 more)
 
-### Community 29 - "kernel.py"
+### Community 29 - "AgentStatus"
 Cohesion: 0.20
-Nodes (20): Deterministic hierarchical market-structure interpretation., AbstentionReason, AgentStatus, DirectionalBias, fact_map(), Interpretation, numeric(), ObservedFact (+12 more)
+Nodes (17): Deterministic hierarchical market-structure interpretation., AgentStatus, DirectionalBias, fact_map(), Interpretation, numeric(), ObservedFact, FactScalar (+9 more)
 
 ### Community 30 - "README.md"
-Cohesion: 0.17
+Cohesion: 0.18
 Nodes (7): Model registry and promotion contract, Phase 5 development layer, Quant model training, Ordered local run plan, Phase 5 local Quant experiment workflow, Returning results for review, Quant Agent contract
 
 ### Community 31 - "test_risk_boundary.py"
@@ -339,36 +318,36 @@ Cohesion: 0.16
 Nodes (42): default_demo_risk_policy(), Return conservative Demo safety defaults, not optimized trading truth., _account(), _broker(), _context(), _discipline(), _evaluate(), _exposure() (+34 more)
 
 ### Community 32 - "ToolResult"
-Cohesion: 0.15
-Nodes (31): FreshnessStatus, FeatureFactTool, datetime, Capability-focused fact tools and their small deterministic catalog., _result(), SlowContextFactTool, ToolCatalog, AnalyticalTool (+23 more)
+Cohesion: 0.09
+Nodes (39): _catalog(), FeatureFactTool, datetime, Capability-focused fact tools and their small deterministic catalog., _result(), SlowContextFactTool, ToolCatalog, AnalyticalTool (+31 more)
 
 ### Community 33 - "RuntimeOrchestrator"
 Cohesion: 0.17
-Nodes (6): RuntimeStatus, JournalSemantic, Lift an entry pause only while all non-bypassable gates remain safe., Perform at most one read-only refresh when the bounded cadence elapsed., Own ordering and gates while delegating every trading semantic decision., RuntimeOrchestrator
+Nodes (5): JournalSemantic, Lift an entry pause only while all non-bypassable gates remain safe., Perform at most one read-only refresh when the bounded cadence elapsed., Own ordering and gates while delegating every trading semantic decision., RuntimeOrchestrator
 
 ### Community 34 - "SQLiteExecutionLedger"
-Cohesion: 0.12
-Nodes (26): Connection, Path, Durable projection reconstructed only from immutable transitions., SQLiteExecutionLedger, broker_snapshot_runtime_events(), ExecutionTransition, _fresh(), _intent() (+18 more)
+Cohesion: 0.08
+Nodes (48): Connection, Durable projection reconstructed only from immutable transitions., SQLiteExecutionLedger, _conflict_reason(), _finding(), _object_id(), datetime, Protocol (+40 more)
 
-### Community 35 - "timedelta"
-Cohesion: 0.22
-Nodes (29): initial_runtime_state(), Construct a canonical state with explicit unknown component values., account(), apply(), event(), feedback(), fresh(), market() (+21 more)
+### Community 35 - "reduce_state"
+Cohesion: 0.20
+Nodes (32): initial_runtime_state(), datetime, Apply one causally available event without consulting a wall clock., Construct a canonical state with explicit unknown component values., reduce_state(), test_snapshot_creates_canonical_events_and_reduces_through_shared_path(), account(), apply() (+24 more)
 
 ### Community 36 - "Global Constraints"
 Cohesion: 0.18
 Nodes (10): Global Constraints, Phase 5 Quant Model Development Implementation Plan, Task 1: Strict development configuration and identities, Task 2: History and compute inspection, Task 3: Diagnostics, drift, and Challenger evidence, Task 4: Fold-local walk-forward and ablation planning, Task 5: Experiment orchestration, artifacts, and comparison, Task 6: User-facing configs and CLIs (+2 more)
 
-### Community 37 - "attribution.py"
-Cohesion: 0.17
-Nodes (27): _average(), _counts(), ExperienceSummary, BaseModel, Experience, Descriptive-only analytics for persisted Phase 8 experiences., Versioned aggregate facts; no score, recommendation, or policy mutation., Return descriptive aggregates while keeping unavailable values as ``None``. (+19 more)
+### Community 37 - "experience/__init__.py"
+Cohesion: 0.18
+Nodes (21): _average(), _counts(), ExperienceSummary, BaseModel, Experience, Descriptive-only analytics for persisted Phase 8 experiences., Versioned aggregate facts; no score, recommendation, or policy mutation., Return descriptive aggregates while keeping unavailable values as ``None``. (+13 more)
 
 ### Community 38 - "Phase 0-6 runbook"
-Cohesion: 0.10
-Nodes (21): Data lifecycle, Future restart and reconciliation gate, Operational checks, Phase 0-6 runbook, Phase 2 lightweight verification, Phase 3 dataset lifecycle, Phase 4 Quant Agent lifecycle, Phase 5 local model development (+13 more)
+Cohesion: 0.09
+Nodes (22): Data lifecycle, Future restart and reconciliation gate, Operational checks, Phase 0-6 runbook, Phase 2 lightweight verification, Phase 3 dataset lifecycle, Phase 4 Quant Agent lifecycle, Phase 5 local model development (+14 more)
 
-### Community 39 - "default_registry"
-Cohesion: 0.12
-Nodes (19): multi_timeframe_features(), Any, DataFrame, fit_standardizer(), FittedStandardizer, DataFrame, Small fit-boundary scaffold for leakage-safe downstream preprocessing., default_registry() (+11 more)
+### Community 39 - "MetricScope"
+Cohesion: 0.07
+Nodes (71): MetricScope, ProposalEvaluationPlan, SemanticArtifactRef, _aggregate(), canonical_record_bytes(), CanonicalMetricSamplesAdapter, EvaluationAdapterOutput, input_artifact_ref() (+63 more)
 
 ### Community 40 - "Phase 2 feature contract"
 Cohesion: 0.25
@@ -383,16 +362,16 @@ Cohesion: 0.25
 Nodes (7): Current architecture, Current phase status, Important risks, Project status, Roadmap, Verified state, Working principle and next task
 
 ### Community 43 - "SQLiteExperienceStore"
-Cohesion: 0.17
-Nodes (12): _canonical_payload(), Experience, Path, Append-only SQLite persistence for normalized experience objects., Durable semantic records; sequence numbers never participate in identity., SQLiteExperienceStore, _decision(), test_conflicting_same_id_content_fails_closed() (+4 more)
+Cohesion: 0.13
+Nodes (17): ExperienceBuild, BaseModel, Experience, ExperienceType, StrEnum, _canonical_payload(), Experience, Path (+9 more)
 
-### Community 44 - "OutcomeAttributionBuilder"
-Cohesion: 0.25
-Nodes (13): _anomaly(), _enum_value(), _identity_context(), OutcomeAttributionBuilder, _progressed_to(), _provenance(), Any, Build experiences with exact semantic joins and explicit missing-link markers. (+5 more)
+### Community 44 - "attribution.py"
+Cohesion: 0.24
+Nodes (17): _anomaly(), _enum_value(), _identity_context(), OutcomeAttributionBuilder, _progressed_to(), _provenance(), Any, Exact-link deterministic reconstruction of normalized Phase 8 experiences. (+9 more)
 
 ### Community 45 - "quant/config.py"
-Cohesion: 0.09
-Nodes (37): Architecture, CalibrationConfig, Device, FeatureSelectionConfig, HoldPolicyConfig, load_quant_config(), PreprocessingConfig, BaseModel (+29 more)
+Cohesion: 0.10
+Nodes (22): Architecture, CalibrationConfig, Device, HoldPolicyConfig, load_quant_config(), BaseModel, Path, StrEnum (+14 more)
 
 ### Community 46 - "Indicator and quantitative-feature candidate research"
 Cohesion: 0.29
@@ -403,36 +382,36 @@ Cohesion: 0.29
 Nodes (7): Adaptive XAUUSD Multi-Agent Trading System, Current capabilities, Download and validate a small sample, Lightweight verification, Non-negotiable development rules, Repository map, Setup (Windows PowerShell)
 
 ### Community 48 - "test_evidence_kernel.py"
-Cohesion: 0.26
-Nodes (22): ChartAgent, _input(), _kernel_fixture(), parametrize, _result(), test_agent_rejects_a_tool_outside_its_access_boundary(), test_chart_agent_abstains_when_structure_is_unavailable(), test_chart_agent_interprets_directional_structure() (+14 more)
+Cohesion: 0.28
+Nodes (21): ChartAgent, _input(), parametrize, _result(), test_agent_rejects_a_tool_outside_its_access_boundary(), test_chart_agent_abstains_when_structure_is_unavailable(), test_chart_agent_interprets_directional_structure(), test_chart_agent_represents_hierarchical_mtf_conflict_as_uncertainty() (+13 more)
 
-### Community 49 - "runtime/journal.py"
-Cohesion: 0.07
-Nodes (34): _float_value(), _int_value(), MT5PositionActionAdapter, _optional_close(), _optional_price(), _positive_int(), datetime, Demo-only MetaTrader 5 transport for Task 7 position-action intents. (+26 more)
+### Community 49 - "PositionActionIntent"
+Cohesion: 0.11
+Nodes (13): MT5PositionActionAdapter, Idempotently translate an already-safe position action to exact MT5 calls., PositionActionAdapter, PositionActionIntent, Path, SQLitePositionActionTransportLedger, InMemoryPositionActionTransportLedger, PositionActionTransportLedger (+5 more)
 
 ### Community 50 - "system.py"
-Cohesion: 0.06
-Nodes (61): EntryDecisionInputs, BaseModel, Causal contexts supplied by the runtime-specific context adapter., _identity(), _PendingClose, PendingReplayEntry, _PendingStop, datetime (+53 more)
+Cohesion: 0.05
+Nodes (64): DeterministicDecisionProcessor, EntryDecisionInputs, BaseModel, Causal contexts supplied by the runtime-specific context adapter., Invoke Master → Discipline → Risk and existing-position boundaries in fixed…, Compose existing pure functions; adapters provide causal context only., _identity(), _PendingClose (+56 more)
 
 ### Community 51 - "Phase 3 label contract"
-Cohesion: 0.40
+Cohesion: 0.33
 Nodes (5): Decision and reference prices, Label families, Phase 3 label contract, Same-bar collision policy, Sensitivity and balance
 
-### Community 52 - "execution_boundary/__init__.py"
-Cohesion: 0.11
-Nodes (40): Deterministic entry execution boundary downstream of financial Risk., Append-only SQLite execution ledger and recovery anchors., evaluate_resume_readiness(), _is_fresh(), datetime, Protocol, Pure fail-closed startup readiness evaluation., RecoveryThesis (+32 more)
+### Community 52 - "ComponentFreshness"
+Cohesion: 0.06
+Nodes (22): evaluate_resume_readiness(), _is_fresh(), datetime, Protocol, Pure fail-closed startup readiness evaluation., RecoveryThesis, StrEnum, ResolutionStatus (+14 more)
 
 ### Community 53 - "Repository instructions"
 Cohesion: 0.50
 Nodes (3): Graphify, Repository instructions, Repository-start workflow
 
 ### Community 54 - "_context"
-Cohesion: 0.17
-Nodes (36): default_demo_position_management_policy(), evaluate_position(), Return conservative deterministic demo defaults, not optimized strategy truth., Evaluate one open position without mutating state or invoking execution…, _broker_constraints(), _context(), _fresh(), _intent() (+28 more)
+Cohesion: 0.16
+Nodes (39): ReconciliationKind, ResumeStatus, default_demo_position_management_policy(), evaluate_position(), Return conservative deterministic demo defaults, not optimized strategy truth., Evaluate one open position without mutating state or invoking execution…, _broker_constraints(), _context() (+31 more)
 
 ### Community 55 - "orchestration/contracts.py"
-Cohesion: 0.18
-Nodes (16): load_runtime_config(), BaseModel, Path, Strict operational configuration for the Phase 7 runtime service., RuntimeConfig, OutcomeCount, StrEnum, Strict orchestration-only contracts for the shared Phase 7 runtime. (+8 more)
+Cohesion: 0.14
+Nodes (22): load_runtime_config(), BaseModel, Path, Strict operational configuration for the Phase 7 runtime service., RuntimeConfig, DecisionCycle, OutcomeCount, BaseModel (+14 more)
 
 ### Community 68 - "evaluate_discipline"
 Cohesion: 0.26
@@ -440,7 +419,7 @@ Nodes (34): default_demo_discipline_policy(), evaluate_discipline(), Apply behav
 
 ### Community 69 - "runner.py"
 Cohesion: 0.11
-Nodes (32): file_hash(), Any, Path, Atomic, hash-verified Phase 5 development reports., verify_development_run(), write_development_manifest(), write_json_atomic(), write_text_atomic() (+24 more)
+Nodes (30): file_hash(), Any, Path, Atomic, hash-verified Phase 5 development reports., verify_development_run(), write_development_manifest(), write_json_atomic(), write_text_atomic() (+22 more)
 
 ### Community 70 - "Tool-Augmented Agentic Architecture"
 Cohesion: 0.09
@@ -459,80 +438,80 @@ Cohesion: 0.15
 Nodes (12): ExecutionInstruction, MarketRegime, MasterDecision, BaseModel, datetime, field_validator, model_validator, StrEnum (+4 more)
 
 ### Community 74 - "test_execution_boundary.py"
-Cohesion: 0.11
-Nodes (46): RuntimeError, Submission may have reached the broker and requires reconciliation., UnknownSubmissionState, build_execution_intent(), default_execution_policy(), RiskContext, Pure construction of provenance-bound execution intents., Return the conservative, execution-disabled baseline policy. (+38 more)
+Cohesion: 0.20
+Nodes (29): RuntimeError, Submission may have reached the broker and requires reconciliation., UnknownSubmissionState, _adapter(), _intent(), _observation(), _policy(), parametrize (+21 more)
 
 ### Community 75 - "OperatorControls"
-Cohesion: 0.29
-Nodes (3): OperatorControls, Monotonic operator gates: callers cannot use this contract to bypass safety., test_operator_controls_only_become_more_conservative()
+Cohesion: 0.22
+Nodes (5): OperatorControls, Monotonic operator gates: callers cannot use this contract to bypass safety., DecisionCycleProcessor, datetime, test_operator_controls_only_become_more_conservative()
 
 ### Community 76 - "MasterProposal"
 Cohesion: 0.15
 Nodes (32): EvidenceDisposition, FusionPolicy, FusionReason, MasterModel, MasterProposal, BaseModel, model_validator, StrEnum (+24 more)
 
-### Community 77 - "snapshot.py"
-Cohesion: 0.20
-Nodes (22): BrokerObjectKind, MT5PersistedIntentLink, MT5SnapshotError, A broker snapshot could not be acquired without guessing., _canonical_links(), _epoch_seconds(), MT5BrokerSnapshotProvider, _optional_float() (+14 more)
+### Community 77 - "MT5SnapshotError"
+Cohesion: 0.23
+Nodes (15): MT5SnapshotError, A broker snapshot could not be acquired without guessing., _epoch_seconds(), MT5BrokerSnapshotProvider, _optional_float(), _optional_int(), _optional_price(), _optional_str() (+7 more)
 
 ### Community 78 - "SQLiteRuntimeJournal"
-Cohesion: 0.18
-Nodes (7): Connection, Path, Small additive SQLite implementation outside the pure decision kernel., Flush committed WAL content without changing semantic journal history., SQLiteRuntimeJournal, JournalEventSource, Canonical event source reconstructed from append-only journal records.
+Cohesion: 0.14
+Nodes (15): Connection, Path, Small additive SQLite implementation outside the pure decision kernel., Flush committed WAL content without changing semantic journal history., SQLiteRuntimeJournal, JournalEventSource, Canonical event source reconstructed from append-only journal records., _event() (+7 more)
 
-### Community 79 - "datetime"
-Cohesion: 0.22
-Nodes (4): datetime, Return the current instant in UTC., Live clock backed by the host system clock., SystemUTCClock
+### Community 79 - "ensure_utc"
+Cohesion: 0.17
+Nodes (10): ensure_utc(), datetime, Protocol, UTC clocks shared by live processing and deterministic replay., Reject naive timestamps and return a normalized UTC timestamp., Clock contract used outside the pure reducer., Return the current instant in UTC., Live clock backed by the host system clock. (+2 more)
 
-### Community 80 - "test_feature_formulas.py"
-Cohesion: 0.23
-Nodes (11): skipif, money_flow_index(), Any, DataFrame, volume_features(), fixture(), DataFrame, test_bollinger_population_std_and_realized_volatility() (+3 more)
+### Community 80 - "preflight.py"
+Cohesion: 0.21
+Nodes (17): The transport failed before submission could be accepted., TransportFailure, _account_mode(), _float_value(), _int_value(), MT5EntryPreflight, _positive_float(), datetime (+9 more)
 
 ### Community 81 - "discipline/__init__.py"
-Cohesion: 0.18
-Nodes (23): DisciplineContext, DisciplineCounters, DisciplineModel, DisciplineOutcome, DisciplinePolicy, DisciplinePosition, DisciplineReason, DisciplineResult (+15 more)
+Cohesion: 0.16
+Nodes (26): DisciplineContext, DisciplineCounters, DisciplineModel, DisciplineOutcome, DisciplinePolicy, DisciplinePosition, DisciplineReason, DisciplineResult (+18 more)
 
 ### Community 82 - "reflection/__init__.py"
-Cohesion: 0.14
-Nodes (50): AcceptanceCriterion, CandidateKind, CriterionComparator, CriterionOutcome, CriterionOutcomeStatus, CriterionRole, EvaluationAggregateOutcome, FinalOOSPolicy (+42 more)
+Cohesion: 0.11
+Nodes (57): Small SQLite adapter with transactional migrations and PostgreSQL-friendly SQL…, BaseModel, ReflectionModel, AcceptanceCriterion, CandidateKind, CriterionComparator, CriterionOutcome, CriterionOutcomeStatus (+49 more)
 
 ### Community 83 - "Global Constraints"
 Cohesion: 0.25
 Nodes (7): Global Constraints, Phase 7 Task 9 Demo Runtime Orchestration Implementation Plan, Task 1: Runtime configuration, modes, status, and operator controls, Task 2: Startup recovery and fail-closed readiness, Task 3: One shared event/decision/feedback path, Task 4: Graceful shutdown and configuration factory, Task 5: Documentation and final gate
 
 ### Community 84 - "Database"
-Cohesion: 0.15
-Nodes (8): main(), Database, Connection, Path, Path, Path, Path, Path
+Cohesion: 0.11
+Nodes (10): main(), Database, Connection, Path, Path, Path, Path, Path (+2 more)
 
-### Community 85 - "processor.py"
-Cohesion: 0.17
-Nodes (29): Concrete composition of existing deterministic Phase 7 decision boundaries., PositionActionContext, PositionActionModel, PositionActionPolicy, PositionActionReason, PositionActionSafetyOutcome, PositionActionSafetyResult, PositionActionType (+21 more)
+### Community 85 - "position_actions/evaluator.py"
+Cohesion: 0.13
+Nodes (34): PositionActionContext, PositionActionModel, PositionActionPolicy, PositionActionReason, PositionActionSafetyOutcome, PositionActionSafetyResult, PositionActionType, BaseModel (+26 more)
 
 ### Community 86 - "Global Constraints"
 Cohesion: 0.20
 Nodes (9): Global Constraints, Phase 7 Task 5 Execution Recovery Implementation Plan, Task 1: Canonical broker refresh events, Task 2: Recovery and reconciliation contracts, Task 3: Append-only SQLite execution ledger, Task 4: Exact-linkage reconciliation, Task 5: Fail-closed safe-resume and continuity assessment, Task 6: Refresh orchestration and recovery checkpoints (+1 more)
 
 ### Community 87 - "ExecutionIntent"
-Cohesion: 0.12
-Nodes (24): DemoExecutionAdapter, ExecutionAdapter, ExecutionLedger, ExecutionTransport, InMemoryExecutionLedger, datetime, Protocol, Demo-safe execution adapter boundary with explicit idempotency semantics. (+16 more)
+Cohesion: 0.13
+Nodes (16): DemoExecutionAdapter, ExecutionAdapter, ExecutionLedger, InMemoryExecutionLedger, datetime, Protocol, Process one immutable intent idempotently., Tiny ledger reference implementation; persistent ports can implement the… (+8 more)
 
 ### Community 88 - "folds.py"
-Cohesion: 0.19
-Nodes (16): ProbabilityCalibrator, ndarray, Validation-only probability calibration without OOS access., _aggregate_fold_metrics(), completed_fold_summary(), DevelopmentFoldResult, fold_identity(), Any (+8 more)
+Cohesion: 0.10
+Nodes (32): chronological_split(), IndexRange, BaseModel, Path, Deterministic chronological, purged, embargoed split definitions., SplitFold, SplitManifest, walk_forward_splits() (+24 more)
 
 ### Community 89 - "test_agent_tools.py"
-Cohesion: 0.17
-Nodes (21): PredictiveModelEvidenceProvider, Protocol, _ExplodingTool, _FailingProvider, _freshness(), _input(), Any, datetime (+13 more)
+Cohesion: 0.11
+Nodes (25): PredictiveModelEvidenceProvider, Any, Protocol, QuantAgentEvidenceProvider, Return label-to-probability facts without a trading decision., Narrow adapter around the existing frozen Phase 4 QuantAgent., _ExplodingTool, _FailingProvider (+17 more)
 
 ### Community 90 - "Phase 7 deterministic runtime orchestration"
 Cohesion: 0.33
 Nodes (5): Event and mutation sequence, Modes, Phase 7 deterministic runtime orchestration, Shutdown and replay output, Startup and recovery
 
 ### Community 91 - "_context"
-Cohesion: 0.16
-Nodes (33): default_position_action_policy(), Return conservative deterministic V1 safety defaults., PositionSide, StrEnum, _context(), _evaluate(), _fresh(), _intent() (+25 more)
+Cohesion: 0.20
+Nodes (28): PositionSide, _context(), _evaluate(), _fresh(), _intent(), _management(), _position(), datetime (+20 more)
 
-### Community 92 - "ReflectionModel"
-Cohesion: 0.10
-Nodes (35): BaseModel, ReflectionModel, ProposalEvidenceGuard, ProposalGuardKind, ProposalTargetComponent, StrEnum, Immutable contracts for advisory improvement proposals., build_improvement_proposals() (+27 more)
+### Community 92 - "execution_boundary/__init__.py"
+Cohesion: 0.21
+Nodes (18): Demo-safe execution adapter boundary with explicit idempotency semantics., build_execution_intent(), default_execution_policy(), Pure construction of provenance-bound execution intents., Return the conservative, execution-disabled baseline policy., Carry a fully linked Risk PASS into execution without changing it., ExecutionAccountMode, ExecutionMode (+10 more)
 
 ### Community 93 - "Global Constraints"
 Cohesion: 0.29
@@ -543,20 +522,20 @@ Cohesion: 0.12
 Nodes (6): FakeMT5Module, test_gateway_initialization_failure_is_structured(), test_gateway_is_lazy_and_normalizes_external_named_tuples(), test_gateway_normalizes_check_send_and_constants(), test_gateway_passes_operational_terminal_path_without_semantic_identity(), test_symbol_mapping_is_explicit_auditable_and_deterministic()
 
 ### Community 95 - "evidence"
-Cohesion: 0.15
-Nodes (21): EvidenceKernel, Restore committed semantic state before the next event is processed., Reduce an event, resolve bounded facts, and update specialists in fixed order., evidence(), datetime, parametrize, test_abstention_is_explicit_and_has_no_direction(), test_agent_evidence_has_no_execution_authorization_fields() (+13 more)
+Cohesion: 0.22
+Nodes (18): evidence(), datetime, parametrize, test_abstention_is_explicit_and_has_no_direction(), test_agent_evidence_has_no_execution_authorization_fields(), test_agent_evidence_identity_is_deterministic_and_round_trips(), test_agent_input_binds_tools_without_exposing_account_state(), test_agent_input_preserves_non_available_tool_semantics() (+10 more)
 
 ### Community 96 - "features/analysis.py"
-Cohesion: 0.25
-Nodes (17): correlation_matrix(), duplicate_features(), feature_group_ablations(), feature_stability(), FeatureQuality, highly_correlated_features(), missing_value_rate(), _optional_float() (+9 more)
+Cohesion: 0.13
+Nodes (27): correlation_matrix(), duplicate_features(), feature_group_ablations(), feature_stability(), FeatureQuality, highly_correlated_features(), missing_value_rate(), _optional_float() (+19 more)
 
 ### Community 98 - "SQLiteImprovementProposalStore"
-Cohesion: 0.12
-Nodes (37): Small SQLite adapter with transactional migrations and PostgreSQL-friendly SQL…, _build(), _emit(), handle_proposal_command(), _history(), _latest(), _policy(), Any (+29 more)
+Cohesion: 0.10
+Nodes (45): _build(), _emit(), handle_proposal_command(), _history(), _latest(), _policy(), Namespace, Path (+37 more)
 
-### Community 99 - "SnapshotGateway"
-Cohesion: 0.15
-Nodes (8): _provider(), SnapshotGateway, test_disconnected_terminal_returns_structured_snapshot_failure(), test_snapshot_creates_canonical_events_and_reduces_through_shared_path(), test_snapshot_does_not_mutate_shared_state_or_call_broker_transport(), test_snapshot_exact_persisted_ticket_link_rebinds_to_canonical_object(), test_snapshot_linkage_never_fuzzy_matches_missing_ticket(), test_snapshot_maps_account_market_books_exposure_and_constraints()
+### Community 99 - "mt5/__init__.py"
+Cohesion: 0.11
+Nodes (12): MT5Constants, MT5PersistedIntentLink, Narrow contracts isolating the optional MetaTrader5 package., Optional, demo-safe MetaTrader5 gateway and adapters., _constants(), _provider(), SnapshotGateway, test_disconnected_terminal_returns_structured_snapshot_failure() (+4 more)
 
 ### Community 101 - "Phase 8 Task 3 Deterministic Weekly Reflection and Pattern Lifecycle Design"
 Cohesion: 0.13
@@ -568,59 +547,59 @@ Nodes (7): Contract design, Documentation and graph, Journal integration, Phase 
 
 ### Community 103 - "MT5Gateway"
 Cohesion: 0.07
-Nodes (38): The transport failed before submission could be accepted., TransportFailure, MT5Gateway, MT5SymbolMapping, Protocol, Narrow contracts isolating the optional MetaTrader5 package., _float_value(), _int_value() (+30 more)
+Nodes (22): ExecutionTransport, Submit an already approved intent to the execution transport., BrokerExecutionReport, MT5Gateway, MT5SymbolMapping, BaseModel, Protocol, _float_value() (+14 more)
 
 ### Community 104 - "PositionGateway"
-Cohesion: 0.16
-Nodes (13): _adapter(), _intent(), PositionGateway, parametrize, test_close_is_exact_full_close_not_reversal(), test_disabled_is_zero_touch_and_dry_run_checks_without_send(), test_exact_ticket_volume_and_stop_are_revalidated_before_send(), test_modify_stop_preserves_ticket_tp_and_cannot_increase_exposure() (+5 more)
+Cohesion: 0.15
+Nodes (14): _adapter(), _constants(), _intent(), PositionGateway, parametrize, test_close_is_exact_full_close_not_reversal(), test_disabled_is_zero_touch_and_dry_run_checks_without_send(), test_exact_ticket_volume_and_stop_are_revalidated_before_send() (+6 more)
 
-### Community 105 - "ReplayClock"
-Cohesion: 0.37
-Nodes (17): Explicitly advanced deterministic replay clock., ReplayClock, _event(), _kernel(), datetime, _scenario_transition(), _snapshot(), test_duplicate_event_is_journaled_without_second_decision_record() (+9 more)
+### Community 105 - "runtime/journal.py"
+Cohesion: 0.07
+Nodes (49): Collection, ScenarioTransition, Explicitly advanced deterministic replay clock., ReplayClock, JournalEntry, JournalOutcome, JournalOutcomeStatus, JournalRecord (+41 more)
 
 ### Community 106 - "Position action safety"
 Cohesion: 0.40
 Nodes (4): Journal and transport boundary, Position action safety, Safety behavior, V1 contracts
 
-### Community 108 - "daily.py"
-Cohesion: 0.21
-Nodes (28): FindingCategory, FindingSignal, MetricFact, StrEnum, Immutable content-addressed contracts for deterministic daily reflection., ReflectionFinding, SampleGuardRecord, SampleGuardStatus (+20 more)
+### Community 107 - "position.py"
+Cohesion: 0.33
+Nodes (9): _float_value(), _int_value(), _optional_close(), _optional_price(), _positive_int(), Demo-only MetaTrader 5 transport for Task 7 position-action intents., _required_positive(), _truthy() (+1 more)
 
 ### Community 109 - "Signal"
 Cohesion: 0.35
 Nodes (16): Signal, _contribution(), _discipline(), _evidence(), _intent(), _master(), _of_type(), _result() (+8 more)
 
-### Community 110 - "RuntimeStreamRunner"
-Cohesion: 0.15
-Nodes (9): JournalSemantic, Feed one source/clock adapter through the unchanged shared kernel., Expose the immutable current state for orchestration and diagnostics., Restore durable thesis continuity before accepting a new event., Restore reducer cursors and specialist memory before event intake., Apply a state refresh while preserving specialist memory unchanged., RuntimeStreamRunner, SemanticTraceStep (+1 more)
+### Community 110 - "QuantAgent"
+Cohesion: 0.40
+Nodes (6): Any, datetime, ndarray, Series, QuantAgent, AgentPrediction
 
 ### Community 111 - "datasets/__init__.py"
-Cohesion: 0.16
-Nodes (20): DatasetBuildResult, Path, write_dataset(), DatasetBuildConfig, BaseModel, RowPolicy, SplitPolicy, build() (+12 more)
+Cohesion: 0.15
+Nodes (21): DatasetBuildResult, Path, write_dataset(), DatasetBuildConfig, BaseModel, RowPolicy, SplitPolicy, build() (+13 more)
 
 ### Community 112 - "LabelDefinition"
 Cohesion: 0.16
 Nodes (23): compare_label_definitions(), label_balance(), Any, DataFrame, Series, Label balance and definition-sensitivity reporting; never resamples data., LabelDefinition, BaseModel (+15 more)
 
-### Community 113 - "session_features"
-Cohesion: 0.23
-Nodes (10): _local_window(), Any, DataFrame, Series, DST-aware session features. Source timestamps are interpreted as UTC., session_features(), test_london_and_new_york_dst_transitions(), test_manifest_is_reproducible_and_complete() (+2 more)
+### Community 113 - "build_mt5_dataset.py"
+Cohesion: 0.31
+Nodes (8): HistoryBuildConfig, _load(), main(), _mapping(), Any, BaseModel, Path, Explicit user-run MT5 multi-timeframe download and immutable dataset build.
 
-### Community 114 - "test_experience_contracts.py"
-Cohesion: 0.36
-Nodes (8): _decision(), _provenance(), test_actual_trade_cannot_be_marked_simulated(), test_counterfactual_is_separate_and_requires_explicit_assumptions(), test_equivalent_decision_content_has_deterministic_identity(), test_experience_rejects_naive_timestamp(), test_trade_preserves_none_separately_from_numeric_zero(), _trade()
+### Community 114 - "ExperienceProvenance"
+Cohesion: 0.16
+Nodes (14): ExperienceProvenance, model_validator, _rejection(), test_show_and_summary_cli_emit_json(), test_summary_is_descriptive_and_preserves_unknowns(), _trade(), _decision(), _provenance() (+6 more)
 
 ### Community 115 - "SQLiteProposalEvaluationStore"
-Cohesion: 0.14
-Nodes (22): _build_plan(), _emit(), handle_evaluation_command(), _input(), Any, Namespace, Path, CLI handlers for preregistered proposal evaluation evidence. (+14 more)
+Cohesion: 0.15
+Nodes (19): _build_plan(), _emit(), handle_evaluation_command(), _input(), Namespace, Path, CLI handlers for preregistered proposal evaluation evidence., _record_decision() (+11 more)
 
 ### Community 116 - "Global Constraints"
 Cohesion: 0.22
 Nodes (8): Global Constraints, Phase 8 Task 1 Experience Store Implementation Plan, Task 1: Experience contracts, Task 2: Append-only SQLite store, Task 3: Durable replay outcome artifact, Task 4: Exact-link outcome attribution, Task 5: Descriptive analytics and CLI, Task 6: Baseline ingestion and final verification
 
-### Community 117 - "CausalFeatureSnapshot"
-Cohesion: 0.09
-Nodes (9): RuntimeRunner, CausalFeatureSnapshot, Any, FactScalar, field_validator, model_validator, Protocol, Return causal distributional evidence without interpreting direction. (+1 more)
+### Community 117 - "Phase 8 Task 6 Deterministic Evaluation Execution Adapter Design"
+Cohesion: 0.22
+Nodes (8): Append-only persistence, CLI, Contracts, Exact linkage and execution, Phase 8 Task 6 Deterministic Evaluation Execution Adapter Design, Result artifact and determinism, Scope, Validation
 
 ### Community 118 - "Phase 8 Task 1 Experience Store Design"
 Cohesion: 0.22
@@ -632,47 +611,47 @@ Nodes (8): Boundaries, Deferred work, Idempotency and persistence, Phase 7 Task 
 
 ### Community 120 - "EntryGateway"
 Cohesion: 0.14
-Nodes (17): _adapter(), EntryGateway, _intent(), _policy(), datetime, Exception, parametrize, test_broker_partial_fill_maps_without_resubmitting_remainder() (+9 more)
+Nodes (18): _adapter(), _constants(), EntryGateway, _intent(), _policy(), datetime, Exception, parametrize (+10 more)
 
 ### Community 121 - "Global constraints"
 Cohesion: 0.25
 Nodes (7): Global constraints, Phase 7 Task 8 Direct MT5 Transport Implementation Plan, Task 1: Gateway and normalized MT5 contracts, Task 2: Canonical broker snapshots, Task 3: Entry transport and complete dry-run preflight, Task 4: Durable position-action transport, Task 5: Documentation, optional read-only smoke, and final verification
 
 ### Community 122 - "LocalModelRegistry"
-Cohesion: 0.25
-Nodes (8): LocalModelRegistry, ModelState, Any, BaseModel, Path, StrEnum, Explicit local lifecycle registry; promotion is never automatic., RegistryEntry
+Cohesion: 0.38
+Nodes (5): LocalModelRegistry, Any, BaseModel, Path, RegistryEntry
 
-### Community 123 - "position_management/contracts.py"
-Cohesion: 0.20
-Nodes (19): MissingEvidenceBehavior, PositionManagementContext, PositionManagementModel, PositionManagementOutcome, PositionManagementPolicy, PositionManagementReason, PositionManagementResult, BaseModel (+11 more)
+### Community 123 - "processor.py"
+Cohesion: 0.18
+Nodes (19): Concrete composition of existing deterministic Phase 7 decision boundaries., MissingEvidenceBehavior, PositionManagementContext, PositionManagementModel, PositionManagementOutcome, PositionManagementPolicy, PositionManagementReason, PositionManagementResult (+11 more)
 
 ### Community 124 - "Phase 8 Task 4 Advisory Improvement Proposal Design"
 Cohesion: 0.20
 Nodes (9): Append-only persistence and supersession, CLI, Contracts and identity, Deterministic advisory content, Eligibility, Phase 8 Task 4 Advisory Improvement Proposal Design, Proposal lifecycle, Scope (+1 more)
 
-### Community 125 - "ComponentFreshness"
-Cohesion: 0.17
-Nodes (4): _unknown_freshness(), ComponentFreshness, model_validator, _fresh()
+### Community 125 - "Global Constraints"
+Cohesion: 0.25
+Nodes (7): Global Constraints, Phase 8 Task 6 Deterministic Evaluation Execution Adapter Implementation Plan, Task 1: Execution and unavailable-observation contracts, Task 2: Closed deterministic metric-sample adapter, Task 3: Append-only request and audit persistence, Task 4: Execution service and idempotent recovery, Task 5: CLI, documentation, and final verification
 
-### Community 126 - "ExperienceProvenance"
-Cohesion: 0.33
-Nodes (12): ExperienceProvenance, _agent(), _findings(), _management(), _provenance(), datetime, _rejection(), test_agent_position_and_runtime_anomaly_findings_use_exact_daily_sources() (+4 more)
+### Community 126 - "test_daily_reflection.py"
+Cohesion: 0.39
+Nodes (11): _agent(), _findings(), _management(), _provenance(), datetime, _rejection(), test_agent_position_and_runtime_anomaly_findings_use_exact_daily_sources(), test_daily_aggregation_detects_confidence_excursion_and_rejection_patterns() (+3 more)
 
 ### Community 127 - "Global Constraints"
 Cohesion: 0.25
 Nodes (7): Global Constraints, Phase 8 Task 3 Weekly Reflection and Pattern Lifecycle Implementation Plan, Task 1: Weekly contracts and semantic identities, Task 2: Pure weekly aggregation and exact provenance, Task 3: Append-only weekly and lifecycle persistence, Task 4: Weekly CLI integration, Task 5: Corrected one-month baseline and durable context
 
-### Community 128 - "test_foundation.py"
-Cohesion: 0.11
-Nodes (13): main(), clean_candles(), DataFrame, Normalize types/order and deterministically keep the last duplicate bar., DatasetManifest, BaseModel, Path, candles() (+5 more)
+### Community 128 - "DatasetManifest"
+Cohesion: 0.25
+Nodes (4): DatasetManifest, BaseModel, Path, PersistenceAndConfigTests
 
-### Community 129 - "models.py"
-Cohesion: 0.22
-Nodes (7): build_model(), MajorityClassifier, ProbabilisticClassifier, Any, ndarray, Protocol, Simple baselines and lazy optional model adapters.
+### Community 129 - "Deterministic Evaluation Execution"
+Cohesion: 0.33
+Nodes (5): Controlled CLI workflow, Deterministic Evaluation Execution, Identity and inputs, Persistence and retry, Protected Final OOS
 
-### Community 130 - "PositionState"
-Cohesion: 0.18
-Nodes (21): PositionState, account(), feedback(), freshness(), market(), order(), position(), datetime (+13 more)
+### Community 130 - "test_runtime_state.py"
+Cohesion: 0.20
+Nodes (20): account(), feedback(), freshness(), market(), order(), position(), datetime, parametrize (+12 more)
 
 ### Community 131 - "Phase 8 Task 2 Deterministic Daily Reflection Design"
 Cohesion: 0.22
@@ -682,41 +661,29 @@ Nodes (8): Causal period rule, CLI, Contracts, Deterministic diagnostics, Persis
 Cohesion: 0.25
 Nodes (7): Global Constraints, Phase 8 Task 2 Deterministic Daily Reflection Implementation Plan, Task 1: Reflection contracts and policy, Task 2: Pure daily aggregation, Task 3: Append-only reflection persistence, Task 4: Build orchestration and CLI, Task 5: Baseline validation and durable context
 
-### Community 133 - "ExperienceType"
-Cohesion: 0.15
-Nodes (16): AttributionSources, _deduplicate(), ExperienceBuild, _index(), BaseModel, Connection, Experience, Path (+8 more)
-
-### Community 134 - "run_event_stream"
-Cohesion: 0.22
-Nodes (9): Collection, ScenarioTransition, Protocol, Clock contract used outside the pure reducer., RuntimeClock, BaseModel, Run an adapter-provided stream through the one shared semantic path., run_event_stream() (+1 more)
+### Community 133 - "AttributionSources"
+Cohesion: 0.20
+Nodes (12): AttributionSources, _deduplicate(), _index(), Connection, Path, T, _read_only(), _emit() (+4 more)
 
 ### Community 135 - "Deterministic Daily Reflection"
 Cohesion: 0.33
 Nodes (5): Causal contract, Deterministic Daily Reflection, Diagnostic families, Persistence, Verified baseline
 
 ### Community 136 - "Phase 3 dataset contract"
-Cohesion: 0.33
+Cohesion: 0.29
 Nodes (6): Commands, Missing rows, Phase 3 dataset contract, Reproducibility and separation, Splits, purge, and embargo, Storage and immutability
 
 ### Community 137 - "Global Constraints"
 Cohesion: 0.25
 Nodes (7): Global Constraints, Phase 8 Task 4 Advisory Improvement Proposal Implementation Plan, Task 1: Proposal contracts and identities, Task 2: Pure eligibility, provenance, and proposal construction, Task 3: Append-only proposal and lifecycle persistence, Task 4: CLI integration, Task 5: Unchanged baseline and durable context
 
-### Community 138 - "SplitManifest"
-Cohesion: 0.17
-Nodes (15): fit_on_training_only(), FitTransformComponent, Any, DataFrame, Protocol, Guards that force future preprocessing components to fit on training rows only., chronological_split(), IndexRange (+7 more)
-
-### Community 139 - "test_runtime_journal.py"
-Cohesion: 0.50
-Nodes (7): _event(), datetime, _snapshot(), test_feature_snapshots_can_be_recovered_by_event_without_mutation(), test_journal_is_append_only_and_keeps_deterministic_order(), test_journal_replay_orders_events_by_causal_availability(), test_journal_round_trip_preserves_typed_semantic_identity()
-
-### Community 140 - "DecisionCycle"
-Cohesion: 0.43
-Nodes (5): DecisionCycle, BaseModel, Auditable classifications emitted by the existing decision boundaries., RuntimeRunSummary, test_summary_is_deterministic_and_counts_existing_results()
+### Community 138 - "datasets/preprocessing.py"
+Cohesion: 0.36
+Nodes (6): fit_on_training_only(), FitTransformComponent, Any, DataFrame, Protocol, Guards that force future preprocessing components to fit on training rows only.
 
 ### Community 141 - "risk_boundary/evaluator.py"
-Cohesion: 0.26
-Nodes (17): BaseModel, StrEnum, Strict contracts for the deterministic financial Risk boundary., RiskBoundaryModel, RiskContext, RiskOutcome, RiskPolicy, RiskReason (+9 more)
+Cohesion: 0.16
+Nodes (22): BaseModel, StrEnum, RiskBoundaryModel, RiskContext, RiskPolicy, RiskReason, RiskResult, _deduplicate() (+14 more)
 
 ### Community 142 - "Deterministic Weekly Reflection and Pattern Lifecycle"
 Cohesion: 0.33
@@ -726,29 +693,17 @@ Nodes (5): Deterministic Weekly Reflection and Pattern Lifecycle, Identity, Know
 Cohesion: 0.33
 Nodes (5): Advisory Improvement Proposals, Eligibility and provenance, Identity and supersession, Lifecycle, Verified baseline
 
-### Community 144 - "test_experience_analytics_cli.py"
-Cohesion: 0.80
-Nodes (4): _rejection(), test_show_and_summary_cli_emit_json(), test_summary_is_descriptive_and_preserves_unknowns(), _trade()
-
-### Community 145 - "breakout_features"
-Cohesion: 0.40
-Nodes (4): breakout_features(), Any, DataFrame, Donchian and breakout-state candidates using only past/current bars.
-
-### Community 146 - ".evaluate"
-Cohesion: 0.25
-Nodes (6): EntryContextProvider, PositionActionContextProvider, PositionContextProvider, DeterministicDecisionProcessor, Invoke Master → Discipline → Risk and existing-position boundaries in fixed…, Compose existing pure functions; adapters provide causal context only.
-
-### Community 147 - "price_action_features"
+### Community 146 - ".__init__"
 Cohesion: 0.50
-Nodes (3): price_action_features(), Any, DataFrame
+Nodes (3): EntryContextProvider, PositionActionContextProvider, PositionContextProvider
 
 ### Community 148 - "MetaTrader5Gateway"
-Cohesion: 0.24
-Nodes (4): _mapping(), _mappings(), MetaTrader5Gateway, Operational gateway; paths and process state are never semantic identity.
+Cohesion: 0.18
+Nodes (9): MT5ConnectionError, RuntimeError, The terminal package or connected terminal is unavailable., _load_mt5(), _mapping(), _mappings(), MetaTrader5Gateway, Lazy concrete wrapper around the Windows-only MetaTrader5 package. (+1 more)
 
 ### Community 149 - "canonical_hash"
 Cohesion: 0.18
-Nodes (3): model_validator, canonical_hash(), Any
+Nodes (4): model_validator, model_validator, canonical_hash(), Any
 
 ### Community 150 - "test_quant_development_runner.py"
 Cohesion: 0.23
@@ -758,54 +713,34 @@ Nodes (13): compare_runs(), Any, Path, Compare completed development runs withou
 Cohesion: 0.17
 Nodes (11): Append-only persistence, Candidate contract, CLI, Evaluation result, Identity and serialization, Operator decision boundary, Phase 8 Task 5 Proposal Evaluation Contract and Persistence Design, Preregistered plan (+3 more)
 
-### Community 154 - "replay.py"
-Cohesion: 0.26
-Nodes (8): JournalOutcome, JournalOutcomeStatus, JournalRecordType, StrEnum, Exception, One shared event-stream harness for live-like and replay adapters., _reason_code(), test_rejection_outcome_is_structured_and_does_not_replace_event()
-
-### Community 156 - "ContractAndRiskTests"
-Cohesion: 0.36
-Nodes (7): calculate_volume_lots(), Deterministic pre-trade veto and broker-specification position sizing., Size from broker specs and round down; return zero when minimum volume is…, RiskContext, RiskLimits, veto_reasons(), ContractAndRiskTests
-
 ### Community 157 - "Global Constraints"
 Cohesion: 0.25
 Nodes (7): Global Constraints, Phase 8 Task 5 Proposal Evaluation Contract and Persistence Implementation Plan, Task 1: Evaluation contracts and protected-OOS invariants, Task 2: Pure preregistration and result evaluation, Task 3: Append-only evaluation persistence, Task 4: Evaluation CLI without execution, Task 5: Documentation and final verification
-
-### Community 158 - "test_quant_development_config.py"
-Cohesion: 0.39
-Nodes (7): experiment_payload(), parametrize, Path, test_experiment_config_is_strict_and_content_addressed(), test_loader_resolves_paths_relative_to_config(), test_run_state_recovers_interrupted_run_and_preserves_identity(), test_tuning_config_rejects_any_oos_objective()
-
-### Community 159 - "MT5ConnectionError"
-Cohesion: 0.33
-Nodes (5): MT5ConnectionError, RuntimeError, The terminal package or connected terminal is unavailable., _load_mt5(), Lazy concrete wrapper around the Windows-only MetaTrader5 package.
-
-### Community 160 - "MT5Constants"
-Cohesion: 0.29
-Nodes (5): MT5Constants, BaseModel, _constants(), _constants(), _constants()
 
 ### Community 163 - "Proposal Evaluation"
 Cohesion: 0.40
 Nodes (4): CLI workflow, Governance boundary, Persistence and corrections, Proposal Evaluation
 
-### Community 167 - "EventSource"
-Cohesion: 0.40
-Nodes (4): EventSource, Protocol, Source of events already ordered for causal reduction., Yield events in canonical availability order.
+### Community 167 - "RuntimeEvent"
+Cohesion: 0.08
+Nodes (25): execution_result_to_runtime_event(), Bridge typed execution results into the shared Phase 6 runtime path., Convert actionable execution feedback; local NO_ACTION stays local., Deterministic composition service for the completed Phase 6/7 boundaries., position_action_result_to_runtime_event(), Dedicated append-only transport contracts for safe position actions., BaseModel, datetime (+17 more)
 
 ## Knowledge Gaps
-- **294 isolated node(s):** `adaptive-xauusd-trader`, `Repository-start workflow`, `Graphify`, `Current capabilities`, `Setup (Windows PowerShell)` (+289 more)
-  These have ≤1 connection - possible missing edges or undocumented components. (Counts symbols only; 914 node(s) total have ≤1 connection when file, concept and rationale nodes are included.)
-- **40 thin communities (<3 nodes) omitted from report** — run `graphify query` to explore isolated nodes.
+- **312 isolated node(s):** `adaptive-xauusd-trader`, `Repository-start workflow`, `Graphify`, `Current capabilities`, `Setup (Windows PowerShell)` (+307 more)
+  These have ≤1 connection - possible missing edges or undocumented components. (Counts symbols only; 952 node(s) total have ≤1 connection when file, concept and rationale nodes are included.)
+- **35 thin communities (<3 nodes) omitted from report** — run `graphify query` to explore isolated nodes.
 
 ## Suggested Questions
 _Questions this graph is uniquely positioned to answer:_
 
-- **Why does `canonical_hash()` connect `canonical_hash` to `test_foundation.py`, `ReflectionPolicy`, `PositionState`, `trainer.py`, `agents/__init__.py`, `development/config.py`, `SplitManifest`, `risk_boundary/evaluator.py`, `datasets/builder.py`, `.bind_identity`, `JournalRecord`, `versioning.py`, `dataset.py`, `RuntimeEvent`, `replay.py`, `kernel.py`, `ToolResult`, `model_validator`, `model_validator`, `model_validator`, `attribution.py`, `.normalize_validate_and_bind_identity`, `.normalize_validate_and_bind_identity`, `model_validator`, `.validate_and_bind_identity`, `.bind_identity`, `SQLiteExperienceStore`, `model_validator`, `.bind_identity`, `quant/config.py`, `.validate_and_bind_identity`, `.validate_and_bind_identity`, `runtime/journal.py`, `.normalize_and_bind_identity`, `execution_boundary/__init__.py`, `system.py`, `.validate_event`, `orchestration/contracts.py`, `.validate_and_bind_identity`, `.validate_and_bind_identity`, `runner.py`, `MasterProposal`, `discipline/__init__.py`, `reflection/__init__.py`, `processor.py`, `ExecutionIntent`, `folds.py`, `ReflectionModel`, `SQLiteImprovementProposalStore`, `model_validator`, `MT5Gateway`, `daily.py`, `SQLiteProposalEvaluationStore`, `CausalFeatureSnapshot`, `position_management/contracts.py`, `ComponentFreshness`?**
-  _High betweenness centrality (0.154) - this node is a cross-community bridge._
-- **Why does `Signal` connect `Signal` to `DailyReflection`, `ReflectionPolicy`, `trainer.py`, `test_runtime_orchestration.py`, `risk_boundary/evaluator.py`, `test_experience_analytics_cli.py`, `RuntimeEvent`, `ContractAndRiskTests`, `test_risk_boundary.py`, `SQLiteExecutionLedger`, `attribution.py`, `SQLiteExperienceStore`, `OutcomeAttributionBuilder`, `system.py`, `execution_boundary/__init__.py`, `_context`, `evaluate_discipline`, `schemas.py`, `test_execution_boundary.py`, `MasterProposal`, `discipline/__init__.py`, `processor.py`, `ExecutionIntent`, `_context`, `ReflectionModel`, `MT5Gateway`, `daily.py`, `test_experience_contracts.py`, `EntryGateway`, `ExperienceProvenance`?**
-  _High betweenness centrality (0.066) - this node is a cross-community bridge._
-- **Why does `RuntimeEvent` connect `RuntimeEvent` to `PositionState`, `agents/__init__.py`, `update_scenario`, `test_runtime_orchestration.py`, `test_runtime_journal.py`, `.evaluate`, `JournalRecord`, `replay.py`, `kernel.py`, `RuntimeOrchestrator`, `SQLiteExecutionLedger`, `timedelta`, `attribution.py`, `EventSource`, `OutcomeAttributionBuilder`, `test_evidence_kernel.py`, `runtime/journal.py`, `system.py`, `.validate_event`, `execution_boundary/__init__.py`, `test_execution_boundary.py`, `SQLiteRuntimeJournal`, `discipline/__init__.py`, `processor.py`, `test_agent_tools.py`, `evidence`, `ReplayClock`, `RuntimeStreamRunner`, `CausalFeatureSnapshot`?**
-  _High betweenness centrality (0.029) - this node is a cross-community bridge._
-- **Are the 160 inferred relationships involving `timedelta` (e.g. with `main()` and `_create_thesis()`) actually correct?**
-  _`timedelta` has 160 INFERRED edges - model-reasoned connections that need verification._
+- **Why does `canonical_hash()` connect `canonical_hash` to `weekly_contracts.py`, `labels/__init__.py`, `reflection/__main__.py`, `DatasetManifest`, `trainer.py`, `agents/__init__.py`, `development/config.py`, `datasets/builder.py`, `.bind_identity`, `.validate_and_bind_identity`, `SQLiteWeeklyReflectionStore`, `dataset.py`, `runtime/__init__.py`, `ToolResult`, `model_validator`, `model_validator`, `SQLiteExecutionLedger`, `model_validator`, `experience/__init__.py`, `.normalize_validate_and_bind_identity`, `RuntimeEvent`, `MetricScope`, `.normalize_validate_and_bind_identity`, `.bind_identity`, `SQLiteExperienceStore`, `attribution.py`, `.bind_identity`, `quant/config.py`, `model_validator`, `.validate_and_bind_identity`, `PositionActionIntent`, `system.py`, `.validate_event`, `.validate_and_bind_identity`, `.validate_and_bind_identity`, `orchestration/contracts.py`, `ComponentFreshness`, `runner.py`, `MasterProposal`, `discipline/__init__.py`, `reflection/__init__.py`, `folds.py`, `execution_boundary/__init__.py`, `SQLiteImprovementProposalStore`, `mt5/__init__.py`, `model_validator`, `runtime/journal.py`, `ExperienceProvenance`, `SQLiteProposalEvaluationStore`, `processor.py`?**
+  _High betweenness centrality (0.169) - this node is a cross-community bridge._
+- **Why does `Signal` connect `Signal` to `weekly_contracts.py`, `reflection/__main__.py`, `trainer.py`, `test_runtime_orchestration.py`, `risk_boundary/evaluator.py`, `runtime/__init__.py`, `test_risk_boundary.py`, `SQLiteExecutionLedger`, `experience/__init__.py`, `SQLiteExperienceStore`, `attribution.py`, `system.py`, `_context`, `evaluate_discipline`, `schemas.py`, `test_execution_boundary.py`, `MasterProposal`, `preflight.py`, `discipline/__init__.py`, `position_actions/evaluator.py`, `ExecutionIntent`, `_context`, `execution_boundary/__init__.py`, `QuantAgent`, `ExperienceProvenance`, `EntryGateway`, `test_daily_reflection.py`?**
+  _High betweenness centrality (0.051) - this node is a cross-community bridge._
+- **Why does `default_registry()` connect `default_registry` to `features/analysis.py`, `axq/features/registry.py`, `axq/config.py`, `system.py`, `datasets/builder.py`, `test_agent_tools.py`?**
+  _High betweenness centrality (0.025) - this node is a cross-community bridge._
+- **Are the 177 inferred relationships involving `timedelta` (e.g. with `main()` and `_create_thesis()`) actually correct?**
+  _`timedelta` has 177 INFERRED edges - model-reasoned connections that need verification._
 - **Are the 25 inferred relationships involving `RuntimeEvent` (e.g. with `AccountState` and `BrokerConstraints`) actually correct?**
   _`RuntimeEvent` has 25 INFERRED edges - model-reasoned connections that need verification._
 - **Are the 70 inferred relationships involving `Signal` (e.g. with `DisciplineOutcome` and `DisciplinePosition`) actually correct?**

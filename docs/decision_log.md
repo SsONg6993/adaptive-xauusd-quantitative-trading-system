@@ -334,3 +334,15 @@ do not silently rewrite earlier decisions.
   OOS observations are retained only for reporting and cannot influence selection, tuning,
   calibration, or acceptance. `ACCEPT_EVIDENCE`, `REJECT_EVIDENCE`, and `DEFER` never transition a
   proposal or mutate code, configuration, models, runtime, or deployment state.
+
+## 2026-09-11 — Evaluation execution is exact, deterministic, and Final-OOS blind
+
+- **Decision:** Execute an exact persisted proposal-evaluation plan only through a closed
+  `CANONICAL_METRIC_SAMPLES_V1` adapter over content-digested DEVELOPMENT/VALIDATION artifacts.
+  Preserve every preregistered Final OOS metric as unavailable without requesting its artifact.
+- **Reason:** Execution must not expand or retrospectively change the plan, and operational retry
+  times must not break content-addressed reproducibility or expose protected evidence.
+- **Consequence:** Request identity excludes `requested_at`; audit identity excludes `started_at`
+  and `completed_at`. Both remain strict-UTC audit facts. Equivalent semantic retries reuse exact
+  request/result/audit IDs and result bytes. Append-only audits confer no tuning, proposal
+  promotion, replay/challenger, deployment, runtime, or broker authority.

@@ -1,7 +1,7 @@
 # Adaptive XAUUSD Multi-Agent Trading System
 
 Production-oriented, local-first foundation for a measurable, tool-augmented multi-agent MT5 trading
-system. Phases 0–7 are complete and Phase 8 Tasks 1–4 are implemented on an isolated branch. There
+system. Phases 0–7 are complete and Phase 8 Tasks 1–6 are implemented on an isolated branch. There
 is no production-trained model,
 autonomous strategy, live execution EA, or claim of trading profitability.
 
@@ -64,7 +64,10 @@ autonomous strategy, live execution EA, or claim of trading profitability.
   supersession, and an independent append-only lifecycle. `VALIDATED` is evidence status only.
 - Preregistered proposal-evaluation contracts for explicitly promoted `CANDIDATE` proposals, with
   immutable candidate specs, protected Final OOS reporting, append-only evidence, and separate
-  non-promoting operator decisions. Task 5 never launches an evaluator or deploys a change.
+  non-promoting operator decisions.
+- A deterministic evaluation adapter for reviewed canonical DEVELOPMENT/VALIDATION metric samples,
+  with exact artifact digests, preregistered-only computation, explicit Final OOS withholding,
+  append-only execution audit, and content-stable retry reuse. It cannot tune or deploy a change.
 - SQLite WAL schema and transactional migrations, with PostgreSQL migration boundaries documented.
 - Dataset manifests, label definitions, immutable model metadata, JSON logging, YAML configuration,
   and deterministic risk-veto foundation.
@@ -79,6 +82,7 @@ Read [the architecture](docs/architecture.md), [agentic architecture](docs/agent
 [weekly reflection](docs/weekly_reflection.md),
 [improvement proposals](docs/improvement_proposals.md),
 [proposal evaluation](docs/proposal_evaluation.md),
+[evaluation execution](docs/evaluation_execution.md),
 and [runbook](docs/runbook.md) before running
 models. The exact user-run sequence is in
 [Phase 5 local runs](docs/phase5_local_runs.md).

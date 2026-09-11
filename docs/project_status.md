@@ -15,7 +15,7 @@ Last updated: 2026-09-11
 | Architecture migration | Tool-augmented agentic design + deterministic replay | APPROVED / DOCUMENTED |
 | 6 | Shared runtime state, agent contracts, deterministic kernel vertical slice | COMPLETE |
 | 7 | Master, Discipline, Risk, execution, recovery, position actions, replay validation | COMPLETE |
-| 8 | Controlled learning and attribution | IN PROGRESS — TASKS 1–3 COMPLETE |
+| 8 | Controlled learning and attribution | IN PROGRESS — TASKS 1–6 COMPLETE |
 | 9+ | Optional intelligence | NOT STARTED |
 
 Phases 0–4 established the local-first contracts, UTC market-data pipeline, causal versioned feature
@@ -48,6 +48,12 @@ Phase 8 Task 3 adds immutable ISO-week reflections, exact daily/Experience prove
 guarded success/failure observations, and an explicit append-only knowledge lifecycle. Its baseline
 contains four complete and one incomplete week, five success and 21 failure patterns, and no status
 promotion. Weekly output remains descriptive and cannot modify runtime or trading policy.
+
+Phase 8 Tasks 4–5 add guarded advisory Improvement Proposals and preregistered evaluation
+governance. Task 6 executes only exact stored plans over content-digested DEVELOPMENT/VALIDATION
+metric-sample artifacts through `CANONICAL_METRIC_SAMPLES_V1`. Final OOS remains structurally
+unavailable, completed semantic retries reuse exact result bytes, and no candidate is tuned,
+promoted, deployed, or connected to runtime.
 
 ## Verified state
 
@@ -178,6 +184,12 @@ cannot affect candidate acceptance, selection, tuning, or calibration. Every cor
 operator decision appends with explicit predecessor linkage. Task 5 contains no evaluator,
 challenger, replay, deployment, proposal promotion, or runtime mutation path.
 
+Phase 8 Task 6 adds immutable execution requests and completed audits around one deterministic,
+closed-set canonical metric-sample adapter. Requests bind the exact plan, candidate, seed,
+environment, and DEVELOPMENT/VALIDATION artifact IDs and byte digests. Operational timestamps are
+strict UTC but excluded from semantic identities. Preregistered Final OOS metrics remain present as
+`UNAVAILABLE` / `FINAL_OOS_NOT_ACCESSED` without opening a Final OOS artifact.
+
 ## Important risks
 
 - The prior real sample is tiny, class-imbalanced, and its OOS results have already been viewed.
@@ -192,15 +204,15 @@ challenger, replay, deployment, proposal promotion, or runtime mutation path.
 - Real-terminal demo mutation has not been exercised by automated validation; fake-gateway tests
   cover transport behavior without placing trades.
 - A production scheduler/service host, simulated fills/P&L, MQL5/IPC transport, automated resolution
-  of unknown broker outcomes, LLMs, vision, and proposal evaluation execution are absent.
+  of unknown broker outcomes, LLMs, vision, and general replay/challenger evaluators are absent.
 
 ## Working principle and next task
 
 Codex writes auditable local pipelines and runs bounded validation. The user runs serious training
-and large replays. Phase 8 Tasks 1–5 are isolated on `codex/phase-8-reflection-experience`; Task 5
-stops at preregistered evaluation semantics, supplied evidence, and explicit operator evidence
-decisions. A later separately approved task may execute a reviewed evaluation plan, but it must not
-change the plan retroactively or mutate production behavior implicitly.
+and large replays. Phase 8 Tasks 1–6 are isolated on `codex/phase-8-reflection-experience`; Task 6
+stops at deterministic execution of reviewed canonical metric samples. Any later replay/challenger
+runner must remain separately approved, plan-bound, and unable to change criteria retroactively or
+mutate production behavior implicitly.
 Future work must preserve the shared live/replay contracts and may not infer authority for
 continuous execution, live-money support, simulated brokerage, or later-phase intelligence.
 

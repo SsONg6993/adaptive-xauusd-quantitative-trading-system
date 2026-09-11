@@ -34,6 +34,20 @@ from axq.reflection.evaluation_contracts import (
 )
 from axq.reflection.evaluation_store import SQLiteProposalEvaluationStore
 from axq.reflection.evaluations import build_evaluation_plan, build_evaluation_result
+from axq.reflection.execution_contracts import (
+    CanonicalMetricSampleArtifact,
+    EvaluationAdapterKind,
+    EvaluationExecutionAudit,
+    EvaluationExecutionRequest,
+    EvaluationExecutionStatus,
+    ExecutionInputArtifactRef,
+    MetricSampleSeries,
+)
+from axq.reflection.execution_service import (
+    EvaluationExecutionOutcome,
+    execute_evaluation_request,
+)
+from axq.reflection.execution_store import SQLiteEvaluationExecutionStore
 from axq.reflection.proposal_contracts import (
     ImprovementProposal,
     ImprovementProposalPolicy,
@@ -100,6 +114,16 @@ __all__ = [
     "SQLiteProposalEvaluationStore",
     "build_evaluation_plan",
     "build_evaluation_result",
+    "CanonicalMetricSampleArtifact",
+    "EvaluationAdapterKind",
+    "EvaluationExecutionAudit",
+    "EvaluationExecutionRequest",
+    "EvaluationExecutionStatus",
+    "ExecutionInputArtifactRef",
+    "MetricSampleSeries",
+    "EvaluationExecutionOutcome",
+    "execute_evaluation_request",
+    "SQLiteEvaluationExecutionStore",
     "ImprovementProposal",
     "ImprovementProposalPolicy",
     "ProposalEvidenceGuard",

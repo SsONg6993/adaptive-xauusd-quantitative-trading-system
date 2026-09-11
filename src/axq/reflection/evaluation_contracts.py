@@ -222,6 +222,7 @@ class MetricObservation(ReflectionModel):
     sample_count: int = Field(ge=0)
     evidence_refs: tuple[SemanticArtifactRef, ...] = Field(min_length=1)
     available_at: UTCDateTime
+    reason_code: str | None = None
 
     @model_validator(mode="after")
     def normalize_validate_and_bind_identity(self) -> MetricObservation:
@@ -229,6 +230,12 @@ class MetricObservation(ReflectionModel):
             raise ValueError("available metric observation requires a value")
         if self.status is MetricObservationStatus.UNAVAILABLE and self.value is not None:
             raise ValueError("unavailable metric observation cannot have a value")
+        if self.status is MetricObservationStatus.AVAILABLE and self.reason_code is not None:
+            raise ValueError("available metric observation cannot have a reason code")
+        if self.status is MetricObservationStatus.UNAVAILABLE and not self.reason_code:
+            raise ValueError("unavailable metric observation requires a reason code")
+        if self.status is MetricObservationStatus.UNAVAILABLE and self.sample_count != 0:
+            raise ValueError("unavailable metric observation must have zero samples")
         refs = tuple(sorted(set(self.evidence_refs), key=lambda item: item.semantic_id))
         if len({item.semantic_id for item in refs}) != len(refs):
             raise ValueError("observation evidence semantic IDs must be unique")

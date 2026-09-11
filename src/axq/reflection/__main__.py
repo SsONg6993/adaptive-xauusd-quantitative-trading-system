@@ -16,6 +16,10 @@ from axq.reflection.evaluation_cli import (
     handle_evaluation_command,
     register_evaluation_commands,
 )
+from axq.reflection.execution_cli import (
+    handle_execution_command,
+    register_execution_commands,
+)
 from axq.reflection.proposal_cli import handle_proposal_command, register_proposal_commands
 from axq.reflection.store import SQLiteReflectionStore
 from axq.reflection.weekly_cli import handle_weekly_command, register_weekly_commands
@@ -42,6 +46,7 @@ def _parser() -> argparse.ArgumentParser:
     register_weekly_commands(commands)
     register_proposal_commands(commands)
     register_evaluation_commands(commands)
+    register_execution_commands(commands)
     return parser
 
 
@@ -176,6 +181,9 @@ def main(argv: Sequence[str] | None = None) -> int:
     evaluation_result = handle_evaluation_command(args)
     if evaluation_result is not None:
         return evaluation_result
+    execution_result = handle_execution_command(args)
+    if execution_result is not None:
+        return execution_result
     if args.command == "build-daily-reflections":
         return _build(args)
     if args.command == "show-daily-reflection":

@@ -323,6 +323,25 @@ for one run names `supersedes_result_id`; later operator decisions name `previou
 `ACCEPT_EVIDENCE`, `REJECT_EVIDENCE`, and `DEFER` are audit facts only. None promotes the proposal,
 deploys a candidate, executes replay/challenger work, tunes policy, or mutates runtime behavior.
 
+## Phase 8 Task 6 deterministic evaluation execution
+
+Execute only a previously persisted exact plan/candidate using reviewed canonical metric-sample
+artifacts. The CLI intentionally has no Final OOS input option:
+
+```powershell
+python -m axq.reflection run-evaluation-execution --store runtime/phase8-task6/evaluations.sqlite3 --request execution-request.json --development-input development-samples.json --validation-input validation-samples.json --result-output runtime/phase8-task6/result.json --started-at 2026-09-11T12:00:00Z --completed-at 2026-09-11T12:00:01Z
+python -m axq.reflection show-evaluation-execution --store runtime/phase8-task6/evaluations.sqlite3 --request-id <request-id>
+python -m axq.reflection evaluation-execution-summary --store runtime/phase8-task6/evaluations.sqlite3
+```
+
+Supply only the DEVELOPMENT/VALIDATION inputs required by the stored plan. Their semantic IDs and
+canonical-byte SHA-256 digests must exactly match the request. Every preregistered Final OOS metric
+is emitted as `UNAVAILABLE` with `FINAL_OOS_NOT_ACCESSED`; no Final OOS artifact is opened.
+Completed equivalent retries reuse the same request/result/audit identities and result bytes even
+when operational request/start/completion timestamps differ. This adapter neither tunes nor runs a
+candidate and has no proposal-promotion, deployment, runtime, or broker authority. See
+`docs/evaluation_execution.md`.
+
 
 ## Phase 7 Task 8 direct MT5 demo transport
 
