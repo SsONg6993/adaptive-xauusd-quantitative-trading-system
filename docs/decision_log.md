@@ -322,3 +322,15 @@ do not silently rewrite earlier decisions.
 - **Consequence:** Proposals use deterministic templates, start as `OBSERVATION`, supersede rather
   than overwrite when evidence changes, and advance only through explicit append-only actions.
   `VALIDATED` means evidence status only; no code, config, runtime, replay, or broker mutation occurs.
+
+## 2026-09-11 — Proposal evaluation is preregistered evidence, not deployment authority
+
+- **Decision:** Register an immutable evaluation candidate and plan only for an exact proposal whose
+  replayed lifecycle status is `CANDIDATE`. Persist supplied observations, plan-derived criterion
+  outcomes, and a separate operator evidence decision as append-only content-addressed records.
+- **Reason:** Criteria defined after seeing results permit selection leakage, while combining an
+  evidence judgment with proposal promotion or deployment would erase the operator boundary.
+- **Consequence:** Plans precede results and copy the proposal's exact canonical provenance. Final
+  OOS observations are retained only for reporting and cannot influence selection, tuning,
+  calibration, or acceptance. `ACCEPT_EVIDENCE`, `REJECT_EVIDENCE`, and `DEFER` never transition a
+  proposal or mutate code, configuration, models, runtime, or deployment state.

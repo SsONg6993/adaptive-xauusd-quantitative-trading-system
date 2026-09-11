@@ -292,6 +292,37 @@ python -m axq.reflection show-proposal-history --store runtime/phase8-task4/impr
 `VALIDATED` never means deployed. These commands cannot write trading configuration, register a
 model, run a replay/challenger, or alter the shared runtime.
 
+## Phase 8 Task 5 proposal evaluation registration and evidence
+
+First explicitly move a reviewed proposal through its existing append-only lifecycle to
+`CANDIDATE`. Task 5 will reject every other status. Then use reviewed JSON inputs:
+
+```powershell
+python -m axq.reflection register-evaluation-candidate --store runtime/phase8-task5/evaluations.sqlite3 --input candidate.json
+python -m axq.reflection build-evaluation-plan --store runtime/phase8-task5/evaluations.sqlite3 --input plan.json
+python -m axq.reflection record-evaluation-result --store runtime/phase8-task5/evaluations.sqlite3 --input result-evidence.json
+python -m axq.reflection record-operator-evaluation-decision --store runtime/phase8-task5/evaluations.sqlite3 --input operator-decision.json
+python -m axq.reflection evaluation-summary --store runtime/phase8-task5/evaluations.sqlite3
+```
+
+The evaluation store must be the same SQLite database that contains the source proposal and its
+transition history. A plan must exist before evidence is accepted. Result JSON supplies observations
+but cannot supply criteria; those are evaluated from the stored plan. Final OOS metrics and criteria
+must be reporting-only and never affect the aggregate evidence outcome.
+
+Inspect exact records and decision history:
+
+```powershell
+python -m axq.reflection show-evaluation-plan --store runtime/phase8-task5/evaluations.sqlite3 --plan-id <plan-id>
+python -m axq.reflection show-evaluation-result --store runtime/phase8-task5/evaluations.sqlite3 --result-id <result-id>
+python -m axq.reflection show-operator-evaluation-history --store runtime/phase8-task5/evaluations.sqlite3 --result-id <result-id>
+```
+
+Corrections never overwrite. Revised plans name the latest `supersedes_plan_id`; corrected evidence
+for one run names `supersedes_result_id`; later operator decisions name `previous_decision_id`.
+`ACCEPT_EVIDENCE`, `REJECT_EVIDENCE`, and `DEFER` are audit facts only. None promotes the proposal,
+deploys a candidate, executes replay/challenger work, tunes policy, or mutates runtime behavior.
+
 
 ## Phase 7 Task 8 direct MT5 demo transport
 

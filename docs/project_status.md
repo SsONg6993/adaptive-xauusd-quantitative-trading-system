@@ -170,6 +170,14 @@ The builder revalidates exact weekly-pattern, finding, daily-reflection, and Exp
 uses deterministic category templates. Proposals start as `OBSERVATION`; supersession and status
 transitions are append-only. `VALIDATED` records evidence status and never deploys or mutates policy.
 
+Phase 8 Task 5 adds immutable `EvaluationCandidateSpec`, preregistered `ProposalEvaluationPlan`,
+externally supplied `ProposalEvaluationResult`, and separate `OperatorEvaluationDecision` records.
+Plans register only for an exact persisted `CANDIDATE` proposal and reproduce its canonical source
+collections. Results apply only preregistered criteria; Final OOS is structurally reporting-only and
+cannot affect candidate acceptance, selection, tuning, or calibration. Every correction and
+operator decision appends with explicit predecessor linkage. Task 5 contains no evaluator,
+challenger, replay, deployment, proposal promotion, or runtime mutation path.
+
 ## Important risks
 
 - The prior real sample is tiny, class-imbalanced, and its OOS results have already been viewed.
@@ -184,14 +192,15 @@ transitions are append-only. `VALIDATED` records evidence status and never deplo
 - Real-terminal demo mutation has not been exercised by automated validation; fake-gateway tests
   cover transport behavior without placing trades.
 - A production scheduler/service host, simulated fills/P&L, MQL5/IPC transport, automated resolution
-  of unknown broker outcomes, LLMs, vision, and proposal execution/evaluation are absent.
+  of unknown broker outcomes, LLMs, vision, and proposal evaluation execution are absent.
 
 ## Working principle and next task
 
 Codex writes auditable local pipelines and runs bounded validation. The user runs serious training
-and large replays. Phase 8 Tasks 1–4 are isolated on `codex/phase-8-reflection-experience`; Task 4
-stops at advisory proposals and explicit lifecycle actions. A later task may define proposal
-evaluation artifacts, but it must not execute candidates or mutate production behavior implicitly.
+and large replays. Phase 8 Tasks 1–5 are isolated on `codex/phase-8-reflection-experience`; Task 5
+stops at preregistered evaluation semantics, supplied evidence, and explicit operator evidence
+decisions. A later separately approved task may execute a reviewed evaluation plan, but it must not
+change the plan retroactively or mutate production behavior implicitly.
 Future work must preserve the shared live/replay contracts and may not infer authority for
 continuous execution, live-money support, simulated brokerage, or later-phase intelligence.
 

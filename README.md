@@ -62,6 +62,9 @@ autonomous strategy, live execution EA, or claim of trading profitability.
 - Immutable advisory Improvement Proposals built only from pattern keys recurring across at least
   two complete guarded weeks, with exact provenance, deterministic templates, explicit
   supersession, and an independent append-only lifecycle. `VALIDATED` is evidence status only.
+- Preregistered proposal-evaluation contracts for explicitly promoted `CANDIDATE` proposals, with
+  immutable candidate specs, protected Final OOS reporting, append-only evidence, and separate
+  non-promoting operator decisions. Task 5 never launches an evaluator or deploys a change.
 - SQLite WAL schema and transactional migrations, with PostgreSQL migration boundaries documented.
 - Dataset manifests, label definitions, immutable model metadata, JSON logging, YAML configuration,
   and deterministic risk-veto foundation.
@@ -75,6 +78,7 @@ Read [the architecture](docs/architecture.md), [agentic architecture](docs/agent
 [runtime orchestration](docs/runtime_orchestration.md), [daily reflection](docs/daily_reflection.md),
 [weekly reflection](docs/weekly_reflection.md),
 [improvement proposals](docs/improvement_proposals.md),
+[proposal evaluation](docs/proposal_evaluation.md),
 and [runbook](docs/runbook.md) before running
 models. The exact user-run sequence is in
 [Phase 5 local runs](docs/phase5_local_runs.md).
@@ -146,7 +150,7 @@ src/axq/position_actions/ Phase 7 action-time safety, intent, and journal-chain 
 src/axq/mt5/            optional Task 8 gateway, snapshot, demo entry, and position-action adapters
 src/axq/orchestration/  Task 9 deterministic startup/event/decision/recovery composition service
 src/axq/experience/     Phase 8 exact attribution, immutable experiences, store, analytics, CLI
-src/axq/reflection/     Phase 8 daily/weekly reflection, guarded patterns, lifecycle, stores, CLI
+src/axq/reflection/     Phase 8 reflections, proposals, preregistered evaluation evidence, CLI
 master/ risk/ execution/ Phase 7 integration boundaries and operator-facing documentation
 datasets/                immutable Phase 3 dataset build/inspection commands
 training/quant/          Phase 4 training plus Phase 5 experiment/suite/walk-forward/ablation CLIs
