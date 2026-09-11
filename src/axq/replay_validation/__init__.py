@@ -20,6 +20,10 @@ from axq.replay_validation.outcomes import (
     ReplayOutcomeArtifact,
     ReplayTradeOutcome,
 )
+from axq.replay_validation.policies import (
+    SharedKernelPolicySet,
+    default_shared_kernel_policy_set,
+)
 from axq.replay_validation.system import compare_replays, load_replay_frame, run_system_replay
 
 __all__ = [
@@ -42,4 +46,6 @@ __all__ = [
     "compare_replays",
     "load_replay_frame",
     "run_system_replay",
+    "SharedKernelPolicySet",
+    "default_shared_kernel_policy_set",
 ]

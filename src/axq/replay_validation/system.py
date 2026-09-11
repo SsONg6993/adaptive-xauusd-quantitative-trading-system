@@ -27,7 +27,6 @@ from axq.discipline import (
     DisciplinePosition,
     DisciplineState,
     EntryIntent,
-    default_demo_discipline_policy,
 )
 from axq.execution_boundary import (
     BrokerIntentLink,
@@ -41,12 +40,10 @@ from axq.execution_boundary import (
     ResumeReadiness,
     ResumeStatus,
     SQLiteExecutionLedger,
-    default_execution_policy,
     execution_result_to_runtime_event,
 )
 from axq.features.market_structure import market_structure_features
 from axq.features.registry import default_registry
-from axq.master import default_fusion_policy
 from axq.orchestration import (
     DecisionPlan,
     DeterministicDecisionProcessor,
@@ -57,12 +54,10 @@ from axq.orchestration import (
 from axq.position_actions import (
     PositionActionContext,
     PositionActionType,
-    default_position_action_policy,
 )
 from axq.position_actions.persistence import SQLitePositionActionTransportLedger
 from axq.position_management import (
     PositionManagementContext,
-    default_demo_position_management_policy,
 )
 from axq.replay_validation.execution import (
     ENTRY_MODEL,
@@ -83,7 +78,11 @@ from axq.replay_validation.outcomes import (
     ReplayOutcomeArtifact,
     ReplayTradeOutcome,
 )
-from axq.risk_boundary import RiskContext, default_demo_risk_policy
+from axq.replay_validation.policies import (
+    SharedKernelPolicySet,
+    default_shared_kernel_policy_set,
+)
+from axq.risk_boundary import RiskContext
 from axq.runtime import (
     AccountState,
     BrokerConstraints,
@@ -154,7 +153,7 @@ def _merge_htf_bias(m5: pd.DataFrame, path: Path, timeframe: str) -> pd.DataFram
     bias = market_structure_features(higher, {})["structure_bias"]
     values = pd.DataFrame(
         {
-            "available_at": higher["timestamp"] + pd.Timedelta(minutes=duration),
+            "available_at": higher["timestamp"] + timedelta(minutes=duration),
             f"{timeframe}_structure_bias": bias,
         }
     )
@@ -170,7 +169,7 @@ def _merge_htf_bias(m5: pd.DataFrame, path: Path, timeframe: str) -> pd.DataFram
 def load_replay_frame(data_dir: Path, *, months: int) -> pd.DataFrame:
     """Build a causal feature frame while retaining warm-up history."""
     raw = _read_csv(data_dir / "xauusd_m5.csv")
-    raw["available_at"] = raw["timestamp"] + pd.Timedelta(minutes=5)
+    raw["available_at"] = raw["timestamp"] + timedelta(minutes=5)
     registry = default_registry()
     groups = (
         "price_action",
@@ -293,6 +292,7 @@ class _RecordingProcessor:
 class _ReplayContext:
     book: ReplayExecutionBook
     runner: RuntimeStreamRunner
+    policy_set: SharedKernelPolicySet
     balance: float = 10_000.0
     peak_equity: float = 10_000.0
     day_start_balance: float = 10_000.0
@@ -472,7 +472,7 @@ class _ReplayContext:
             for item in self.book.positions
         )
         assert self.executed_setups is not None and self.executed_theses is not None
-        discipline_policy = default_demo_discipline_policy()
+        discipline_policy = self.policy_set.discipline_policy
         state = DisciplineState(
             policy_id=discipline_policy.policy_id,
             as_of=at,
@@ -617,7 +617,7 @@ class _ReplayContext:
         assert context.original_execution_result is not None
         assert context.broker_intent_link is not None
         return PositionActionContext(
-            policy_id=default_position_action_policy().policy_id,
+            policy_id=self.policy_set.position_action_policy.policy_id,
             management_outcome=outcome,
             position=context.position,
             original_execution_intent=context.original_execution_intent,
@@ -676,7 +676,10 @@ def _snapshot(row: pd.Series) -> CausalFeatureSnapshot:
 
 
 def _scenario_transition(
-    event: RuntimeEvent, bundle: EvidenceBundle, previous: ThesisState | None
+    event: RuntimeEvent,
+    bundle: EvidenceBundle,
+    previous: ThesisState | None,
+    policy: ScenarioPolicy,
 ) -> ThesisState | None:
     if event.event_type not in {
         RuntimeEventType.M5_CLOSED,
@@ -700,7 +703,7 @@ def _scenario_transition(
         bundle.input_for("chart"),
         chart,
         previous,
-        policy=ScenarioPolicy(ttl_seconds=900, max_m5_bars=3),
+        policy=policy,
         scenario_definitions=definitions,
     )
 
@@ -731,8 +734,15 @@ def _counts(values: list[str]) -> dict[str, int]:
     return dict(sorted(Counter(values).items()))
 
 
-def run_system_replay(data_dir: Path, output_dir: Path, *, months: int = 1) -> Path:
+def run_system_replay(
+    data_dir: Path,
+    output_dir: Path,
+    *,
+    months: int = 1,
+    policy_set: SharedKernelPolicySet | None = None,
+) -> Path:
     frame = load_replay_frame(data_dir, months=months)
+    policies = policy_set or default_shared_kernel_policy_set()
     first_at = frame.iloc[0]["timestamp"].to_pydatetime()
     book = ReplayExecutionBook(point_size=0.01, slippage_points=1.0)
     catalog, access = _catalog()
@@ -751,9 +761,11 @@ def run_system_replay(data_dir: Path, output_dir: Path, *, months: int = 1) -> P
         clock,
         journal=journal,
         retained_record_types=ATTRIBUTION_JOURNAL_RECORD_TYPES,
-        scenario_transition=_scenario_transition,
+        scenario_transition=lambda event, bundle, previous: _scenario_transition(
+            event, bundle, previous, policies.scenario_policy
+        ),
     )
-    context = _ReplayContext(book=book, runner=runner)
+    context = _ReplayContext(book=book, runner=runner, policy_set=policies)
     position_cache: dict[str, PositionManagementContext] = {}
 
     def position_provider(
@@ -767,12 +779,12 @@ def run_system_replay(data_dir: Path, output_dir: Path, *, months: int = 1) -> P
 
     processor = _RecordingProcessor(
         DeterministicDecisionProcessor(
-            fusion_policy=default_fusion_policy(),
-            discipline_policy=default_demo_discipline_policy(),
-            risk_policy=default_demo_risk_policy(),
-            execution_policy=default_execution_policy(),
-            position_management_policy=default_demo_position_management_policy(),
-            position_action_policy=default_position_action_policy(),
+            fusion_policy=policies.fusion_policy,
+            discipline_policy=policies.discipline_policy,
+            risk_policy=policies.risk_policy,
+            execution_policy=policies.execution_policy,
+            position_management_policy=policies.position_management_policy,
+            position_action_policy=policies.position_action_policy,
             entry_context_provider=context.discipline_inputs,
             position_context_provider=position_provider,
             position_action_context_provider=context.action_input,

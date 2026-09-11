@@ -83,6 +83,28 @@ from axq.reflection.proposals import (
     ProposalEligibilityAssessment,
     build_improvement_proposals,
 )
+from axq.reflection.shared_kernel_candidate_contracts import (
+    FrozenSharedKernelCandidateConfig,
+    SharedKernelCandidateAudit,
+    SharedKernelCandidateEngineKind,
+    SharedKernelCandidateRequest,
+    SharedKernelCandidateStatus,
+    SharedKernelCSVFileRef,
+    SharedKernelDataManifestRef,
+    SharedKernelMetricArtifactRef,
+    SharedKernelReplayDataManifest,
+    SharedKernelReplayResultRef,
+)
+from axq.reflection.shared_kernel_candidate_engine import (
+    SharedKernelCandidateEngine,
+    SharedKernelCandidateEngineOutput,
+    SharedKernelMasterFusionEngineV1,
+)
+from axq.reflection.shared_kernel_candidate_service import (
+    SharedKernelCandidateOutcome,
+    execute_shared_kernel_candidate,
+)
+from axq.reflection.shared_kernel_candidate_store import SQLiteSharedKernelCandidateStore
 from axq.reflection.store import SQLiteReflectionStore
 from axq.reflection.weekly import build_weekly_reflection
 from axq.reflection.weekly_contracts import (
@@ -126,6 +148,22 @@ __all__ = [
     "SampleGuardStatus",
     "build_daily_reflection",
     "SQLiteReflectionStore",
+    "FrozenSharedKernelCandidateConfig",
+    "SharedKernelCSVFileRef",
+    "SharedKernelCandidateAudit",
+    "SharedKernelCandidateEngineKind",
+    "SharedKernelCandidateRequest",
+    "SharedKernelCandidateStatus",
+    "SharedKernelDataManifestRef",
+    "SharedKernelMetricArtifactRef",
+    "SharedKernelReplayDataManifest",
+    "SharedKernelReplayResultRef",
+    "SharedKernelCandidateEngine",
+    "SharedKernelCandidateEngineOutput",
+    "SharedKernelMasterFusionEngineV1",
+    "SharedKernelCandidateOutcome",
+    "execute_shared_kernel_candidate",
+    "SQLiteSharedKernelCandidateStore",
     "AcceptanceCriterion",
     "CandidateKind",
     "CriterionComparator",

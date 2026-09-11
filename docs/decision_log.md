@@ -360,3 +360,17 @@ do not silently rewrite earlier decisions.
   operational timestamps and output paths do not affect identity. Completed retries reuse exact
   artifact bytes without rerunning the engine. Full Phase 7 candidate injection and real proposal
   evaluation require separate approval.
+
+## 2026-09-11 — Frozen candidates enter through one shared-kernel policy boundary
+
+- **Decision:** Introduce a content-addressed `SharedKernelPolicySet` at the existing system-replay
+  composition root and permit V1 to replace only its `FusionPolicy` from an exact frozen
+  `CONFIGURATION / MASTER_FUSION` candidate. Bind each run to authoritative governance records and
+  content-digested DEVELOPMENT/VALIDATION CSV manifests.
+- **Reason:** Candidate evidence must exercise the same tools, specialists, lifecycle, Master,
+  Discipline, Risk, execution, and position-management semantics as live/replay operation without
+  creating scattered overrides or a candidate-only strategy.
+- **Consequence:** The omitted/default policy set remains byte-identical on the controlled replay.
+  Migration 012 stores requests, inputs, replay refs, outputs, and audits append-only. Only closed,
+  preregistered metrics become Task 6/7 artifacts; Final OOS, tuning, broker access, promotion,
+  deployment, runtime mutation, and the seven real proposals remain outside authority.

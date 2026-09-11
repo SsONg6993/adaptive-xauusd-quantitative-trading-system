@@ -159,6 +159,7 @@ src/axq/mt5/            optional Task 8 gateway, snapshot, demo entry, and posit
 src/axq/orchestration/  Task 9 deterministic startup/event/decision/recovery composition service
 src/axq/experience/     Phase 8 exact attribution, immutable experiences, store, analytics, CLI
 src/axq/reflection/     Phase 8 reflections, proposals, preregistered evaluation evidence, CLI
+src/axq/replay_validation/ shared Phase 7 replay and immutable policy composition
 master/ risk/ execution/ Phase 7 integration boundaries and operator-facing documentation
 datasets/                immutable Phase 3 dataset build/inspection commands
 training/quant/          Phase 4 training plus Phase 5 experiment/suite/walk-forward/ablation CLIs
@@ -186,4 +187,8 @@ replaceable ports. Task 9 composes these boundaries into one restart-safe servic
 shadow, and demo modes. Phase 8 reflection is offline and observational. A simulated broker,
 live-money execution, MQL5/IPC transport, LLM reasoning, and runtime learning remain unimplemented. See
 [position actions](docs/position_actions.md).
+The Phase 8 Shared-Kernel Candidate Driver evaluates one frozen Master-fusion configuration through
+the existing system replay and emits Task 6/7 canonical metric artifacts. Its default policy set
+preserves Phase 7 replay bytes; V1 has no Final OOS, tuning, broker, deployment, or proposal-
+promotion path. See [shared-kernel candidate driver](docs/shared_kernel_candidate_driver.md).
 The phase implementation plans live under `docs/superpowers/plans/`.

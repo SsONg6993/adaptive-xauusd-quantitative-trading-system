@@ -15,7 +15,7 @@ Last updated: 2026-09-11
 | Architecture migration | Tool-augmented agentic design + deterministic replay | APPROVED / DOCUMENTED |
 | 6 | Shared runtime state, agent contracts, deterministic kernel vertical slice | COMPLETE |
 | 7 | Master, Discipline, Risk, execution, recovery, position actions, replay validation | COMPLETE |
-| 8 | Controlled learning and attribution | IN PROGRESS — TASKS 1–7 COMPLETE |
+| 8 | Controlled learning and attribution | IN PROGRESS — TASKS 1–8 COMPLETE |
 | 9+ | Optional intelligence | NOT STARTED |
 
 Phases 0–4 established the local-first contracts, UTC market-data pipeline, causal versioned feature
@@ -60,6 +60,15 @@ engine causally emits exact Task 6 `CanonicalMetricSampleArtifact` records for D
 VALIDATION only. Requests and terminal audits bind persisted proposal/candidate/plan identity,
 seed/environment, and canonical input/output digests; completed retries reuse output bytes. Full
 Phase 7 candidate injection and the seven baseline proposals remain untouched.
+
+Phase 8 Task 8 adds the first reviewed full-kernel candidate boundary. An immutable
+`SharedKernelPolicySet` preserves the Phase 7 composition by default, while one content-addressed
+`CONFIGURATION / MASTER_FUSION` candidate may replace only the Fusion policy. Exact
+DEVELOPMENT/VALIDATION CSV manifests run through the existing system replay and emit only
+preregistered allowlisted Task 6/7 metric artifacts. Final OOS, tuning, broker access, deployment,
+runtime mutation, automatic promotion, and the seven real proposals remain inaccessible.
+The controlled fixture produced two canonical artifacts from 140 M5 rows per scope, and a later
+semantic retry reused exact bytes without invoking the engine.
 
 ## Verified state
 
@@ -201,6 +210,12 @@ artifacts. New requests require an exact currently-CANDIDATE proposal and stored
 engine replays controlled causal metric observations; it neither aggregates nor changes parameters.
 Outputs pass unchanged into Task 6, while Final OOS remains structurally absent.
 
+Phase 8 Task 8 threads a complete content-addressed policy set through the existing system-replay
+composition root. The default set retains prior behavior; V1 candidate resolution verifies the
+exact baseline and replaces only Master Fusion. Migration 012 preserves configs, manifests,
+requests, replay-result references, metric artifacts, and audits append-only. Completed requests
+reuse stored bytes without executing the shared kernel again.
+
 ## Important risks
 
 - The prior real sample is tiny, class-imbalanced, and its OOS results have already been viewed.
@@ -221,10 +236,10 @@ Outputs pass unchanged into Task 6, while Final OOS remains structurally absent.
 ## Working principle and next task
 
 Codex writes auditable local pipelines and runs bounded validation. The user runs serious training
-and large replays. Phase 8 Tasks 1–7 are isolated on `codex/phase-8-reflection-experience`; Task 7
-stops at one controlled-fixture producer for canonical metric samples. Any full-kernel candidate or
-challenger runner must remain separately approved, plan-bound, and unable to change criteria
-retroactively or mutate production behavior implicitly.
+and large replays. Phase 8 Tasks 1–8 are isolated on `codex/phase-8-reflection-experience`; Task 8
+stops at one controlled frozen Master-fusion candidate through the shared kernel. Broader candidate
+kinds or execution of real proposals require separate approval and must remain plan-bound and unable
+to change criteria retroactively or mutate production behavior implicitly.
 Future work must preserve the shared live/replay contracts and may not infer authority for
 continuous execution, live-money support, simulated brokerage, or later-phase intelligence.
 

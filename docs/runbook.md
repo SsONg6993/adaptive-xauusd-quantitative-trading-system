@@ -362,6 +362,24 @@ The command has no Final OOS argument. It cannot tune parameters, launch arbitra
 proposal, deploy, mutate runtime, contact a broker, or execute the seven baseline proposals. See
 `docs/candidate_replay_evaluation.md`.
 
+## Phase 8 Task 8 shared-kernel frozen candidate
+
+Use only an exact persisted CANDIDATE proposal, `CONFIGURATION / MASTER_FUSION` candidate, and
+preregistered plan. Prepare content-addressed config/request JSON and DEVELOPMENT/VALIDATION
+four-timeframe CSV manifests, then run:
+
+```powershell
+python -m axq.reflection run-shared-kernel-candidate --store runtime/phase8-task8/shared-kernel.sqlite3 --request shared-kernel-request.json --config frozen-master-fusion-config.json --development-manifest development-data-manifest.json --development-data-dir data/development --validation-manifest validation-data-manifest.json --validation-data-dir data/validation --output-dir runtime/phase8-task8/artifacts --started-at 2026-09-11T12:00:00+00:00 --completed-at 2026-09-11T12:00:01+00:00
+python -m axq.reflection show-shared-kernel-candidate --store runtime/phase8-task8/shared-kernel.sqlite3 --request-id <request-id>
+python -m axq.reflection shared-kernel-candidate-summary --store runtime/phase8-task8/shared-kernel.sqlite3
+```
+
+The command rejects missing/changed CSV digests, unknown metric keys, other candidate kinds or
+targets, and Final OOS. It invokes the existing system replay with one immutable policy set; it does
+not fork strategy logic. Identical completed requests reuse stored canonical artifacts and terminal
+audit without running the kernel again. Generated SQLite, replay journals, and artifacts stay under
+ignored `runtime/`.
+
 
 ## Phase 7 Task 8 direct MT5 demo transport
 
