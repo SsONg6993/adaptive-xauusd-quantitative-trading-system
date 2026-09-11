@@ -374,3 +374,16 @@ do not silently rewrite earlier decisions.
   Migration 012 stores requests, inputs, replay refs, outputs, and audits append-only. Only closed,
   preregistered metrics become Task 6/7 artifacts; Final OOS, tuning, broker access, promotion,
   deployment, runtime mutation, and the seven real proposals remain outside authority.
+
+## 2026-09-11 — Paired comparison reuses preregistered candidate criteria unchanged
+
+- **Decision:** Compare exact baseline and candidate DEVELOPMENT/VALIDATION canonical artifacts only
+  when proposal/candidate/plan, baseline policy, frozen configuration, manifests, scopes, seed, and
+  environment are explicitly bound. Calculate `candidate - baseline` using canonical decimal
+  serialization, but evaluate only the candidate through the existing `AcceptanceCriterion`.
+- **Reason:** Baseline context is useful evidence, while adding a delta threshold after results exist
+  would create an unregistered acceptance rule and selection leakage.
+- **Consequence:** Baseline and delta never change PASS/FAIL. Missing or non-identical paired evidence
+  is UNAVAILABLE. Final OOS remains structurally inaccessible. Migration 013 is append-only and
+  deterministic retries reuse exact result bytes without replay, tuning, promotion, deployment,
+  runtime mutation, broker access, or execution of the seven real proposals.

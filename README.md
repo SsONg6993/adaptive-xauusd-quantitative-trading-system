@@ -1,7 +1,7 @@
 # Adaptive XAUUSD Multi-Agent Trading System
 
 Production-oriented, local-first foundation for a measurable, tool-augmented multi-agent MT5 trading
-system. Phases 0–7 are complete and Phase 8 Tasks 1–7 are implemented on an isolated branch. There
+system. Phases 0–7 are complete and Phase 8 Tasks 1–9 are implemented on an isolated branch. There
 is no production-trained model,
 autonomous strategy, live execution EA, or claim of trading profitability.
 
@@ -71,6 +71,9 @@ autonomous strategy, live execution EA, or claim of trading profitability.
 - A governed candidate-replay boundary with one allowlisted controlled-fixture engine, exact
   proposal/candidate/plan binding, append-only replay audits, idempotent canonical Task 6 artifacts,
   and no Final OOS, parameter search, full-runtime injection, or broker path.
+- A deterministic paired baseline/candidate comparison over exact canonical DEVELOPMENT/VALIDATION
+  evidence. Existing preregistered criteria evaluate only the candidate; baseline values and
+  decimal-safe deltas are evidence only, with fail-closed parity and Final OOS withholding.
 - SQLite WAL schema and transactional migrations, with PostgreSQL migration boundaries documented.
 - Dataset manifests, label definitions, immutable model metadata, JSON logging, YAML configuration,
   and deterministic risk-veto foundation.
@@ -87,6 +90,8 @@ Read [the architecture](docs/architecture.md), [agentic architecture](docs/agent
 [proposal evaluation](docs/proposal_evaluation.md),
 [evaluation execution](docs/evaluation_execution.md),
 [candidate replay evaluation](docs/candidate_replay_evaluation.md),
+[shared-kernel candidate driver](docs/shared_kernel_candidate_driver.md),
+[paired evaluation](docs/paired_evaluation.md),
 and [runbook](docs/runbook.md) before running
 models. The exact user-run sequence is in
 [Phase 5 local runs](docs/phase5_local_runs.md).
@@ -191,4 +196,7 @@ The Phase 8 Shared-Kernel Candidate Driver evaluates one frozen Master-fusion co
 the existing system replay and emits Task 6/7 canonical metric artifacts. Its default policy set
 preserves Phase 7 replay bytes; V1 has no Final OOS, tuning, broker, deployment, or proposal-
 promotion path. See [shared-kernel candidate driver](docs/shared_kernel_candidate_driver.md).
+Phase 8 paired evaluation compares already-produced canonical baseline/candidate evidence under the
+exact stored plan. It does not rerun either side or introduce a delta acceptance rule. See
+[paired evaluation](docs/paired_evaluation.md).
 The phase implementation plans live under `docs/superpowers/plans/`.

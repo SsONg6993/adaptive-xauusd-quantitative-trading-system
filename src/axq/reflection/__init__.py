@@ -68,6 +68,27 @@ from axq.reflection.execution_service import (
     execute_evaluation_request,
 )
 from axq.reflection.execution_store import SQLiteEvaluationExecutionStore
+from axq.reflection.paired_evaluation import PairedEvaluationOutput, compare_paired_evidence
+from axq.reflection.paired_evaluation_contracts import (
+    PairedArtifactRef,
+    PairedCriterionOutcome,
+    PairedCriterionStatus,
+    PairedEvaluationAdapterKind,
+    PairedEvaluationAudit,
+    PairedEvaluationRequest,
+    PairedEvaluationResult,
+    PairedEvaluationStatus,
+    PairedMetricComparison,
+    PairedMetricStatus,
+    PairedParityCheck,
+    PairedParityStatus,
+    canonical_decimal,
+)
+from axq.reflection.paired_evaluation_service import (
+    PairedEvaluationServiceOutcome,
+    execute_paired_evaluation,
+)
+from axq.reflection.paired_evaluation_store import SQLitePairedEvaluationStore
 from axq.reflection.proposal_contracts import (
     ImprovementProposal,
     ImprovementProposalPolicy,
@@ -196,6 +217,24 @@ __all__ = [
     "EvaluationExecutionOutcome",
     "execute_evaluation_request",
     "SQLiteEvaluationExecutionStore",
+    "PairedArtifactRef",
+    "PairedCriterionOutcome",
+    "PairedCriterionStatus",
+    "PairedEvaluationAdapterKind",
+    "PairedEvaluationAudit",
+    "PairedEvaluationOutput",
+    "PairedEvaluationRequest",
+    "PairedEvaluationResult",
+    "PairedEvaluationServiceOutcome",
+    "PairedEvaluationStatus",
+    "PairedMetricComparison",
+    "PairedMetricStatus",
+    "PairedParityCheck",
+    "PairedParityStatus",
+    "SQLitePairedEvaluationStore",
+    "canonical_decimal",
+    "compare_paired_evidence",
+    "execute_paired_evaluation",
     "ImprovementProposal",
     "ImprovementProposalPolicy",
     "ProposalEvidenceGuard",

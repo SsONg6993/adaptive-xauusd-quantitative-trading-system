@@ -15,7 +15,7 @@ Last updated: 2026-09-11
 | Architecture migration | Tool-augmented agentic design + deterministic replay | APPROVED / DOCUMENTED |
 | 6 | Shared runtime state, agent contracts, deterministic kernel vertical slice | COMPLETE |
 | 7 | Master, Discipline, Risk, execution, recovery, position actions, replay validation | COMPLETE |
-| 8 | Controlled learning and attribution | IN PROGRESS — TASKS 1–8 COMPLETE |
+| 8 | Controlled learning and attribution | IN PROGRESS — TASKS 1–9 COMPLETE |
 | 9+ | Optional intelligence | NOT STARTED |
 
 Phases 0–4 established the local-first contracts, UTC market-data pipeline, causal versioned feature
@@ -69,6 +69,13 @@ preregistered allowlisted Task 6/7 metric artifacts. Final OOS, tuning, broker a
 runtime mutation, automatic promotion, and the seven real proposals remain inaccessible.
 The controlled fixture produced two canonical artifacts from 140 M5 rows per scope, and a later
 semantic retry reused exact bytes without invoking the engine.
+
+Phase 8 Task 9 adds a comparison-only boundary over already-produced canonical baseline and
+candidate metric artifacts. Exact DEVELOPMENT/VALIDATION manifest, scope, seed, environment,
+policy/config, digest, and metric parity is explicit; mismatches are unavailable. The unchanged
+plan criterion evaluates only the candidate, while normalized decimal baseline/delta values remain
+evidence. The controlled fixture produced one PASS and one withheld Final-OOS UNAVAILABLE outcome;
+a later retry reused identical request/result/audit IDs and 4,161-byte result bytes.
 
 ## Verified state
 
@@ -216,6 +223,11 @@ exact baseline and replaces only Master Fusion. Migration 012 preserves configs,
 requests, replay-result references, metric artifacts, and audits append-only. Completed requests
 reuse stored bytes without executing the shared kernel again.
 
+Phase 8 Task 9 does not execute the kernel. It compares exact canonical evidence from one baseline
+policy and frozen candidate under the same persisted plan and manifests. Candidate-only criteria
+remain preregistered; decimal deltas are descriptive. Migration 013 persists immutable requests,
+source links, results, and audits, and the CLI exposes no Final OOS input.
+
 ## Important risks
 
 - The prior real sample is tiny, class-imbalanced, and its OOS results have already been viewed.
@@ -236,8 +248,8 @@ reuse stored bytes without executing the shared kernel again.
 ## Working principle and next task
 
 Codex writes auditable local pipelines and runs bounded validation. The user runs serious training
-and large replays. Phase 8 Tasks 1–8 are isolated on `codex/phase-8-reflection-experience`; Task 8
-stops at one controlled frozen Master-fusion candidate through the shared kernel. Broader candidate
+and large replays. Phase 8 Tasks 1–9 are isolated on `codex/phase-8-reflection-experience`; Task 9
+stops at a controlled comparison of frozen baseline/candidate evidence. Broader candidate
 kinds or execution of real proposals require separate approval and must remain plan-bound and unable
 to change criteria retroactively or mutate production behavior implicitly.
 Future work must preserve the shared live/replay contracts and may not infer authority for

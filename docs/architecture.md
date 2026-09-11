@@ -172,6 +172,20 @@ calibration, and fold models never enter the lifecycle registry. Content-derived
 atomic status, artifact hashes, and skip-on-verified-completion make local jobs auditable and
 resumable without introducing autonomous model choice.
 
+## Phase 8 governed comparison boundary
+
+Reflection and proposal evaluation remain offline from the trading runtime. Task 9 consumes exact
+canonical DEVELOPMENT/VALIDATION metric artifacts already produced for a baseline policy and one
+frozen candidate. It binds the same plan, manifests, scopes, deterministic seed, and environment,
+then calculates normalized decimal `candidate - baseline` evidence without rerunning the kernel.
+
+Only the candidate observation is evaluated, using the plan's unchanged preregistered
+`AcceptanceCriterion`. Baseline values and deltas cannot alter PASS/FAIL. Missing evidence or any
+manifest, scope, seed, environment, digest, policy/config, or metric-definition mismatch produces
+UNAVAILABLE. Final OOS has no input path and remains reporting-only as explicitly unavailable.
+Append-only request/result/audit records provide deterministic retry recovery but confer no
+promotion, deployment, runtime, or broker authority.
+
 ## Python and MT5 boundaries
 
 Python owns data retrieval/normalization, feature computation, local model inference, agent

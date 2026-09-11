@@ -380,6 +380,24 @@ not fork strategy logic. Identical completed requests reuse stored canonical art
 audit without running the kernel again. Generated SQLite, replay journals, and artifacts stay under
 ignored `runtime/`.
 
+## Phase 8 Task 9 paired baseline-vs-candidate comparison
+
+Compare existing canonical evidence only after the exact proposal, CANDIDATE status, candidate,
+plan, frozen configuration, and shared-kernel manifests are present in one store:
+
+```powershell
+$env:PYTHONPATH = (Resolve-Path 'src')
+python -m axq.reflection run-paired-evaluation --store runtime/phase8-task9/governance.sqlite3 --request paired-request.json --baseline-development-input baseline-development.json --baseline-validation-input baseline-validation.json --candidate-development-input candidate-development.json --candidate-validation-input candidate-validation.json --result-output runtime/phase8-task9/paired-result.json --started-at 2026-09-11T12:21:00+00:00 --completed-at 2026-09-11T12:22:00+00:00
+python -m axq.reflection show-paired-evaluation --store runtime/phase8-task9/governance.sqlite3 --request-id <request-id>
+python -m axq.reflection paired-evaluation-summary --store runtime/phase8-task9/governance.sqlite3
+```
+
+Omit DEVELOPMENT flags when the plan preregisters only VALIDATION. Never substitute a similar
+manifest, seed, environment, or artifact: parity failure is `UNAVAILABLE`, not an approximate
+comparison. The candidate alone is checked against the unchanged stored criterion; baseline and
+decimal `candidate - baseline` are evidence only. The CLI has no Final OOS input and does not replay,
+tune, promote, deploy, mutate runtime, or contact MT5. See `docs/paired_evaluation.md`.
+
 
 ## Phase 7 Task 8 direct MT5 demo transport
 
