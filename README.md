@@ -1,8 +1,8 @@
 # Adaptive XAUUSD Multi-Agent Trading System
 
 Production-oriented, local-first foundation for a measurable, tool-augmented multi-agent MT5 trading
-system. Phases 0–7 are complete and Phase 8 Tasks 1–3 are implemented on an isolated branch. There is no
-production-trained model,
+system. Phases 0–7 are complete and Phase 8 Tasks 1–4 are implemented on an isolated branch. There
+is no production-trained model,
 autonomous strategy, live execution EA, or claim of trading profitability.
 
 ## Current capabilities
@@ -59,6 +59,9 @@ autonomous strategy, live execution EA, or claim of trading profitability.
 - Deterministic ISO-week reflections with explicit completeness/provenance guards, evidence-backed
   success/failure observations, and an append-only pattern-status lifecycle. Aggregation creates
   only `OBSERVATION`; every later status requires an explicit operator or evaluation action.
+- Immutable advisory Improvement Proposals built only from pattern keys recurring across at least
+  two complete guarded weeks, with exact provenance, deterministic templates, explicit
+  supersession, and an independent append-only lifecycle. `VALIDATED` is evidence status only.
 - SQLite WAL schema and transactional migrations, with PostgreSQL migration boundaries documented.
 - Dataset manifests, label definitions, immutable model metadata, JSON logging, YAML configuration,
   and deterministic risk-veto foundation.
@@ -70,6 +73,8 @@ Read [the architecture](docs/architecture.md), [agentic architecture](docs/agent
 [label contract](docs/labels.md), [Quant Agent](docs/quant_agent.md),
 [model training](docs/model_training.md), [model registry](docs/model_registry.md),
 [runtime orchestration](docs/runtime_orchestration.md), [daily reflection](docs/daily_reflection.md),
+[weekly reflection](docs/weekly_reflection.md),
+[improvement proposals](docs/improvement_proposals.md),
 and [runbook](docs/runbook.md) before running
 models. The exact user-run sequence is in
 [Phase 5 local runs](docs/phase5_local_runs.md).

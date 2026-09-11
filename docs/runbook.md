@@ -267,6 +267,32 @@ Transitions are append-only and fail closed unless they extend the exact current
 Weekly reflection and pattern status remain descriptive; neither command tunes or mutates trading
 runtime behavior.
 
+## Phase 8 Task 4 advisory improvement proposals
+
+Build proposals from the unchanged exact Experience/Daily/Weekly stores, then show the summary and
+one canonical proposal:
+
+```powershell
+python -m axq.reflection build-improvement-proposals --experience-store runtime/phase8-task1/baseline-c/experiences.sqlite3 --daily-store runtime/phase8-task2/daily-reflections.sqlite3 --weekly-store runtime/phase8-task3/weekly-reflections.sqlite3 --proposal-store runtime/phase8-task4/improvement-proposals.sqlite3
+python -m axq.reflection proposal-summary --store runtime/phase8-task4/improvement-proposals.sqlite3
+python -m axq.reflection show-improvement-proposal --store runtime/phase8-task4/improvement-proposals.sqlite3 --proposal-id <proposal-id>
+```
+
+Only recurring pattern keys with at least two complete weeks and passed required guards produce a
+proposal. Identical builds reuse IDs. Changed evidence appends a proposal that explicitly
+supersedes the latest record with the same proposal key.
+
+Lifecycle changes require explicit reviewed action and remain advisory:
+
+```powershell
+python -m axq.reflection transition-proposal --store runtime/phase8-task4/improvement-proposals.sqlite3 --proposal-id <proposal-id> --proposal-key <proposal-key> --from-status OBSERVATION --to-status HYPOTHESIS --effective-at 2026-09-14T00:00:00Z --action-kind OPERATOR --actor-id <operator-id> --action-id <review-id> --reason-code <reason-code>
+python -m axq.reflection show-proposal-history --store runtime/phase8-task4/improvement-proposals.sqlite3 --proposal-id <proposal-id>
+```
+
+`VALIDATED` never means deployed. These commands cannot write trading configuration, register a
+model, run a replay/challenger, or alter the shared runtime.
+
+
 ## Phase 7 Task 8 direct MT5 demo transport
 
 1. Keep the execution policy `DISABLED` unless an operator has deliberately selected `DRY_RUN` or

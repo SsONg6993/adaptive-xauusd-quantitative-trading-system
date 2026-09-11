@@ -164,6 +164,12 @@ patterns. Every pattern starts as `OBSERVATION`; later knowledge status is deriv
 explicit append-only operator/evaluation transition chain. There is no mutable current-status row
 and no automatic `VALIDATED` promotion.
 
+Phase 8 Task 4 creates immutable advisory `ImprovementProposal` records only when the same semantic
+pattern key appears in at least two complete weeks and every required weekly/provenance guard passes.
+The builder revalidates exact weekly-pattern, finding, daily-reflection, and Experience links and
+uses deterministic category templates. Proposals start as `OBSERVATION`; supersession and status
+transitions are append-only. `VALIDATED` records evidence status and never deploys or mutates policy.
+
 ## Important risks
 
 - The prior real sample is tiny, class-imbalanced, and its OOS results have already been viewed.
@@ -178,14 +184,14 @@ and no automatic `VALIDATED` promotion.
 - Real-terminal demo mutation has not been exercised by automated validation; fake-gateway tests
   cover transport behavior without placing trades.
 - A production scheduler/service host, simulated fills/P&L, MQL5/IPC transport, automated resolution
-  of unknown broker outcomes, LLMs, vision, and improvement proposals are absent.
+  of unknown broker outcomes, LLMs, vision, and proposal execution/evaluation are absent.
 
 ## Working principle and next task
 
 Codex writes auditable local pipelines and runs bounded validation. The user runs serious training
-and large replays. Phase 8 Tasks 1–3 are isolated on `codex/phase-8-reflection-experience`; Task 3
-stops at deterministic weekly observations and explicit lifecycle actions. The next task may define
-ImprovementProposal candidates, but proposals must remain non-mutating and require later validation.
+and large replays. Phase 8 Tasks 1–4 are isolated on `codex/phase-8-reflection-experience`; Task 4
+stops at advisory proposals and explicit lifecycle actions. A later task may define proposal
+evaluation artifacts, but it must not execute candidates or mutate production behavior implicitly.
 Future work must preserve the shared live/replay contracts and may not infer authority for
 continuous execution, live-money support, simulated brokerage, or later-phase intelligence.
 

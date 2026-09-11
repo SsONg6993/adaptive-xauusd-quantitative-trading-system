@@ -12,6 +12,7 @@ from pathlib import Path
 from axq.experience.store import SQLiteExperienceStore
 from axq.reflection.contracts import DailyReflection, ReflectionPolicy
 from axq.reflection.daily import build_daily_reflection
+from axq.reflection.proposal_cli import handle_proposal_command, register_proposal_commands
 from axq.reflection.store import SQLiteReflectionStore
 from axq.reflection.weekly_cli import handle_weekly_command, register_weekly_commands
 
@@ -35,6 +36,7 @@ def _parser() -> argparse.ArgumentParser:
     report = commands.add_parser("report")
     report.add_argument("--store", type=Path, required=True)
     register_weekly_commands(commands)
+    register_proposal_commands(commands)
     return parser
 
 
@@ -163,6 +165,9 @@ def main(argv: Sequence[str] | None = None) -> int:
     weekly_result = handle_weekly_command(args)
     if weekly_result is not None:
         return weekly_result
+    proposal_result = handle_proposal_command(args)
+    if proposal_result is not None:
+        return proposal_result
     if args.command == "build-daily-reflections":
         return _build(args)
     if args.command == "show-daily-reflection":

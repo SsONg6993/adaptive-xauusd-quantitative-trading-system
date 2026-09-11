@@ -311,3 +311,14 @@ do not silently rewrite earlier decisions.
 - **Consequence:** Pattern keys bind only stable semantics and recur across weeks, while observation
   IDs bind interval and evidence. Weekly revisions and lifecycle transitions append and supersede;
   no mutable status, automatic validation, proposal, tuning, or runtime mutation exists.
+
+## 2026-09-11 — Improvement proposals are recurring-evidence advisories
+
+- **Decision:** Create one immutable advisory proposal only when a semantic pattern key recurs in at
+  least two complete weeks and every required completeness, provenance, day-support, and
+  experience-support guard passes. Revalidate every exact pattern/finding/daily/Experience link.
+- **Reason:** A single observation or copied identifier is insufficient authority for a change,
+  while repeated guarded evidence should be reviewable through a stable, auditable artifact.
+- **Consequence:** Proposals use deterministic templates, start as `OBSERVATION`, supersede rather
+  than overwrite when evidence changes, and advance only through explicit append-only actions.
+  `VALIDATED` means evidence status only; no code, config, runtime, replay, or broker mutation occurs.
