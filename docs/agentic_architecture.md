@@ -4,8 +4,9 @@
 
 This document describes the implemented Phase 6 deterministic evidence baseline and the approved
 future direction. It does not rewrite Phase 4/5 history or delete their contracts. Predictive ML,
-local LLMs, external news providers, and chart vision are optional evidence sources; only the
-predictive-model adapter contract exists today.
+local LLMs, external news providers, and chart vision remain optional. The predictive-model adapter
+is the only such runtime evidence contract; Phase 9 Task 1 adds a separate offline LLM explanation
+boundary that cannot feed or mutate the live/replay decision path.
 
 ## Invariants
 
@@ -177,13 +178,25 @@ open-position resync, missing-candle backfill, explicit missing-intrabar continu
 TTLs, stale-state checks, and safe resume only after reconciliation and freshness validation. None of
 this recovery workflow is implemented in Phase 6.
 
-## Optional local reasoning and controlled evolution (future)
+## Offline local reasoning boundary
 
-Specialists may later use a local LLM behind the stable `AgentEvidence`/`AgentMemory` contracts. The
-backend must support a fast reasoning mode, a deep reasoning mode, latency and token/output budgets,
-timeout, structured-
-output validation, deterministic fallback, and fact/provenance consistency checks. Llama, Qwen, and
-DeepSeek experiments are exploratory; no specific model is an implemented dependency.
+Phase 9 Task 1 implements one optional `REFLECTION_EXPLANATION` slow-path task under the separate
+`axq.reasoning` package. A code-owned prompt and strict response schema bind immutable reflection,
+pattern, or proposal references plus bounded sanitized context. Provider/model identity includes the
+native adapter, Ollama server version, exact model name and digest, and optional family/quantization
+assertions. Only loopback native Ollama HTTP is allowed; the package uses no cloud provider, RAG,
+embedding, vector, graph, web research, plugin, arbitrary-tool, Final OOS, broker, or MT5 path.
+
+Canonical requests, structured responses, and terminal attempts are append-only SQLite records.
+`REUSE_FIRST_COMPLETED_EXACT` revalidates and returns the first exact completion without invoking the
+provider; `NEVER_REUSE` permits another independent generation. Request identity and exact reuse are
+deterministic, but independent LLM generations are not promised to be byte-identical. Failed and
+invalid attempts remain permanently auditable without storing raw invalid output or hidden thinking.
+
+The boundary is offline and advisory. No fast-path package imports it, and it cannot produce agent
+evidence, change Master/Discipline/Risk, transition a proposal, deploy a candidate, or alter runtime.
+Future specialist or runtime LLM use would require a separately reviewed contract and deterministic
+fallback; it must not be inferred from this offline implementation.
 
 Controlled improvement follows `live/demo experience -> reflection -> meta-reflection -> candidate
 proposal -> recent replay/shadow -> compare -> explicit promotion`. Agents may propose new or changed
@@ -297,8 +310,9 @@ counts directly comparable between equivalent replay and live-like inputs.
 
 live-money execution; an OS service/watchdog host; MQL5/IPC transport; a simulated broker/trade-P&L
 model; a concrete missing-candle backfill adapter;
-Ollama/local-LLM integration; chart vision; reflection/weekly learning; autonomous tool- or
-agent-gap detection; and autonomous architecture evolution.
+runtime Ollama/LLM integration; chart vision; autonomous tool- or agent-gap detection; RAG/Experience
+Graph reasoning; and autonomous architecture evolution. Offline structured Ollama explanation exists
+only through the Phase 9 Task 1 boundary described above.
 
 ## Deferred risks
 

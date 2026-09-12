@@ -432,6 +432,35 @@ Use `previous_authorization_id: null` for the first record and the current termi
 for any later record. Recording permission does not run `transition-proposal`; lifecycle application
 requires a separate future operator action and a fresh eligibility check.
 
+## Phase 9 Task 1 offline reflection explanation
+
+This command is optional and offline-only. It does not participate in replay, shadow, demo, or live
+decision processing. Start Ollama locally and identify the exact server and installed model before
+running; never substitute a similar tag or digest:
+
+```powershell
+$env:PYTHONPATH = (Resolve-Path 'src')
+$ollamaRoot = 'http://127.0.0.1:11434'
+$ollamaVersion = (Invoke-RestMethod "$ollamaRoot/api/version").version
+$model = (Invoke-RestMethod "$ollamaRoot/api/tags").models |
+  Where-Object { $_.name -eq 'qwen3:8b' } |
+  Select-Object -First 1
+
+python -m axq.reasoning run-reflection-explanation --input tests/fixtures/reasoning/reflection_explanation_input.json --store runtime/phase9/reasoning.sqlite3 --output runtime/phase9/result.json --attempt-key operator-smoke-001 --reuse-policy REUSE_FIRST_COMPLETED_EXACT --endpoint $ollamaRoot --model $model.name --model-digest $model.digest --ollama-version $ollamaVersion --timeout-seconds 30
+$result = Get-Content -Raw runtime/phase9/result.json | ConvertFrom-Json
+python -m axq.reasoning show-request --store runtime/phase9/reasoning.sqlite3 --request-id $result.request_id
+python -m axq.reasoning show-response --store runtime/phase9/reasoning.sqlite3 --response-id $result.response_id
+python -m axq.reasoning show-history --store runtime/phase9/reasoning.sqlite3 --request-id $result.request_id
+python -m axq.reasoning reasoning-summary --store runtime/phase9/reasoning.sqlite3
+```
+
+The fake-provider tests are the acceptance authority; a real Ollama smoke test is optional. Keep the
+store and result under ignored `runtime/`. Do not pass secrets or arbitrary prompts through bounded
+context. A provider failure or identity mismatch is an offline audit result, not permission to weaken
+checks. `REUSE_FIRST_COMPLETED_EXACT` guarantees exact stored response bytes; a fresh
+`NEVER_REUSE` generation can legitimately differ. See `docs/llm_reasoning.md` for identities,
+failure statuses, privacy behavior, and safety boundaries.
+
 
 ## Phase 7 Task 8 direct MT5 demo transport
 

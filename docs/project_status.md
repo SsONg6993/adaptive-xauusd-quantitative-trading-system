@@ -16,7 +16,8 @@ Last updated: 2026-09-12
 | 6 | Shared runtime state, agent contracts, deterministic kernel vertical slice | COMPLETE |
 | 7 | Master, Discipline, Risk, execution, recovery, position actions, replay validation | COMPLETE |
 | 8 | Controlled learning and attribution | IN PROGRESS — TASKS 1–11 COMPLETE |
-| 9+ | Optional intelligence | NOT STARTED |
+| 9 | Optional intelligence | IN PROGRESS — TASK 1 STAGES 1–8 IMPLEMENTED; FINAL GATE PENDING |
+| 10+ | Later optional intelligence | NOT STARTED |
 
 Phases 0–4 established the local-first contracts, UTC market-data pipeline, causal versioned feature
 engine, immutable leakage-safe datasets/labels/splits, and manifest-bound Quant Agent training,
@@ -88,6 +89,14 @@ Phase 8 Task 11 adds an operator authorization record downstream of a current te
 replayed `CANDIDATE` status and exact governance linkage, and persists a strict append-only chain.
 Authorization remains permission only and cannot apply the proposal transition or deploy anything.
 
+Phase 9 Task 1 adds a separate offline-only `axq.reasoning` package for one controlled
+`REFLECTION_EXPLANATION` task. Requests bind exact provider/model, prompt/schema, immutable source,
+bounded context, and generation identities. Native standard-library Ollama access is loopback-only;
+strict structured responses and every terminal attempt are stored append-only under migration 016.
+Exact completed-result reuse skips provider invocation and preserves response bytes, while failures
+remain permanent audit records. No reasoning dependency enters runtime, trading, proposal lifecycle,
+deployment, broker/MT5, or Final OOS paths. The final repository validation gate remains pending.
+
 ## Verified state
 
 - Stable Phase 4 checkpoint: `32132dd103087778fda88c1facf4159894aca653`.
@@ -99,6 +108,9 @@ Authorization remains permission only and cannot apply the proposal transition o
   Regression with sigmoid calibration and 60% actionable coverage.
 - Serious model training has **not** been performed. Smoke metrics are pipeline diagnostics and are
   not profitability evidence.
+- Phase 9 Task 1 controlled fixture: one request, one response, one `COMPLETED` plus one `REUSED`
+  attempt; one provider verification/completion total; 221-byte completed and 217-byte reused result
+  artifacts. This is boundary validation, not model-quality evidence.
 
 ## Current architecture
 
@@ -261,16 +273,19 @@ status-transition history; no lifecycle mutation occurs.
 - Real-terminal demo mutation has not been exercised by automated validation; fake-gateway tests
   cover transport behavior without placing trades.
 - A production scheduler/service host, simulated fills/P&L, MQL5/IPC transport, automated resolution
-  of unknown broker outcomes, LLMs, vision, full-kernel candidate injection, and general
-  replay/challenger evaluators are absent.
+  of unknown broker outcomes, runtime LLM use, RAG/Experience Graph, vision, broader candidate kinds,
+  and execution of real governed proposals are absent.
+- Fresh LLM generations are not byte-deterministic across model builds, Ollama versions, hardware,
+  or environments. Only semantic request identity, validation, content-addressed responses, and
+  explicitly selected exact-result reuse are guaranteed.
 
 ## Working principle and next task
 
 Codex writes auditable local pipelines and runs bounded validation. The user runs serious training
-and large replays. Phase 8 Tasks 1–11 are isolated on `codex/phase-8-reflection-experience`; Task 11
-stops at explicit permission to request a proposal transition. Broader candidate
-kinds or execution of real proposals require separate approval and must remain plan-bound and unable
-to change criteria retroactively or mutate production behavior implicitly.
+and large replays. Phase 8 Tasks 1–11 remain checkpointed. Phase 9 Task 1 is isolated on
+`codex/phase-9-llm-reasoning`; Stages 1–8 implement its offline boundary and Stage 9 is the next
+separately authorized final validation gate. Broader reasoning, candidate kinds, or execution of real
+proposals require separate approval and must remain unable to mutate production behavior implicitly.
 Future work must preserve the shared live/replay contracts and may not infer authority for
 continuous execution, live-money support, simulated brokerage, or later-phase intelligence.
 

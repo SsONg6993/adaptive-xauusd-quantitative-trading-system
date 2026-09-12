@@ -410,3 +410,18 @@ do not silently rewrite earlier decisions.
 - **Consequence:** Authorization time is strict UTC and part of identity. Identical retries reuse the
   same record; stale/forked authorization history fails closed. The bridge never calls the proposal
   transition API and has no Final OOS, evaluation, replay, tuning, runtime, deployment, or MT5 path.
+
+## 2026-09-12 — Local LLM reasoning begins as an offline append-only boundary
+
+- **Decision:** Implement only `REFLECTION_EXPLANATION` through a provider-neutral protocol and one
+  loopback native Ollama adapter. Bind exact provider/model and code-owned prompt/schema identities,
+  accept only bounded immutable context, validate strict structured output/citations, and persist
+  requests, responses, and terminal attempts append-only.
+- **Reason:** Local explanations can aid controlled reflection research without becoming an
+  instruction channel, hiding provider/model changes, retaining chain of thought, or coupling an
+  unreliable generative dependency to deterministic trading.
+- **Consequence:** Exact completed-result reuse skips provider invocation and preserves response
+  bytes; failures remain permanent audit evidence. Semantic identities and reuse are deterministic,
+  while independent generations are not promised byte equality. No RAG, Experience Graph, cloud
+  provider, arbitrary tool use, Final OOS, proposal promotion, deployment, runtime, broker, or MT5
+  authority is introduced.

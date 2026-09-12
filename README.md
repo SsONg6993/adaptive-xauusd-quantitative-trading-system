@@ -1,8 +1,9 @@
 # Adaptive XAUUSD Multi-Agent Trading System
 
 Production-oriented, local-first foundation for a measurable, tool-augmented multi-agent MT5 trading
-system. Phases 0–7 are complete and Phase 8 Tasks 1–11 are implemented on an isolated branch. There
-is no production-trained model,
+system. Phases 0–7 are complete, Phase 8 Tasks 1–11 are checkpointed, and the offline-only Phase 9
+Task 1 reasoning boundary is implemented on an isolated branch pending its final validation gate.
+There is no production-trained model,
 autonomous strategy, live execution EA, or claim of trading profitability.
 
 ## Current capabilities
@@ -78,10 +79,16 @@ autonomous strategy, live execution EA, or claim of trading profitability.
   histories record accept/reject/defer evidence judgments without promoting, deploying, or mutating.
 - An operator-authorized proposal-transition bridge that records exact accepted-evidence permission
   for `CANDIDATE -> VALIDATED` without applying the lifecycle transition or deploying anything.
+- An optional offline `REFLECTION_EXPLANATION` boundary with exact Ollama/model and code-owned
+  prompt/schema identity, bounded immutable context, strict structured output, append-only SQLite
+  request/response/attempt provenance, typed failure preservation, and explicit exact-result reuse.
+  It is not imported by the live/replay fast path and has no policy, proposal, deployment, broker,
+  MT5, or Final OOS authority.
 - SQLite WAL schema and transactional migrations, with PostgreSQL migration boundaries documented.
 - Dataset manifests, label definitions, immutable model metadata, JSON logging, YAML configuration,
   and deterministic risk-veto foundation.
-- Local-first defaults: LLM and external-news integrations are off.
+- Local-first defaults: offline Ollama reasoning is explicit opt-in; runtime LLM and external-news
+  integrations are off.
 
 Read [the architecture](docs/architecture.md), [agentic architecture](docs/agentic_architecture.md),
 [indicator research](docs/indicator_research.md),
@@ -98,6 +105,7 @@ Read [the architecture](docs/architecture.md), [agentic architecture](docs/agent
 [paired evaluation](docs/paired_evaluation.md),
 [paired evaluation review](docs/paired_evaluation_review.md),
 [proposal transition authorization](docs/proposal_transition_authorization.md),
+[offline LLM reasoning](docs/llm_reasoning.md),
 and [runbook](docs/runbook.md) before running
 models. The exact user-run sequence is in
 [Phase 5 local runs](docs/phase5_local_runs.md).
@@ -170,6 +178,7 @@ src/axq/mt5/            optional Task 8 gateway, snapshot, demo entry, and posit
 src/axq/orchestration/  Task 9 deterministic startup/event/decision/recovery composition service
 src/axq/experience/     Phase 8 exact attribution, immutable experiences, store, analytics, CLI
 src/axq/reflection/     Phase 8 reflections, proposals, preregistered evaluation evidence, CLI
+src/axq/reasoning/      Phase 9 offline structured LLM boundary, Ollama adapter, audit store, CLI
 src/axq/replay_validation/ shared Phase 7 replay and immutable policy composition
 master/ risk/ execution/ Phase 7 integration boundaries and operator-facing documentation
 datasets/                immutable Phase 3 dataset build/inspection commands
@@ -196,7 +205,8 @@ action-time safety outcome becomes a content-addressed modify-stop or full-close
 supplies a direct Python/MetaTrader5 demo transport and canonical snapshot provider behind
 replaceable ports. Task 9 composes these boundaries into one restart-safe service shared by replay,
 shadow, and demo modes. Phase 8 reflection is offline and observational. A simulated broker,
-live-money execution, MQL5/IPC transport, LLM reasoning, and runtime learning remain unimplemented. See
+live-money execution, MQL5/IPC transport, runtime-integrated LLM reasoning, and runtime learning
+remain unimplemented. The implemented local reasoning boundary is offline and advisory only. See
 [position actions](docs/position_actions.md).
 The Phase 8 Shared-Kernel Candidate Driver evaluates one frozen Master-fusion configuration through
 the existing system replay and emits Task 6/7 canonical metric artifacts. Its default policy set
