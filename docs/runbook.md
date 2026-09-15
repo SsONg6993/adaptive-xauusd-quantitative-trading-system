@@ -505,3 +505,22 @@ failure statuses, privacy behavior, and safety boundaries.
 
 See `docs/runtime_orchestration.md` for mode and sequence contracts. No checked-in command enables
 live money, and Task 9 does not add an unbounded polling daemon.
+
+## Phase 9 stabilization and Dashboard verification
+
+Always make the Phase 9 worktree source authoritative when using the shared root interpreter:
+
+```powershell
+$env:PYTHONPATH = (Resolve-Path 'src').Path
+& '..\..\.venv\Scripts\python.exe' -c "import axq,sys; print(sys.executable); print(axq.__file__)"
+```
+
+Launch with `Start AXQ Dashboard.cmd` or `scripts/start_axq_dashboard.py`. Use only Dashboard START,
+STOP, and explicit RESTART for the managed Shadow lifecycle. A duplicate START must retain the same
+instance/PID. After STOP, verify the exact PID exited and query the append-only control database; do
+not terminate unrelated Python processes. Shadow is observation-only and no dashboard control can
+enable DEMO or live money.
+
+Preserved journal compatibility is read-only. Do not migrate or rewrite historical payloads in
+place. V1/V2 decoding and unknown-version failure policy are documented in
+`docs/journal_compatibility.md`. Phase 9 Task 2 remains PAUSED after this gate.

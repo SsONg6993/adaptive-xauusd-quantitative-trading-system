@@ -335,3 +335,23 @@ transitions; no model can promote or update itself. See [Quant Agent](quant_agen
 The watchdog will monitor Python, MT5 connectivity, agents, database, models, data age, execution,
 disk capacity, and provider status. A news-provider failure is noncritical when news is optional;
 unknown high-impact-event coverage can still be configured to block trading.
+
+## Phase 9 stabilization boundaries
+
+The scanner is an observational projection over a completed M5 event. It may label a cycle quiet or
+candidate, but it does not select a different semantic kernel. Every completed M5 event in Live
+Shadow and replay traverses reducer, causal tools, specialists, scenario lifecycle, and evidence
+generation. Snapshot-only broker refresh events update canonical broker/account/market state; M1,
+live tick, and completed M5 decision-capable events use the shared kernel.
+
+Runtime journal envelopes dispatch semantic decoding by record type and semantic schema version.
+Legacy `ShadowRuntimeCycle` V1 records retain their original bytes and identity calculation; current
+writes use V2, whose identity includes interaction linkage. Unknown versions and corrupt identity
+claims fail closed. Processing outcomes remain append-only: replay includes an event only when it
+has an `APPLIED` outcome, while legacy journals with no outcome records remain readable.
+
+Dataset builders require a timezone-aware `data_available_at` cutoff and discard every M5/H1/H4
+source row whose close is later than that cutoff before validation, synchronization, features, or
+labels. The existing conservative higher-timeframe availability lag is retained. Quant development
+uses TRAIN for fitting, VALIDATION for calibration/selection/diagnostics, and never emits OOS metrics;
+final OOS is invoked only as a distinct frozen-candidate evaluation.

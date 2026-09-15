@@ -347,6 +347,38 @@ def test_source_sequence_collision_is_explicitly_journaled(tmp_path) -> None:
     assert outcomes[-1].reason_code == "SOURCE_SEQUENCE_COLLISION"
 
 
+def test_mixed_accepted_rejected_and_duplicate_events_replay_original_trace(
+    tmp_path,
+) -> None:
+    first = _event(T0, 1)
+    collision = _event(T0 + timedelta(minutes=5), 1)
+    second = _event(T0 + timedelta(minutes=10), 2)
+    journal = SQLiteRuntimeJournal(tmp_path / "runtime.sqlite3")
+    runner = RuntimeStreamRunner(_kernel(), ReplayClock(T0), journal=journal)
+
+    first_step = runner.process(first, _snapshot(first))
+    assert runner.process(first, _snapshot(first)) == first_step
+    with pytest.raises(ValueError, match="source sequence collision"):
+        runner.process(collision, _snapshot(collision))
+    second_step = runner.process(second, _snapshot(second))
+
+    replayed = run_event_stream(
+        JournalEventSource(journal),
+        _kernel(),
+        ReplayClock(T0),
+        snapshots=journal.feature_snapshots(),
+    )
+
+    assert tuple(event.event_id for event in journal.events()) == (
+        first.event_id,
+        second.event_id,
+    )
+    assert tuple(step.bundle_id for step in replayed.steps) == (
+        first_step.bundle_id,
+        second_step.bundle_id,
+    )
+
+
 def test_scenario_continuity_status_is_preserved_in_journal(tmp_path) -> None:
     event = _event(T0, 1)
     journal = SQLiteRuntimeJournal(tmp_path / "runtime.sqlite3")
@@ -444,3 +476,143 @@ def test_reduce_only_broker_refresh_preserves_next_decision_semantics() -> None:
     reduced_next = reduced.process(second, feature_snapshot=_snapshot(second))
     assert evaluated.state == reduced.state
     assert evaluated_next.bundle_id == reduced_next.bundle_id
+
+
+def test_broker_refresh_is_journaled_without_semantic_or_scenario_work(tmp_path) -> None:
+    decision = _event(T0, 1)
+    at = T0 + timedelta(minutes=1)
+    account_event = RuntimeEvent(
+        event_type=RuntimeEventType.ACCOUNT_UPDATED,
+        event_time=at,
+        observed_at=at,
+        available_at=at,
+        source="mt5-snapshot",
+        source_version="1.0",
+        source_sequence=2,
+        symbol="XAUUSD",
+        payload=AccountState(
+            source="mt5-snapshot",
+            account_id="demo",
+            as_of=at,
+            freshness=ComponentFreshness(
+                component="account",
+                status=FreshnessStatus.AVAILABLE,
+                observed_at=at,
+                available_at=at,
+                stale_after_ms=300_000,
+            ),
+            balance=10_000.0,
+            equity=10_000.0,
+            free_margin=10_000.0,
+            used_margin=0.0,
+        ),
+    )
+    journal = SQLiteRuntimeJournal(tmp_path / "runtime.sqlite3")
+    runner = RuntimeStreamRunner(
+        _kernel(),
+        ReplayClock(T0),
+        journal=journal,
+        scenario_transition=_scenario_transition,
+    )
+    runner.process(decision, _snapshot(decision))
+    prior_steps = runner.steps
+    prior_thesis = runner.thesis
+
+    state = runner.reduce_broker_refresh(account_event)
+
+    assert state.account == account_event.payload
+    assert runner.steps == prior_steps
+    assert runner.thesis == prior_thesis
+    records = journal.records()
+    matching = [item.record for item in records if item.record.event_id == account_event.event_id]
+    assert tuple(item.record_type for item in matching) == (
+        JournalRecordType.RUNTIME_EVENT,
+        JournalRecordType.RUNTIME_STATE,
+        JournalRecordType.OUTCOME,
+    )
+    outcome = JournalOutcome.model_validate(matching[-1].decode())
+    assert outcome.status is JournalOutcomeStatus.APPLIED
+    assert outcome.reason_code == "BROKER_REFRESH_APPLIED"
+
+
+@pytest.mark.parametrize(
+    "event_type",
+    (
+        RuntimeEventType.M5_CLOSED,
+        RuntimeEventType.M1_CLOSED,
+        RuntimeEventType.HTF_CLOSED,
+    ),
+)
+def test_broker_refresh_rejects_decision_and_context_bar_events(
+    tmp_path, event_type: RuntimeEventType
+) -> None:
+    market = _event(T0, 1).payload
+    event = RuntimeEvent(
+        event_type=event_type,
+        event_time=T0,
+        observed_at=T0,
+        available_at=T0,
+        source="mt5-snapshot",
+        source_version="1.0",
+        source_sequence=1,
+        symbol="XAUUSD",
+        payload=market,
+    )
+    runner = RuntimeStreamRunner(
+        _kernel(),
+        ReplayClock(T0),
+        journal=SQLiteRuntimeJournal(tmp_path / f"{event_type.value}.sqlite3"),
+    )
+
+    with pytest.raises(ValueError, match="rejects non-snapshot"):
+        runner.reduce_broker_refresh(event)
+
+    assert runner.steps == ()
+
+
+def test_broker_snapshot_tick_is_state_only_but_live_tick_remains_semantic() -> None:
+    scenario_events: list[RuntimeEventType] = []
+
+    def scenario_transition(event, bundle, previous):
+        del bundle
+        scenario_events.append(event.event_type)
+        return previous
+
+    runner = RuntimeStreamRunner(
+        _kernel(),
+        ReplayClock(T0),
+        scenario_transition=scenario_transition,
+    )
+    market = _event(T0, 1).payload
+    snapshot_tick = RuntimeEvent(
+        event_type=RuntimeEventType.TICK,
+        event_time=T0,
+        observed_at=T0,
+        available_at=T0,
+        source="mt5-snapshot",
+        source_version="1.0",
+        source_sequence=1,
+        symbol="XAUUSD",
+        payload=market,
+    )
+    live_at = T0 + timedelta(seconds=1)
+    live_market = market.model_copy(update={"as_of": live_at})
+    live_tick = RuntimeEvent(
+        event_type=RuntimeEventType.TICK,
+        event_time=live_at,
+        observed_at=live_at,
+        available_at=live_at,
+        source="mt5-live-events",
+        source_version="1.0",
+        source_sequence=1,
+        symbol="XAUUSD",
+        payload=live_market,
+    )
+
+    runner.reduce_broker_refresh(snapshot_tick)
+    assert scenario_events == []
+    assert runner.steps == ()
+
+    runner.process(live_tick, None)
+    assert scenario_events == [RuntimeEventType.TICK]
+    assert len(runner.steps) == 1

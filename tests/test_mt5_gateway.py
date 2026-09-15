@@ -140,6 +140,8 @@ def test_gateway_initialization_failure_is_structured() -> None:
     with pytest.raises(MT5ConnectionError, match="test error"):
         gateway.connect()
 
+    assert module.shutdown_calls == 1
+
 
 def test_gateway_normalizes_check_send_and_constants() -> None:
     module = FakeMT5Module()

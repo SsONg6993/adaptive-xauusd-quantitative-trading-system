@@ -84,6 +84,9 @@ autonomous strategy, live execution EA, or claim of trading profitability.
   request/response/attempt provenance, typed failure preservation, and explicit exact-result reuse.
   It is not imported by the live/replay fast path and has no policy, proposal, deployment, broker,
   MT5, or Final OOS authority.
+- An optional local read-only Streamlit operator dashboard over explicit reasoning, runtime-journal,
+  and replay-metrics paths. It never scans for artifacts, runs reasoning, connects to MT5, or mutates
+  persisted state; unavailable fields remain visibly marked.
 - SQLite WAL schema and transactional migrations, with PostgreSQL migration boundaries documented.
 - Dataset manifests, label definitions, immutable model metadata, JSON logging, YAML configuration,
   and deterministic risk-veto foundation.
@@ -106,6 +109,8 @@ Read [the architecture](docs/architecture.md), [agentic architecture](docs/agent
 [paired evaluation review](docs/paired_evaluation_review.md),
 [proposal transition authorization](docs/proposal_transition_authorization.md),
 [offline LLM reasoning](docs/llm_reasoning.md),
+[operator dashboard](docs/operator_dashboard.md),
+[live shadow runtime](docs/live_shadow_runtime.md),
 and [runbook](docs/runbook.md) before running
 models. The exact user-run sequence is in
 [Phase 5 local runs](docs/phase5_local_runs.md).
@@ -179,6 +184,7 @@ src/axq/orchestration/  Task 9 deterministic startup/event/decision/recovery com
 src/axq/experience/     Phase 8 exact attribution, immutable experiences, store, analytics, CLI
 src/axq/reflection/     Phase 8 reflections, proposals, preregistered evaluation evidence, CLI
 src/axq/reasoning/      Phase 9 offline structured LLM boundary, Ollama adapter, audit store, CLI
+src/axq/dashboard/      optional read-only Streamlit operator views over explicit artifact paths
 src/axq/replay_validation/ shared Phase 7 replay and immutable policy composition
 master/ risk/ execution/ Phase 7 integration boundaries and operator-facing documentation
 datasets/                immutable Phase 3 dataset build/inspection commands

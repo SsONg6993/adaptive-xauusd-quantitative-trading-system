@@ -68,6 +68,7 @@ def main() -> None:
         feature_groups=feature_config.features.groups,
         feature_parameters=feature_config.features.parameters,
         label_definition=config.label,
+        data_available_at=config.data_available_at,
         row_policy=config.row_policy,
         split_policy=config.split,
         storage_format=config.storage_format,

@@ -47,7 +47,7 @@ def _freshness(status: FreshnessStatus, at: datetime) -> ComponentFreshness:
         observed_at=at,
         available_at=at,
         stale_after_ms=5_000,
-        reason="source heartbeat expired" if status is FreshnessStatus.STALE else None,
+        reason=None if status is FreshnessStatus.AVAILABLE else "source heartbeat unavailable",
     )
 
 
@@ -251,7 +251,11 @@ class _SimilarityProvider(SimilarityEvidenceProvider):
     provider_name = "local-neighbor-index"
     provider_version = "1.0.0"
 
+    def __init__(self) -> None:
+        self.calls = 0
+
     def find_similar(self, snapshot: CausalFeatureSnapshot) -> SimilarityEvidence:
+        self.calls += 1
         assert snapshot.feature_manifest_id == MANIFEST_ID
         return SimilarityEvidence(
             similarity_score=0.91,
@@ -368,3 +372,34 @@ def test_historical_similarity_is_optional_factual_evidence() -> None:
         "mae_mean_atr": 0.41,
     }
     assert result.quality.sample_size == 184
+
+
+def test_historical_similarity_rejects_snapshot_state_incompatibility() -> None:
+    provider = _SimilarityProvider()
+    state = _state()
+    mismatched_snapshot = CausalFeatureSnapshot.from_mapping(
+        symbol="XAUUSD",
+        base_timeframe="M5",
+        as_of=T0,
+        available_at=T0,
+        feature_manifest_id="different-manifest",
+        completed_timeframes=("M5",),
+        values={"trend_adx_14": 27.4},
+        source="phase2-feature-engine",
+        source_version="2.0.0",
+    )
+
+    manifest_result = HistoricalSimilarityTool(provider).evaluate(
+        ToolInput(state=state, feature_snapshot=mismatched_snapshot)
+    )
+    timeframe_result = HistoricalSimilarityTool(provider).evaluate(
+        ToolInput(
+            state=state,
+            feature_snapshot=_snapshot(
+                {"trend_adx_14": 27.4}, completed=("M5", "H1")
+            ),
+        )
+    )
+    assert manifest_result.status is ToolStatus.ERROR
+    assert timeframe_result.status is ToolStatus.UNAVAILABLE
+    assert provider.calls == 0

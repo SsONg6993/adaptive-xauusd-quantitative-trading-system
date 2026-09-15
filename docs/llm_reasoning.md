@@ -20,11 +20,14 @@ the native Ollama HTTP API through the Python standard library and rejects every
 Before fresh generation it checks `/api/version` and `/api/tags`; a name, digest, version, family,
 quantization, missing-model, or ambiguous-model mismatch fails closed before `/api/chat`.
 
-The only prompt is the code-owned `REFLECTION_EXPLANATION_V1`. `PromptTemplateIdentity` binds the
-template name/version/digest and the strict `ReflectionExplanation` JSON Schema name/version/digest.
-The CLI cannot accept arbitrary system or user prompts. Rendering is deterministic for the same
-canonical bounded input, and `/api/chat` is sent with `stream=false`, `think=false`, the exact JSON
-Schema, explicit temperature/seed/output limit, and the resolved model name.
+The current prompt is the code-owned `REFLECTION_EXPLANATION_V2`; persisted V1 identities remain
+readable. V2 explicitly lists the exact source/context IDs that may be cited, prohibits citations
+to digests, nested finding IDs, schema versions, or other identifiers, and constrains the provider
+JSON Schema to the same per-request allowlist. `PromptTemplateIdentity` binds the template
+name/version/digest and that exact `ReflectionExplanation` JSON Schema name/version/digest. The CLI
+cannot accept arbitrary system or user prompts. Rendering is deterministic for the same canonical
+bounded input, and `/api/chat` is sent with `stream=false`, `think=false`, the exact JSON Schema,
+explicit temperature/seed/output limit, and the resolved model name.
 
 `LLMRequestEnvelope` identity includes task, exact provider/model identity, prompt/schema identity,
 normalized source references, sanitized bounded context, and generation settings. It contains no
@@ -56,9 +59,16 @@ UTC timestamps, endpoint, token counts, and duration measurements remain audit m
 change semantic attempt identity. A later success appends after a failure; it never overwrites or
 converts the failed attempt.
 
+The CLI samples request, operation start, and completion wall time separately and measures local
+elapsed duration with a monotonic clock. Unexpected provider or response-persistence exceptions are
+converted to a bounded `PROVIDER_ERROR` terminal attempt without persisting exception text. A store
+failure that prevents the audit database itself from accepting any write remains an external
+operational failure and cannot be made durable in that unavailable store.
+
 Invalid raw provider content and exception traces are not persisted. The audit retains only a
-typed code, bounded safe message, optional HTTP status, and optional raw-response SHA-256/byte count.
-Hidden thinking is neither requested nor stored.
+typed code, bounded safe message, optional HTTP status, optional raw-response SHA-256/byte count,
+and provider usage/duration metadata when a completion was successfully received. Hidden thinking
+is neither requested nor stored.
 
 ## Exact-result reuse and determinism
 

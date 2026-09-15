@@ -161,12 +161,24 @@ class PromptTemplateIdentity(ReasoningModel):
     task: Literal[ReasoningTask.REFLECTION_EXPLANATION] = (
         ReasoningTask.REFLECTION_EXPLANATION
     )
-    template_name: Literal["REFLECTION_EXPLANATION_V1"] = "REFLECTION_EXPLANATION_V1"
-    template_version: Literal["1.0"] = "1.0"
+    template_name: Literal[
+        "REFLECTION_EXPLANATION_V1", "REFLECTION_EXPLANATION_V2"
+    ] = "REFLECTION_EXPLANATION_V1"
+    template_version: Literal["1.0", "2.0"] = "1.0"
     template_digest: str = Field(pattern=_DIGEST_PATTERN)
     response_schema_name: Literal["ReflectionExplanation"] = "ReflectionExplanation"
-    response_schema_version: Literal["1.0"] = "1.0"
+    response_schema_version: Literal["1.0", "2.0"] = "1.0"
     response_schema_digest: str = Field(pattern=_DIGEST_PATTERN)
+
+    @model_validator(mode="after")
+    def validate_version_bundle(self) -> PromptTemplateIdentity:
+        expected = {
+            "REFLECTION_EXPLANATION_V1": ("1.0", "1.0"),
+            "REFLECTION_EXPLANATION_V2": ("2.0", "2.0"),
+        }[self.template_name]
+        if (self.template_version, self.response_schema_version) != expected:
+            raise ValueError("prompt template and response-schema versions must match")
+        return self
 
 
 class ReasoningSourceReference(ReasoningModel):

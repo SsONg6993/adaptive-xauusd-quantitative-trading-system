@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+from datetime import datetime
 from pathlib import Path
 from typing import Literal
 
@@ -30,6 +31,7 @@ class DatasetBuildConfig(BaseModel):
     symbol: str = "XAUUSD"
     base_timeframe: str = "M5"
     source_files: dict[str, Path]
+    data_available_at: datetime
     feature_config: Path = Path("configs/base.yaml")
     label: LabelDefinition
     row_policy: RowPolicy = Field(default_factory=RowPolicy)

@@ -5,7 +5,7 @@ from __future__ import annotations
 import importlib
 from collections.abc import Callable, Mapping
 from pathlib import Path
-from typing import Protocol, cast
+from typing import Any, Protocol, cast
 
 from axq.mt5.contracts import MT5ConnectionError, MT5Constants
 
@@ -33,6 +33,8 @@ class _MT5Module(Protocol):
     TRADE_RETCODE_PLACED: int
     TRADE_RETCODE_DONE: int
     TRADE_RETCODE_DONE_PARTIAL: int
+    TIMEFRAME_M5: int
+    TIMEFRAME_M15: int
 
     def initialize(self, **kwargs: object) -> bool: ...
 
@@ -49,6 +51,10 @@ class _MT5Module(Protocol):
     def symbol_info(self, symbol: str) -> object: ...
 
     def symbol_info_tick(self, symbol: str) -> object: ...
+
+    def copy_rates_from_pos(
+        self, symbol: str, timeframe: int, start_pos: int, count: int
+    ) -> object: ...
 
     def positions_get(self, *, symbol: str | None = None) -> object: ...
 
@@ -90,7 +96,9 @@ class MetaTrader5Gateway:
         if self._terminal_path is not None:
             kwargs["path"] = self._terminal_path
         if not module.initialize(**kwargs):
-            raise MT5ConnectionError(f"MT5 initialize failed: {module.last_error()}")
+            error = module.last_error()
+            module.shutdown()
+            raise MT5ConnectionError(f"MT5 initialize failed: {error}")
         self._module = module
         self._connected = True
 
@@ -155,6 +163,18 @@ class MetaTrader5Gateway:
     def symbol_info_tick(self, symbol: str) -> Mapping[str, object] | None:
         return _mapping(self._require_module().symbol_info_tick(symbol))
 
+    def copy_rates_from_pos(
+        self, symbol: str, timeframe: str, start_pos: int, count: int
+    ) -> tuple[Mapping[str, object], ...]:
+        module = self._require_module()
+        values = {"M5": module.TIMEFRAME_M5, "M15": module.TIMEFRAME_M15}
+        try:
+            native_timeframe = values[timeframe.upper()]
+        except KeyError as exc:
+            raise ValueError(f"unsupported shadow timeframe: {timeframe}") from exc
+        raw = module.copy_rates_from_pos(symbol, native_timeframe, start_pos, count)
+        return _rate_mappings(raw)
+
     def positions_get(self, symbol: str | None = None) -> tuple[Mapping[str, object], ...]:
         return _mappings(self._require_module().positions_get(symbol=symbol))
 
@@ -192,4 +212,25 @@ def _mappings(value: object) -> tuple[Mapping[str, object], ...]:
         if mapped is None:
             raise MT5ConnectionError("MT5 collection contains an empty record")
         results.append(mapped)
+    return tuple(results)
+
+
+def _rate_mappings(value: object) -> tuple[Mapping[str, object], ...]:
+    if value is None:
+        return ()
+    try:
+        items: tuple[object, ...] = tuple(value)  # type: ignore[arg-type]
+    except TypeError as exc:
+        raise MT5ConnectionError("unsupported MT5 rates response") from exc
+    results: list[Mapping[str, object]] = []
+    for item in items:
+        if isinstance(item, Mapping):
+            results.append({str(key): raw for key, raw in item.items()})
+            continue
+        names = getattr(getattr(item, "dtype", None), "names", None)
+        if names:
+            indexed = cast(Any, item)
+            results.append({str(name): indexed[name].item() for name in names})
+            continue
+        raise MT5ConnectionError(f"unsupported MT5 rate type: {type(item).__name__}")
     return tuple(results)

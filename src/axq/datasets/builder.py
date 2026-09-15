@@ -7,6 +7,7 @@ import json
 import tempfile
 from collections.abc import Iterable, Mapping
 from dataclasses import dataclass
+from datetime import datetime
 from pathlib import Path
 from typing import Any
 
@@ -53,6 +54,26 @@ def _validate_source_frames(
             raise ValueError(f"Invalid {timeframe} source: {list(report.errors)}")
 
 
+def _completed_source_frames(
+    frames: Mapping[str, pd.DataFrame],
+    *,
+    data_available_at: datetime | pd.Timestamp,
+) -> dict[str, pd.DataFrame]:
+    cutoff = pd.Timestamp(data_available_at)
+    if cutoff.tzinfo is None:
+        raise ValueError("data_available_at must be timezone-aware")
+    cutoff = cutoff.tz_convert("UTC")
+    completed: dict[str, pd.DataFrame] = {}
+    for timeframe, source in frames.items():
+        frame = source.copy()
+        opened_at = pd.to_datetime(frame["timestamp"], utc=True, errors="raise")
+        closes_at = opened_at + pd.Timedelta(timeframe_delta(timeframe))
+        frame = frame.loc[closes_at <= cutoff].copy()
+        frame["timestamp"] = opened_at.loc[frame.index]
+        completed[timeframe] = frame.reset_index(drop=True)
+    return completed
+
+
 def assemble_dataset(
     frames: Mapping[str, pd.DataFrame],
     *,
@@ -63,6 +84,7 @@ def assemble_dataset(
     feature_groups: Iterable[str],
     feature_parameters: Mapping[str, Mapping[str, Any]],
     label_definition: LabelDefinition,
+    data_available_at: datetime | pd.Timestamp,
     row_policy: RowPolicy | None = None,
     split_policy: SplitPolicy | None = None,
     storage_format: str = "parquet",
@@ -72,7 +94,10 @@ def assemble_dataset(
     policy = row_policy or RowPolicy()
     groups = list(feature_groups)
     base = base_timeframe.upper()
-    normalized = {key.upper(): value.copy() for key, value in frames.items()}
+    normalized = _completed_source_frames(
+        {key.upper(): value.copy() for key, value in frames.items()},
+        data_available_at=data_available_at,
+    )
     _validate_source_frames(normalized, base)
     synchronized = synchronize_completed_bars(normalized, base_timeframe=base)
     if synchronized["timestamp"].duplicated().any():
@@ -172,6 +197,7 @@ def assemble_dataset(
         "row_policy": policy.model_dump(mode="json"),
         "split_policy": split_policy.model_dump(mode="json") if split_policy else None,
         "storage_format": storage_format,
+        "data_available_at": pd.Timestamp(data_available_at).tz_convert("UTC").isoformat(),
     }
     content_hash = dataframe_hash(dataset)
     manifest = DatasetManifest(
@@ -195,7 +221,8 @@ def assemble_dataset(
         configuration_hash=canonical_hash(config_body),
         decision_timestamp_convention=(
             f"{base} candle open timestamp plus {timeframe_delta(base)}; "
-            "features include the just-completed candle"
+            "features include the just-completed candle; source bars close at or before "
+            f"data_available_at={pd.Timestamp(data_available_at).tz_convert('UTC').isoformat()}"
         ),
         train_validation_oos_boundaries=boundaries,
         storage_format=storage_format,

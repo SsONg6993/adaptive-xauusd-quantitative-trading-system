@@ -1,6 +1,6 @@
 # Project status
 
-Last updated: 2026-09-12
+Last updated: 2026-09-15
 
 ## Current phase status
 
@@ -16,7 +16,7 @@ Last updated: 2026-09-12
 | 6 | Shared runtime state, agent contracts, deterministic kernel vertical slice | COMPLETE |
 | 7 | Master, Discipline, Risk, execution, recovery, position actions, replay validation | COMPLETE |
 | 8 | Controlled learning and attribution | IN PROGRESS — TASKS 1–11 COMPLETE |
-| 9 | Optional intelligence | IN PROGRESS — TASK 1 STAGES 1–8 IMPLEMENTED; FINAL GATE PENDING |
+| 9 | Optional intelligence | IN PROGRESS — TASK 1 + STABILIZATION IMPLEMENTED; FULL PASS; DASHBOARD/MT5 GATE PASSED; TASK 2 PAUSED |
 | 10+ | Later optional intelligence | NOT STARTED |
 
 Phases 0–4 established the local-first contracts, UTC market-data pipeline, causal versioned feature
@@ -95,7 +95,30 @@ bounded context, and generation identities. Native standard-library Ollama acces
 strict structured responses and every terminal attempt are stored append-only under migration 016.
 Exact completed-result reuse skips provider invocation and preserves response bytes, while failures
 remain permanent audit records. No reasoning dependency enters runtime, trading, proposal lifecycle,
-deployment, broker/MT5, or Final OOS paths. The final repository validation gate remains pending.
+deployment, broker/MT5, or Final OOS paths. The full repository validation suite passes; the real
+Dashboard/MT5 lifecycle gate passes against the explicitly configured Vantage terminal.
+
+Phase 9 stabilization repairs the legacy/current Shadow-cycle schema boundary, rejected-event
+replay, completed-M5 Shadow/replay parity, explicit source-completion cutoffs in dataset assembly,
+and development-time Final-OOS isolation. Related hardening records measured reasoning timing and
+unexpected failures, cleans up exact spawned Dashboard/Shadow processes on failed startup,
+exercises the singleton lock across real processes, and validates historical-similarity snapshot
+compatibility. Historical journals remain append-only and unchanged. Dashboard smoke additionally
+made stopped-state MT5 probing explicit and yielded the connection to the managed child. The prior
+IPC timeout was traced to a different terminal installation; the managed default now targets the
+logged-in Vantage terminal at `C:\Program Files\MetaTrader\terminal64.exe`. START, RUNNING,
+completed-M5 processing, duplicate-START singleton ownership, graceful STOP, and exact-process exit
+were verified with zero broker mutation. An immediate restart while the already-processed completed
+M5 remained latest failed closed as `stale source sequence`; after the next genuinely completed M5,
+restart accepted the new bar naturally and returned to healthy waiting without any runtime,
+journal, replay, ordering, or decision-semantic change. This same-bar restart is a known operational
+constraint. The Dashboard/MT5 lifecycle gate is passed. Task 2 retrieval/embedding work remains
+PAUSED.
+
+Historical Quant development before this repair did inspect OOS metrics during candidate comparison.
+Those results are contaminated for model-selection claims and must not be represented as clean final
+OOS evidence. New development runs emit TRAIN/VALIDATION evidence only; final OOS is a separate,
+explicit post-freeze evaluation.
 
 ## Verified state
 

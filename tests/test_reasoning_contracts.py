@@ -239,6 +239,25 @@ def test_structured_response_rejects_extra_fields_and_false_citations() -> None:
         )
 
 
+@pytest.mark.parametrize("forbidden_id", ["1" * 64, "finding-a"])
+def test_structured_response_rejects_nested_or_digest_citations(
+    forbidden_id: str,
+) -> None:
+    with pytest.raises(ValueError, match="citations must reference allowed evidence IDs"):
+        response_artifact(output=explanation(cited_evidence_ids=(forbidden_id,)))
+
+
+@pytest.mark.parametrize(
+    "allowed_id",
+    ["weekly-reflection-aaaaaaaaaaaaaaaaaaaa", "context-weekly-summary"],
+)
+def test_structured_response_accepts_exact_source_or_context_citation(
+    allowed_id: str,
+) -> None:
+    artifact = response_artifact(output=explanation(cited_evidence_ids=(allowed_id,)))
+    assert artifact.output.cited_evidence_ids == (allowed_id,)
+
+
 def test_response_identity_is_content_addressed() -> None:
     request = request_envelope()
     baseline = response_artifact(request)

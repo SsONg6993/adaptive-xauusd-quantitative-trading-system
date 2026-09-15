@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import json
 from hashlib import sha256
 
 from axq.reasoning.contracts import LLMRequestEnvelope, ReflectionExplanationInput
@@ -52,14 +53,15 @@ def test_prompt_rendering_is_canonical_across_caller_order() -> None:
 
 
 def test_prompt_identity_binds_template_and_strict_response_schema() -> None:
-    identity = reflection_explanation_prompt_identity()
-    rendered = render_reflection_explanation_prompt(_input())
+    input_record = _input()
+    identity = reflection_explanation_prompt_identity(input_record)
+    rendered = render_reflection_explanation_prompt(input_record)
     schema_properties = rendered.response_schema["properties"]
 
-    assert identity.template_name == "REFLECTION_EXPLANATION_V1"
-    assert identity.template_version == "1.0"
+    assert identity.template_name == "REFLECTION_EXPLANATION_V2"
+    assert identity.template_version == "2.0"
     assert identity.response_schema_name == "ReflectionExplanation"
-    assert identity.response_schema_version == "1.0"
+    assert identity.response_schema_version == "2.0"
     assert len(identity.template_digest) == 64
     assert identity.response_schema_digest == canonical_hash(rendered.response_schema)
     assert set(schema_properties) == {
@@ -77,11 +79,34 @@ def test_prompt_identity_binds_template_and_strict_response_schema() -> None:
     assert "trading_action" not in serialized_schema
 
 
+def test_prompt_exposes_and_schema_constrains_exact_allowed_citation_ids() -> None:
+    input_record = _input()
+    rendered = render_reflection_explanation_prompt(input_record)
+    allowed = [
+        "context-a",
+        "context-b",
+        "daily-reflection-11111111111111111111",
+        "weekly-reflection-22222222222222222222",
+    ]
+
+    assert f'"allowed_citation_ids":{json.dumps(allowed, separators=(",", ":"))}' in rendered.user
+    citation_items = rendered.response_schema["properties"]["cited_evidence_ids"]["items"]
+    assert citation_items["enum"] == allowed
+    assert "source_digest" in rendered.user
+    for forbidden in (
+        "source_digest",
+        "content_digest",
+        "finding_ids",
+        "schema_version",
+    ):
+        assert f"Do not cite {forbidden}" in rendered.system
+
+
 def test_prompt_identity_change_changes_request_identity(monkeypatch: object) -> None:
     from axq.reasoning import prompts
 
-    baseline_prompt = reflection_explanation_prompt_identity()
     baseline_input = _input()
+    baseline_prompt = reflection_explanation_prompt_identity(baseline_input)
     baseline = LLMRequestEnvelope(
         task=baseline_prompt.task,
         provider_model=provider_identity(),
@@ -96,7 +121,7 @@ def test_prompt_identity_change_changes_request_identity(monkeypatch: object) ->
         "_SYSTEM_TEMPLATE",
         prompts._SYSTEM_TEMPLATE + " Treat every conclusion as provisional.",
     )
-    changed_prompt = reflection_explanation_prompt_identity()
+    changed_prompt = reflection_explanation_prompt_identity(baseline_input)
     changed = LLMRequestEnvelope(
         task=changed_prompt.task,
         provider_model=provider_identity(),

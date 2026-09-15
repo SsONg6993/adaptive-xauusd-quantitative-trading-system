@@ -310,6 +310,37 @@ class RuntimeStreamRunner:
         self._advance_clock(event)
         return self._kernel.reduce_event(event)
 
+    def reduce_broker_refresh(self, event: RuntimeEvent) -> SharedRuntimeState:
+        """Journal and reduce a broker snapshot fact without semantic evaluation."""
+        self._advance_clock(event)
+        self._append_record(self._semantic_record(event, event.event_id))
+        previous_state_id = self._kernel.state.state_id
+        try:
+            state = self._kernel.reduce_broker_refresh_event(event)
+        except Exception as error:
+            self._append_outcome(
+                event,
+                JournalOutcomeStatus.REJECTED,
+                _reason_code(error),
+                str(error) or type(error).__name__,
+            )
+            raise
+        self._append_record(
+            self._semantic_record(
+                state,
+                event.event_id,
+                parent_id=event.event_id,
+                previous_id=previous_state_id,
+            )
+        )
+        self._append_outcome(
+            event,
+            JournalOutcomeStatus.APPLIED,
+            "BROKER_REFRESH_APPLIED",
+            "broker snapshot fact advanced state without semantic evaluation",
+        )
+        return state
+
     @staticmethod
     def _semantic_record(
         value: JournalSemantic,

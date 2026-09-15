@@ -139,7 +139,11 @@ def _model_explanation(
     return {"method": "none", "permutation_importance_compatible": True}
 
 
-def train_quant_model(config: QuantTrainingConfig) -> TrainingResult:
+def train_quant_model(
+    config: QuantTrainingConfig,
+    *,
+    evaluate_final_oos: bool = True,
+) -> TrainingResult:
     np.random.seed(config.random_seed)
     dataset = load_training_dataset(config.dataset_dir)
     if not dataset.manifest.git_commit:
@@ -155,9 +159,9 @@ def train_quant_model(config: QuantTrainingConfig) -> TrainingResult:
     device = resolve_device(config.device, config.architecture)
     estimator = build_model(config, selected_device=str(device["selected"]))
     encoder = LabelEncoder().fit(train[target_column].astype(str))
-    all_labels = set(dataset.frame[target_column].astype(str).unique())
-    if all_labels - set(encoder.classes_):
-        raise ValueError("Validation/OOS contains a class absent from TRAIN")
+    development_labels = set(validation[target_column].astype(str).unique())
+    if development_labels - set(encoder.classes_):
+        raise ValueError("VALIDATION contains a class absent from TRAIN")
     y_train = encoder.transform(train[target_column].astype(str))
     estimator.fit(x_train, y_train)
     model = EncodedClassifier(estimator=estimator, classes_=encoder.classes_)
@@ -179,16 +183,17 @@ def train_quant_model(config: QuantTrainingConfig) -> TrainingResult:
             explicit_neutral_class=config.hold_policy.explicit_neutral_class,
             metadata=_metadata(dataset, frame),
         )
-    # OOS labels are accessed only after model, preprocessing, selection, and calibration freeze.
-    oos_probability = calibrator.transform(model.predict_proba(processor.transform(oos)))
-    split_metrics["oos"] = evaluate_predictions(
-        oos[target_column],
-        oos_probability,
-        model.classes_,
-        minimum_confidence=config.hold_policy.minimum_confidence,
-        explicit_neutral_class=config.hold_policy.explicit_neutral_class,
-        metadata=_metadata(dataset, oos),
-    )
+    if evaluate_final_oos:
+        # Explicit one-way final evaluation after every fitted component is frozen.
+        oos_probability = calibrator.transform(model.predict_proba(processor.transform(oos)))
+        split_metrics["oos"] = evaluate_predictions(
+            oos[target_column],
+            oos_probability,
+            model.classes_,
+            minimum_confidence=config.hold_policy.minimum_confidence,
+            explicit_neutral_class=config.hold_policy.explicit_neutral_class,
+            metadata=_metadata(dataset, oos),
+        )
     git_commit = _git_identity()
     mapping = {label: label_to_signal(label) for label in model.classes_}
     if not set(mapping.values()) <= {"BUY", "SELL", "HOLD"}:
@@ -261,7 +266,9 @@ def train_quant_model(config: QuantTrainingConfig) -> TrainingResult:
                 run_dir / paths["selected_features"],
             ),
             "training_config": write_json(
-                config.model_dump(mode="json"), run_dir / paths["training_config"]
+                config.model_dump(mode="json")
+                | {"final_oos_evaluated": evaluate_final_oos},
+                run_dir / paths["training_config"],
             ),
             "metrics": write_json(split_metrics, run_dir / paths["metrics"]),
             "confusion_matrices": write_json(
@@ -277,7 +284,7 @@ def train_quant_model(config: QuantTrainingConfig) -> TrainingResult:
                         "preprocessing": "TRAIN",
                         "model": "TRAIN",
                         "calibration": "VALIDATION",
-                        "final_evaluation": "OOS",
+                        "final_evaluation": "OOS" if evaluate_final_oos else "NOT_RUN",
                     },
                     "fit_rows": {
                         "preprocessing": processor.fit_row_count,

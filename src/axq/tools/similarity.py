@@ -75,6 +75,36 @@ class HistoricalSimilarityTool:
                 quality=ToolQuality(valid=False),
                 warnings=("feature snapshot is not yet causally available",),
             )
+        if snapshot.feature_manifest_id != tool_input.state.market.feature_manifest_id:
+            return _result(
+                self,
+                tool_input,
+                status=ToolStatus.ERROR,
+                freshness=FreshnessStatus.UNAVAILABLE,
+                quality=ToolQuality(valid=False),
+                warnings=("feature manifest does not match runtime market state",),
+            )
+        if not set(snapshot.completed_timeframes).issubset(
+            tool_input.state.market.completed_timeframes
+        ):
+            return _result(
+                self,
+                tool_input,
+                status=ToolStatus.UNAVAILABLE,
+                freshness=FreshnessStatus.UNAVAILABLE,
+                quality=ToolQuality(valid=False),
+                warnings=("feature snapshot timeframes are not completed in market state",),
+            )
+        market_status = tool_input.state.market.freshness.status
+        if market_status in {FreshnessStatus.UNKNOWN, FreshnessStatus.UNAVAILABLE}:
+            return _result(
+                self,
+                tool_input,
+                status=ToolStatus.UNAVAILABLE,
+                freshness=market_status,
+                quality=ToolQuality(valid=False),
+                warnings=("market state is unavailable",),
+            )
         try:
             evidence = self._provider.find_similar(snapshot)
         except Exception as error:
@@ -96,7 +126,7 @@ class HistoricalSimilarityTool:
             for name, value in values.items()
             if value is not None
         )
-        stale = tool_input.state.market.freshness.status is FreshnessStatus.STALE
+        stale = market_status is FreshnessStatus.STALE
         return _result(
             self,
             tool_input,

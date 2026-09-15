@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from datetime import UTC, datetime
+from datetime import UTC, datetime, timedelta
 
 import pytest
 
@@ -12,6 +12,11 @@ from axq.mt5 import (
     MT5SymbolMapping,
 )
 from axq.mt5.snapshot import MT5BrokerSnapshotProvider
+from axq.mt5.time_normalization import (
+    MT5BrokerEnvironmentIdentity,
+    MT5BrokerTimeNormalizer,
+    infer_broker_time_offset,
+)
 from axq.runtime import (
     FreshnessStatus,
     OrderType,
@@ -202,6 +207,123 @@ def test_snapshot_maps_account_market_books_exposure_and_constraints() -> None:
     assert gateway.connect_calls == 1
 
 
+def test_shadow_snapshot_normalizes_tick_but_leaves_unverified_object_times_unchanged() -> None:
+    gateway = SnapshotGateway()
+    raw_tick = NOW + timedelta(hours=3)
+    gateway.symbol_info_tick = lambda symbol: {  # type: ignore[method-assign]
+        "symbol": symbol,
+        "time": int(raw_tick.timestamp()),
+        "time_msc": int(raw_tick.timestamp() * 1_000),
+        "bid": 2500.0,
+        "ask": 2500.2,
+        "last": 0.0,
+    }
+    resolution = infer_broker_time_offset(
+        raw_tick_time=int(raw_tick.timestamp()),
+        raw_tick_time_msc=int(raw_tick.timestamp() * 1_000),
+        observed_at=NOW,
+        canonical_instrument="XAUUSD",
+        resolved_broker_symbol="XAUUSD.demo",
+        instrument_resolution_id="rbi-test",
+        environment=MT5BrokerEnvironmentIdentity(
+            broker_server="test",
+            account_login_digest="login-digest",
+            account_trade_mode=0,
+            terminal_company="test",
+            terminal_build=1,
+        ),
+    )
+    provider = MT5BrokerSnapshotProvider(
+        gateway=gateway,
+        symbol_mapping=MT5SymbolMapping(
+            internal_symbol="XAUUSD", broker_symbol="XAUUSD.demo"
+        ),
+        clock=lambda: NOW,
+        source="mt5-shadow",
+        source_version="1.0.0",
+        stale_after_ms=30_000,
+        broker_time_normalizer=MT5BrokerTimeNormalizer(resolution),
+    )
+
+    snapshot = provider.capture()
+
+    assert snapshot.market.as_of == NOW
+    assert snapshot.market.freshness.observed_at == NOW
+    assert snapshot.market.last is None
+    # Position/order clock encoding is not proven equivalent to market-data encoding in V1.
+    assert snapshot.positions.positions[0].opened_at == NOW.replace(minute=0)
+    assert snapshot.orders.orders[0].created_at == NOW.replace(minute=1)
+
+
+def test_shadow_snapshot_accepts_normalizer_operational_future_tolerance() -> None:
+    gateway = SnapshotGateway()
+    raw_tick = NOW + timedelta(hours=3, milliseconds=100)
+    gateway.symbol_info_tick = lambda symbol: {  # type: ignore[method-assign]
+        "symbol": symbol,
+        "time": int(raw_tick.timestamp()),
+        "time_msc": int(raw_tick.timestamp() * 1_000),
+        "bid": 2500.0,
+        "ask": 2500.2,
+        "last": 0.0,
+    }
+    resolution = infer_broker_time_offset(
+        raw_tick_time=int(raw_tick.timestamp()),
+        raw_tick_time_msc=int(raw_tick.timestamp() * 1_000),
+        observed_at=NOW,
+        canonical_instrument="XAUUSD",
+        resolved_broker_symbol="XAUUSD.demo",
+        instrument_resolution_id="rbi-test",
+        environment=MT5BrokerEnvironmentIdentity(broker_server="test"),
+    )
+    clock_values = iter((NOW, NOW + timedelta(milliseconds=200)))
+    provider = MT5BrokerSnapshotProvider(
+        gateway=gateway,
+        symbol_mapping=MT5SymbolMapping(
+            internal_symbol="XAUUSD", broker_symbol="XAUUSD.demo"
+        ),
+        clock=lambda: next(clock_values),
+        source="mt5-shadow",
+        source_version="1.0.0",
+        stale_after_ms=30_000,
+        broker_time_normalizer=MT5BrokerTimeNormalizer(resolution),
+    )
+
+    snapshot = provider.capture()
+
+    assert snapshot.market.as_of == NOW + timedelta(milliseconds=100)
+    assert snapshot.market.freshness.available_at == NOW + timedelta(milliseconds=200)
+
+
+def test_snapshot_preserves_positive_broker_last() -> None:
+    snapshot = _provider(SnapshotGateway()).capture()
+
+    assert snapshot.market.last == 2500.1
+
+
+@pytest.mark.parametrize("broker_last", [0.0, -1.0, float("nan"), "invalid"])
+def test_snapshot_maps_invalid_broker_last_to_none_without_changing_quote(
+    broker_last: object,
+) -> None:
+    gateway = SnapshotGateway()
+    gateway.symbol_info_tick = lambda symbol: {  # type: ignore[method-assign]
+        "symbol": symbol,
+        "time": int(NOW.timestamp()),
+        "time_msc": int(NOW.timestamp() * 1000),
+        "bid": 4348.10,
+        "ask": 4348.45,
+        "last": broker_last,
+        "volume": 0,
+    }
+
+    snapshot = _provider(gateway).capture()
+
+    assert snapshot.market.bid == 4348.10
+    assert snapshot.market.ask == 4348.45
+    assert snapshot.market.last is None
+    assert snapshot.market.last != (4348.10 + 4348.45) / 2
+    assert snapshot.market.as_of == NOW
+
+
 def test_snapshot_exact_persisted_ticket_link_rebinds_to_canonical_object() -> None:
     linkage = MT5PersistedIntentLink(
         intent_id="xi-entry",
@@ -265,3 +387,26 @@ def test_snapshot_does_not_mutate_shared_state_or_call_broker_transport() -> Non
     gateway = SnapshotGateway()
     snapshot = _provider(gateway).capture()
     assert snapshot.account.freshness.status is FreshnessStatus.AVAILABLE
+
+
+def test_shadow_snapshot_does_not_select_the_explicit_symbol() -> None:
+    gateway = SnapshotGateway()
+
+    def reject_selection(symbol: str, enabled: bool) -> bool:
+        del symbol, enabled
+        raise AssertionError("shadow snapshot must not select a symbol")
+
+    gateway.symbol_select = reject_selection  # type: ignore[method-assign]
+    provider = MT5BrokerSnapshotProvider(
+        gateway=gateway,
+        symbol_mapping=MT5SymbolMapping(internal_symbol="XAUUSD", broker_symbol="XAUUSD.demo"),
+        clock=lambda: NOW,
+        source="mt5-shadow",
+        source_version="1",
+        stale_after_ms=30_000,
+        select_symbol=False,
+    )
+
+    snapshot = provider.capture()
+
+    assert snapshot.market.symbol == "XAUUSD"

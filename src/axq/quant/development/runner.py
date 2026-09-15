@@ -58,7 +58,7 @@ def plan_experiment(config: ExperimentConfig) -> dict[str, Any]:
         "architecture": config.training.architecture.value,
         "device": device,
         "fit_performed": False,
-        "final_oos_use": "EVALUATION_ONLY",
+        "final_oos_use": "NOT_ACCESSED",
         "development_selection_scopes": ["TRAIN", "VALIDATION", "WALK_FORWARD_VALIDATION"],
     }
 
@@ -115,16 +115,16 @@ def run_experiment(config: ExperimentConfig) -> DevelopmentRunResult:
         )
     state.start(run_id, config_hash=config.config_hash)
     try:
-        trained = train_quant_model(config.training)
+        trained = train_quant_model(config.training, evaluate_final_oos=False)
         dataset = load_training_dataset(config.training.dataset_dir)
         agent = QuantAgent(trained.run_dir)
-        _, _, oos = dataset.split_frames()
+        _, validation, _ = dataset.split_frames()
         probability = agent.calibration.transform(
-            agent.model.predict_proba(agent.preprocessing.transform(oos))
+            agent.model.predict_proba(agent.preprocessing.transform(validation))
         )
-        target = oos[trained.manifest.target_column]
+        target = validation[trained.manifest.target_column]
         predictions = _prediction_frame(
-            oos,
+            validation,
             probability,
             agent.model.classes_,
             config.training.hold_policy.minimum_confidence,
@@ -133,13 +133,13 @@ def run_experiment(config: ExperimentConfig) -> DevelopmentRunResult:
         )
         run_dir.mkdir(parents=True, exist_ok=True)
         predictions.to_parquet(run_dir / "predictions.parquet", index=False)
-        oos_metrics = trained.metrics["oos"]
-        pd.DataFrame(oos_metrics["confidence_buckets"]).to_csv(
+        validation_metrics = trained.metrics["validation"]
+        pd.DataFrame(validation_metrics["confidence_buckets"]).to_csv(
             run_dir / "confidence_buckets.csv", index=False
         )
         stability: dict[str, Any] = {
             config.evaluation.temporal_frequency: segment_predictions(
-                oos,
+                validation,
                 probability,
                 agent.model.classes_,
                 target_column=trained.manifest.target_column,
@@ -157,9 +157,9 @@ def run_experiment(config: ExperimentConfig) -> DevelopmentRunResult:
             ],
         }
         for column in config.evaluation.session_columns:
-            if column in oos.columns:
+            if column in validation.columns:
                 stability["session"][column] = segment_predictions(
-                    oos,
+                    validation,
                     probability,
                     agent.model.classes_,
                     target_column=trained.manifest.target_column,
@@ -189,7 +189,7 @@ def run_experiment(config: ExperimentConfig) -> DevelopmentRunResult:
             "feature_manifest_id": trained.manifest.feature_manifest_id,
             "feature_count": len(trained.manifest.selected_features),
             "config_hash": config.config_hash,
-            "final_oos_use": "EVALUATION_ONLY",
+            "final_oos_use": "NOT_ACCESSED",
             "threshold_diagnostics": threshold_diagnostics(
                 probability, agent.model.classes_, config.evaluation.hold_thresholds
             ),
@@ -210,7 +210,7 @@ def run_experiment(config: ExperimentConfig) -> DevelopmentRunResult:
             f"- Model: `{trained.manifest.model_id}`\n"
             f"- Architecture: `{trained.manifest.architecture}`\n"
             f"- Dataset: `{trained.manifest.dataset_id}`\n"
-            "- Final OOS use: evaluation only\n"
+            "- Final OOS use: not accessed; explicit final evaluation is separate\n"
             "- Profitability claim: none; execution-aware backtesting is required later.\n"
         )
         write_text_atomic(run_dir / "report.md", report)
@@ -234,7 +234,7 @@ def run_experiment(config: ExperimentConfig) -> DevelopmentRunResult:
                 "model_id": trained.manifest.model_id,
                 "model_run_dir": str(trained.run_dir),
                 "dataset_id": trained.manifest.dataset_id,
-                "final_oos_use": "EVALUATION_ONLY",
+                "final_oos_use": "NOT_ACCESSED",
                 "real_training_scale": summary["real_training_scale"],
             },
             names,

@@ -121,6 +121,7 @@ class DecisionPlan(BaseModel):
     position_management: tuple[PositionManagementOutcome, ...] = ()
     position_action_safety: tuple[PositionActionSafetyOutcome, ...] = ()
     position_action_intents: tuple[PositionActionIntent, ...] = ()
+    interaction_resolution_id: str | None = None
 
 
 class DecisionCycle(BaseModel):

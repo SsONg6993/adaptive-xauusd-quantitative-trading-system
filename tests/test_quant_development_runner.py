@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import json
+from datetime import timedelta
 from pathlib import Path
 
 import numpy as np
@@ -37,6 +38,8 @@ def tiny_dataset(tmp_path: Path) -> Path:
         feature_set_version="phase5-test-v1",
         feature_groups=["price_action", "volatility"],
         feature_parameters={"volatility_v2": {"atr_period": 2, "rolling_period": 3}},
+        data_available_at=pd.to_datetime(candles["timestamp"].iloc[-1], utc=True)
+        + timedelta(minutes=5),
         label_definition=LabelDefinition(
             name="next_3",
             version="direction-3-test",
@@ -79,7 +82,7 @@ def test_dry_run_validates_dataset_without_creating_or_fitting(tmp_path: Path) -
     plan = plan_experiment(config)
 
     assert plan["status"] == "DRY_RUN"
-    assert plan["final_oos_use"] == "EVALUATION_ONLY"
+    assert plan["final_oos_use"] == "NOT_ACCESSED"
     assert plan["fit_performed"] is False
     assert not config.output_root.exists()
     assert not config.training.output_root.exists()
@@ -104,8 +107,12 @@ def test_tiny_run_writes_required_verified_artifacts(tmp_path: Path) -> None:
     }
     assert expected <= {path.name for path in result.run_dir.iterdir()}
     assert verified["run_id"] == result.run_id
-    assert verified["final_oos_use"] == "EVALUATION_ONLY"
+    assert verified["final_oos_use"] == "NOT_ACCESSED"
     assert verified["real_training_scale"] == "TINY_TEST_ONLY"
+    metrics = json.loads((result.run_dir / "metrics.json").read_text())
+    assert set(metrics) == {"train", "validation"}
+    summary = json.loads((result.run_dir / "run_summary.json").read_text())
+    assert summary["final_oos_use"] == "NOT_ACCESSED"
     predictions = pd.read_parquet(result.run_dir / "predictions.parquet")
     assert any(
         token in column.lower()
@@ -132,7 +139,7 @@ def test_compare_runs_uses_multiple_evidence_dimensions(tmp_path: Path) -> None:
                     "model_id": f"model-{name}",
                     "dataset_id": "ds-1",
                     "feature_count": 10,
-                    "final_oos_use": "EVALUATION_ONLY",
+                    "final_oos_use": "NOT_ACCESSED",
                 }
             ),
             encoding="utf-8",
@@ -140,7 +147,7 @@ def test_compare_runs_uses_multiple_evidence_dimensions(tmp_path: Path) -> None:
         (root / "metrics.json").write_text(
             json.dumps(
                 {
-                    "oos": {
+                    "validation": {
                         "balanced_accuracy": score,
                         "log_loss": 0.8,
                         "brier_score": 0.4,

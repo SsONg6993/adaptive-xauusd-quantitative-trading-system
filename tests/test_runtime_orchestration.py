@@ -15,6 +15,7 @@ from axq.execution_boundary import (
     ExecutionReason,
     ExecutionResult,
     ExecutionResultStatus,
+    ResumeBlockReason,
     ResumeStatus,
     SQLiteExecutionLedger,
     default_execution_policy,
@@ -50,13 +51,17 @@ from axq.runtime import (
     OrderBookState,
     PositionBookState,
     PositionSide,
+    ReplayClock,
     RuntimeEvent,
     RuntimeEventType,
     initial_runtime_state,
     reduce_state,
 )
 from axq.runtime.journal import JournalRecord, JournalRecordType, SQLiteRuntimeJournal
+from axq.runtime.kernel import AGENT_ORDER, EvidenceKernel
+from axq.runtime.replay import RuntimeStreamRunner
 from axq.schemas import Signal
+from axq.tools import ToolCatalog
 
 T0 = datetime(2025, 1, 6, 12, 0, tzinfo=UTC)
 
@@ -205,6 +210,8 @@ class FakeSnapshotProvider:
 
     def capture(self) -> BrokerRecoverySnapshot:
         self.calls += 1
+        if self.snapshot.market.freshness.status is FreshnessStatus.STALE:
+            return self.snapshot
         return _snapshot(self.snapshot.as_of + timedelta(seconds=self.calls - 1))
 
 
@@ -213,6 +220,7 @@ class FakeRunner:
         self._state = initial_runtime_state("XAUUSD", at=T0 - timedelta(seconds=1))
         self._thesis = None
         self.processed: list[str] = []
+        self.broker_refreshed: list[RuntimeEvent] = []
 
     @property
     def state(self):
@@ -231,6 +239,11 @@ class FakeRunner:
             scenario_state_ids=(),
             bundle=SimpleNamespace(bundle_id=f"eb-{event.event_id}"),
         )
+
+    def reduce_broker_refresh(self, event: RuntimeEvent):
+        self._state = reduce_state(self._state, event, now=event.available_at)
+        self.broker_refreshed.append(event)
+        return self._state
 
     def restore_thesis(self, thesis) -> None:
         self._thesis = thesis
@@ -353,6 +366,7 @@ def _service(
     *,
     plan: DecisionPlan | None = None,
     action_adapter: FakePositionActionAdapter | None = None,
+    snapshot: BrokerRecoverySnapshot | None = None,
 ):
     config = RuntimeConfig(
         mode=mode,
@@ -375,7 +389,7 @@ def _service(
             config.position_action_ledger_path
         ),
         gateway=gateway,
-        snapshot_provider=FakeSnapshotProvider(_snapshot()),
+        snapshot_provider=FakeSnapshotProvider(snapshot or _snapshot()),
         entry_adapter=entry,
         position_action_adapter=action_adapter,
         clock=lambda: T0,
@@ -525,9 +539,137 @@ def test_shadow_startup_reduces_snapshot_and_is_safe_but_non_mutating(tmp_path: 
 
     assert status.resume_status == ResumeStatus.SAFE.value
     assert gateway.connected == 1
+    assert tuple(event.event_type for event in service.runner.broker_refreshed) == (
+        RuntimeEventType.TICK,
+        RuntimeEventType.ACCOUNT_UPDATED,
+        RuntimeEventType.POSITIONS_UPDATED,
+        RuntimeEventType.ORDERS_UPDATED,
+        RuntimeEventType.EXPOSURE_UPDATED,
+        RuntimeEventType.BROKER_CONSTRAINTS_UPDATED,
+    )
+    assert service.runner.processed == [_market_event().event_id]
     assert processor.calls
     assert cycle.execution_intent_ids == (_intent().intent_id,)
     assert entry.calls == 0
+
+
+def test_real_runner_stale_startup_refresh_never_enters_scenario_path(
+    tmp_path: Path,
+) -> None:
+    config = RuntimeConfig(
+        mode=RuntimeMode.SHADOW,
+        symbol="XAUUSD",
+        broker_symbol="GOLD.a",
+        runtime_journal_path=tmp_path / "runtime.sqlite3",
+        execution_ledger_path=tmp_path / "execution.sqlite3",
+        position_action_ledger_path=tmp_path / "actions.sqlite3",
+    )
+    journal = SQLiteRuntimeJournal(config.runtime_journal_path)
+    scenario_events: list[RuntimeEventType] = []
+
+    def scenario_transition(event, bundle, previous):
+        del bundle, previous
+        scenario_events.append(event.event_type)
+        return None
+
+    runner = RuntimeStreamRunner(
+        EvidenceKernel(
+            initial_state=initial_runtime_state("XAUUSD", at=T0 - timedelta(seconds=1)),
+            catalog=ToolCatalog(()),
+            tool_access={name: () for name in AGENT_ORDER},
+        ),
+        ReplayClock(T0),
+        journal=journal,
+        scenario_transition=scenario_transition,
+    )
+    snapshot = _snapshot()
+    stale_at = T0 - timedelta(days=2)
+    stale_snapshot = snapshot.model_copy(
+        update={
+            "market": snapshot.market.model_copy(
+                update={
+                    "as_of": stale_at,
+                    "freshness": ComponentFreshness(
+                        component="market",
+                        status=FreshnessStatus.STALE,
+                        observed_at=stale_at,
+                        available_at=T0,
+                        stale_after_ms=30_000,
+                    ),
+                }
+            )
+        }
+    )
+    processor = FakeProcessor()
+    service = RuntimeOrchestrator(
+        config=config,
+        runner=runner,
+        processor=processor,
+        journal=journal,
+        execution_ledger=SQLiteExecutionLedger(config.execution_ledger_path),
+        position_action_ledger=SQLitePositionActionTransportLedger(
+            config.position_action_ledger_path
+        ),
+        gateway=FakeGateway(),
+        snapshot_provider=FakeSnapshotProvider(stale_snapshot),
+        clock=lambda: T0,
+    )
+
+    status = service.startup()
+
+    assert status.startup_phase is StartupPhase.SAFE
+    assert status.accepting_events is True
+    assert status.safe_to_process_new_trades is False
+    assert status.resume_status == ResumeStatus.BLOCKED.value
+    assert scenario_events == []
+    assert processor.calls == []
+    assert runner.steps == ()
+    types = tuple(item.record.record_type for item in journal.records())
+    assert types.count(JournalRecordType.RUNTIME_EVENT) == 6
+    assert types.count(JournalRecordType.RUNTIME_STATE) == 6
+    assert types.count(JournalRecordType.OUTCOME) == 6
+
+
+def test_shadow_stale_market_is_healthy_waiting_while_demo_remains_blocked(
+    tmp_path: Path,
+) -> None:
+    snapshot = _snapshot()
+    stale_market = snapshot.market.model_copy(
+        update={
+            "as_of": T0 - timedelta(days=2),
+            "freshness": ComponentFreshness(
+                component="market",
+                status=FreshnessStatus.STALE,
+                observed_at=T0 - timedelta(days=2),
+                available_at=T0,
+                stale_after_ms=30_000,
+            ),
+        }
+    )
+    stale_snapshot = snapshot.model_copy(update={"market": stale_market})
+    shadow, _, _, shadow_processor = _service(
+        tmp_path / "shadow",
+        RuntimeMode.SHADOW,
+        snapshot=stale_snapshot,
+    )
+    demo, _, _, _ = _service(
+        tmp_path / "demo",
+        RuntimeMode.DEMO,
+        snapshot=stale_snapshot,
+    )
+
+    shadow_status = shadow.startup()
+    demo_status = demo.startup()
+
+    assert shadow_status.startup_phase is StartupPhase.SAFE
+    assert shadow_status.accepting_events is True
+    assert shadow_status.safe_to_process_new_trades is False
+    assert shadow_status.resume_status == ResumeStatus.BLOCKED.value
+    assert shadow_status.last_error is None
+    assert shadow_processor.calls == []
+    assert shadow._readiness is not None
+    assert shadow._readiness.reason_codes == (ResumeBlockReason.MARKET_NOT_FRESH,)
+    assert demo_status.startup_phase is StartupPhase.BLOCKED
 
 
 def test_demo_runs_entry_then_reduces_canonical_feedback(tmp_path: Path) -> None:

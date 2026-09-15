@@ -7,7 +7,7 @@ import sqlite3
 from collections.abc import Iterator
 from enum import StrEnum
 from pathlib import Path
-from typing import Literal, Protocol, cast
+from typing import Any, Literal, Protocol, cast
 
 from pydantic import BaseModel, ConfigDict, Field, model_validator
 
@@ -19,13 +19,32 @@ from axq.execution_boundary.recovery_contracts import (
     RecoveryCheckpoint,
     ResumeReadiness,
 )
+from axq.interaction.contracts import (
+    MasterConflictAssessment,
+    SpecialistInteractionResolution,
+    SpecialistInteractionRound,
+    SpecialistInteractionTurn,
+)
 from axq.master.contracts import MasterProposal
+from axq.mt5.symbols import ResolvedBrokerInstrument
+from axq.mt5.time_normalization import (
+    MT5BrokerTimeOffsetResolution,
+    MT5TimestampNormalizationTrace,
+)
 from axq.position_actions.contracts import PositionActionIntent, PositionActionSafetyOutcome
 from axq.position_actions.transport import PositionActionTransportResult
 from axq.position_management import PositionManagementOutcome
 from axq.risk_boundary.contracts import RiskOutcome
 from axq.runtime.events import RuntimeEvent
 from axq.runtime.kernel import EvidenceBundle
+from axq.runtime.shadow import (
+    HypotheticalTradePlan,
+    M5CandidateScan,
+    M15ContextSnapshot,
+    ShadowExecutionRecord,
+    ShadowMarketAvailability,
+    ShadowRuntimeCycle,
+)
 from axq.runtime.state import SharedRuntimeState, UTCDateTime
 from axq.tools import CausalFeatureSnapshot, ToolResult
 from axq.versioning import canonical_hash
@@ -55,6 +74,19 @@ class JournalRecordType(StrEnum):
     RESUME_READINESS = "RESUME_READINESS"
     RECOVERY_CHECKPOINT = "RECOVERY_CHECKPOINT"
     OUTCOME = "OUTCOME"
+    M15_CONTEXT = "M15_CONTEXT"
+    M5_CANDIDATE_SCAN = "M5_CANDIDATE_SCAN"
+    SHADOW_RUNTIME_CYCLE = "SHADOW_RUNTIME_CYCLE"
+    HYPOTHETICAL_TRADE_PLAN = "HYPOTHETICAL_TRADE_PLAN"
+    SHADOW_EXECUTION = "SHADOW_EXECUTION"
+    INSTRUMENT_RESOLUTION = "INSTRUMENT_RESOLUTION"
+    MT5_TIME_OFFSET_RESOLUTION = "MT5_TIME_OFFSET_RESOLUTION"
+    MT5_TIMESTAMP_NORMALIZATION = "MT5_TIMESTAMP_NORMALIZATION"
+    SHADOW_MARKET_AVAILABILITY = "SHADOW_MARKET_AVAILABILITY"
+    MASTER_CONFLICT_ASSESSMENT = "MASTER_CONFLICT_ASSESSMENT"
+    SPECIALIST_INTERACTION_ROUND = "SPECIALIST_INTERACTION_ROUND"
+    SPECIALIST_INTERACTION_TURN = "SPECIALIST_INTERACTION_TURN"
+    SPECIALIST_INTERACTION_RESOLUTION = "SPECIALIST_INTERACTION_RESOLUTION"
 
 
 class JournalOutcomeStatus(StrEnum):
@@ -106,6 +138,19 @@ JournalSemantic = (
     | ResumeReadiness
     | RecoveryCheckpoint
     | JournalOutcome
+    | M15ContextSnapshot
+    | M5CandidateScan
+    | ShadowRuntimeCycle
+    | HypotheticalTradePlan
+    | ShadowExecutionRecord
+    | ResolvedBrokerInstrument
+    | MT5BrokerTimeOffsetResolution
+    | MT5TimestampNormalizationTrace
+    | ShadowMarketAvailability
+    | MasterConflictAssessment
+    | SpecialistInteractionRound
+    | SpecialistInteractionTurn
+    | SpecialistInteractionResolution
 )
 
 _MODEL_BY_RECORD_TYPE: dict[JournalRecordType, type[BaseModel]] = {
@@ -132,7 +177,87 @@ _MODEL_BY_RECORD_TYPE: dict[JournalRecordType, type[BaseModel]] = {
     JournalRecordType.RESUME_READINESS: ResumeReadiness,
     JournalRecordType.RECOVERY_CHECKPOINT: RecoveryCheckpoint,
     JournalRecordType.OUTCOME: JournalOutcome,
+    JournalRecordType.M15_CONTEXT: M15ContextSnapshot,
+    JournalRecordType.M5_CANDIDATE_SCAN: M5CandidateScan,
+    JournalRecordType.SHADOW_RUNTIME_CYCLE: ShadowRuntimeCycle,
+    JournalRecordType.HYPOTHETICAL_TRADE_PLAN: HypotheticalTradePlan,
+    JournalRecordType.SHADOW_EXECUTION: ShadowExecutionRecord,
+    JournalRecordType.INSTRUMENT_RESOLUTION: ResolvedBrokerInstrument,
+    JournalRecordType.MT5_TIME_OFFSET_RESOLUTION: MT5BrokerTimeOffsetResolution,
+    JournalRecordType.MT5_TIMESTAMP_NORMALIZATION: MT5TimestampNormalizationTrace,
+    JournalRecordType.SHADOW_MARKET_AVAILABILITY: ShadowMarketAvailability,
+    JournalRecordType.MASTER_CONFLICT_ASSESSMENT: MasterConflictAssessment,
+    JournalRecordType.SPECIALIST_INTERACTION_ROUND: SpecialistInteractionRound,
+    JournalRecordType.SPECIALIST_INTERACTION_TURN: SpecialistInteractionTurn,
+    JournalRecordType.SPECIALIST_INTERACTION_RESOLUTION: SpecialistInteractionResolution,
 }
+
+
+class _ShadowRuntimeCycleV1(BaseModel):
+    """Decoder-only contract for immutable pre-interaction Shadow cycle records."""
+
+    model_config = ConfigDict(extra="forbid", frozen=True)
+    schema_version: Literal["1.0"] = "1.0"
+    cycle_id: str = ""
+    event_id: str = Field(min_length=1)
+    scan_id: str = Field(min_length=1)
+    m15_context_id: str | None = None
+    canonical_instrument: Literal["XAUUSD"]
+    resolved_broker_symbol: str = Field(min_length=1)
+    instrument_resolution_id: str = Field(min_length=1)
+    stage: str = Field(min_length=1)
+    as_of: UTCDateTime
+    evidence_bundle_id: str | None = None
+    master_proposal_id: str | None = None
+    discipline_outcome_id: str | None = None
+    risk_outcome_id: str | None = None
+    execution_intent_id: str | None = None
+    trade_plan_id: str | None = None
+    shadow_execution_id: str | None = None
+
+    @model_validator(mode="after")
+    def validate_legacy_identity(self) -> _ShadowRuntimeCycleV1:
+        identity = self.model_dump(mode="json", exclude={"cycle_id"})
+        expected = f"scycle-{canonical_hash(identity)[:20]}"
+        if self.cycle_id and self.cycle_id != expected:
+            raise ValueError("cycle_id does not match legacy shadow cycle content")
+        object.__setattr__(self, "cycle_id", expected)
+        return self
+
+
+def _semantic_model(
+    record_type: JournalRecordType,
+    semantic_schema_version: str,
+) -> type[BaseModel]:
+    if record_type is JournalRecordType.SHADOW_RUNTIME_CYCLE:
+        if semantic_schema_version == "1.0":
+            return _ShadowRuntimeCycleV1
+        if semantic_schema_version == "2.0":
+            return ShadowRuntimeCycle
+        raise ValueError(
+            "unsupported journal semantic schema version for "
+            f"{record_type.value}: {semantic_schema_version}"
+        )
+    model = _MODEL_BY_RECORD_TYPE[record_type]
+    return model
+
+
+def _decode_semantic(
+    record_type: JournalRecordType,
+    semantic_schema_version: str,
+    payload_json: str,
+) -> BaseModel:
+    try:
+        payload: Any = json.loads(payload_json)
+    except json.JSONDecodeError as error:
+        raise ValueError(f"journal semantic payload is not valid JSON: {error.msg}") from error
+    if not isinstance(payload, dict):
+        raise ValueError("journal semantic payload must be a JSON object")
+    payload_version = payload.get("schema_version")
+    if payload_version != semantic_schema_version:
+        raise ValueError("journal semantic schema version does not match payload")
+    model = _semantic_model(record_type, semantic_schema_version)
+    return model.model_validate(payload)
 
 
 def _record_type(value: JournalSemantic) -> JournalRecordType:
@@ -163,6 +288,28 @@ def _record_type(value: JournalSemantic) -> JournalRecordType:
         (ResumeReadiness, JournalRecordType.RESUME_READINESS),
         (RecoveryCheckpoint, JournalRecordType.RECOVERY_CHECKPOINT),
         (JournalOutcome, JournalRecordType.OUTCOME),
+        (M15ContextSnapshot, JournalRecordType.M15_CONTEXT),
+        (M5CandidateScan, JournalRecordType.M5_CANDIDATE_SCAN),
+        (ShadowRuntimeCycle, JournalRecordType.SHADOW_RUNTIME_CYCLE),
+        (HypotheticalTradePlan, JournalRecordType.HYPOTHETICAL_TRADE_PLAN),
+        (ShadowExecutionRecord, JournalRecordType.SHADOW_EXECUTION),
+        (ResolvedBrokerInstrument, JournalRecordType.INSTRUMENT_RESOLUTION),
+        (
+            MT5BrokerTimeOffsetResolution,
+            JournalRecordType.MT5_TIME_OFFSET_RESOLUTION,
+        ),
+        (
+            MT5TimestampNormalizationTrace,
+            JournalRecordType.MT5_TIMESTAMP_NORMALIZATION,
+        ),
+        (ShadowMarketAvailability, JournalRecordType.SHADOW_MARKET_AVAILABILITY),
+        (MasterConflictAssessment, JournalRecordType.MASTER_CONFLICT_ASSESSMENT),
+        (SpecialistInteractionRound, JournalRecordType.SPECIALIST_INTERACTION_ROUND),
+        (SpecialistInteractionTurn, JournalRecordType.SPECIALIST_INTERACTION_TURN),
+        (
+            SpecialistInteractionResolution,
+            JournalRecordType.SPECIALIST_INTERACTION_RESOLUTION,
+        ),
     )
     for model_type, record_type in types:
         if isinstance(value, model_type):
@@ -172,6 +319,11 @@ def _record_type(value: JournalSemantic) -> JournalRecordType:
 
 def _semantic_id(value: JournalSemantic) -> str:
     fields = (
+        "scan_id",
+        "cycle_id",
+        "plan_id",
+        "context_id",
+        "record_id",
         "event_id",
         "state_id",
         "snapshot_id",
@@ -187,6 +339,12 @@ def _semantic_id(value: JournalSemantic) -> str:
         "report_id",
         "readiness_id",
         "checkpoint_id",
+        "resolution_id",
+        "trace_id",
+        "availability_id",
+        "assessment_id",
+        "round_id",
+        "turn_id",
     )
     for field in fields:
         candidate = getattr(value, field, None)
@@ -213,8 +371,11 @@ class JournalRecord(BaseModel):
 
     @model_validator(mode="after")
     def validate_and_bind_identity(self) -> JournalRecord:
-        model = _MODEL_BY_RECORD_TYPE[self.record_type]
-        decoded = model.model_validate_json(self.payload_json)
+        decoded = _decode_semantic(
+            self.record_type,
+            self.semantic_schema_version,
+            self.payload_json,
+        )
         if _semantic_id(cast(JournalSemantic, decoded)) != self.semantic_id:
             raise ValueError("journal semantic ID does not match payload")
         if str(getattr(decoded, "schema_version", "")) != self.semantic_schema_version:
@@ -263,8 +424,10 @@ class JournalRecord(BaseModel):
         )
 
     def decode(self) -> BaseModel:
-        return _MODEL_BY_RECORD_TYPE[self.record_type].model_validate_json(
-            self.payload_json
+        return _decode_semantic(
+            self.record_type,
+            self.semantic_schema_version,
+            self.payload_json,
         )
 
 
@@ -396,11 +559,23 @@ class SQLiteRuntimeJournal:
 
     def events(self) -> Iterator[RuntimeEvent]:
         values: dict[str, RuntimeEvent] = {}
-        for entry in self.records():
-            if entry.record.record_type is JournalRecordType.RUNTIME_EVENT:
-                event = RuntimeEvent.model_validate(entry.record.decode())
+        outcomes: dict[str, list[JournalOutcomeStatus]] = {}
+        records = self.records()
+        for entry in records:
+            record = entry.record
+            if record.record_type is JournalRecordType.RUNTIME_EVENT:
+                event = RuntimeEvent.model_validate(record.decode())
                 values[event.event_id] = event
-        return iter(sorted(values.values(), key=lambda event: event.ordering_key))
+            elif record.record_type is JournalRecordType.OUTCOME and record.event_id is not None:
+                outcome = JournalOutcome.model_validate(record.decode())
+                outcomes.setdefault(record.event_id, []).append(outcome.status)
+        accepted = (
+            event
+            for event_id, event in values.items()
+            if not outcomes.get(event_id)
+            or JournalOutcomeStatus.APPLIED in outcomes[event_id]
+        )
+        return iter(sorted(accepted, key=lambda event: event.ordering_key))
 
     def sync(self) -> None:
         """Flush committed WAL content without changing semantic journal history."""

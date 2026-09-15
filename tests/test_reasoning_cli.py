@@ -151,6 +151,31 @@ def test_run_emits_and_atomically_writes_one_canonical_safe_result(
     assert provider.verify_calls == provider.complete_calls == 1
 
 
+def test_run_records_observed_wall_and_monotonic_timing(tmp_path: Path) -> None:
+    provider = FakeCLIProvider(_valid_output())
+    wall_times = iter(
+        (
+            utc("2026-09-12T00:00:00Z"),
+            utc("2026-09-12T00:00:01Z"),
+            utc("2026-09-12T00:00:03Z"),
+        )
+    )
+    monotonic_times = iter((10.0, 12.5))
+
+    main(
+        _run_args(tmp_path, attempt_key="timed-001", output_name="result.json"),
+        provider_factory=lambda endpoint: provider,
+        clock=lambda: next(wall_times),
+        monotonic_clock=lambda: next(monotonic_times),
+    )
+
+    attempt = SQLiteReasoningAuditStore(
+        tmp_path / "reasoning.sqlite3"
+    ).all_attempts()[0]
+    assert attempt.requested_at < attempt.started_at < attempt.completed_at
+    assert attempt.local_elapsed_ms == 2500.0
+
+
 def test_exact_reuse_emits_same_response_without_provider_call(
     tmp_path: Path,
     capsys: pytest.CaptureFixture[str],

@@ -2,6 +2,8 @@
 
 from __future__ import annotations
 
+import math
+import time
 from collections.abc import Callable, Mapping
 from datetime import UTC, datetime
 
@@ -17,6 +19,7 @@ from axq.mt5.contracts import (
     MT5SnapshotError,
     MT5SymbolMapping,
 )
+from axq.mt5.time_normalization import MT5BrokerTimeNormalizer, MT5TimeNormalizationError
 from axq.runtime import (
     AccountState,
     BrokerConstraints,
@@ -46,6 +49,8 @@ class MT5BrokerSnapshotProvider:
         source: str,
         source_version: str,
         stale_after_ms: int,
+        select_symbol: bool = True,
+        broker_time_normalizer: MT5BrokerTimeNormalizer | None = None,
     ) -> None:
         if stale_after_ms <= 0:
             raise ValueError("stale_after_ms must be positive")
@@ -55,6 +60,8 @@ class MT5BrokerSnapshotProvider:
         self._source = source
         self._source_version = source_version
         self._stale_after_ms = stale_after_ms
+        self._select_symbol = select_symbol
+        self._broker_time = broker_time_normalizer
 
     def capture(
         self,
@@ -71,7 +78,7 @@ class MT5BrokerSnapshotProvider:
             raise MT5SnapshotError("DISCONNECTED: MT5 terminal is not connected")
         account_raw = self._required(self._gateway.account_info(), "ACCOUNT_UNAVAILABLE")
         broker_symbol = self._mapping.to_broker(self._mapping.internal_symbol)
-        if not self._gateway.symbol_select(broker_symbol, True):
+        if self._select_symbol and not self._gateway.symbol_select(broker_symbol, True):
             raise MT5SnapshotError(
                 f"SYMBOL_UNAVAILABLE: configured broker symbol {broker_symbol!r} cannot be selected"
             )
@@ -85,9 +92,34 @@ class MT5BrokerSnapshotProvider:
             self._gateway.symbol_info_tick(broker_symbol),
             "TICK_UNAVAILABLE",
         )
-        tick_time = _record_time(tick, observed_at)
-        if tick_time > observed_at:
+        if self._broker_time is not None:
+            # Observation time is arrival time: capture it after the broker read.
+            observed_at = ensure_utc(self._clock())
+        if self._broker_time is None:
+            tick_time = _record_time(tick, observed_at)
+        else:
+            raw_seconds = _optional_int(tick.get("time"))
+            if raw_seconds is None:
+                raise MT5SnapshotError("TICK_TIME_UNAVAILABLE: broker tick has no time")
+            try:
+                tick_time = self._broker_time.normalize_tick(
+                    raw_tick_time=raw_seconds,
+                    raw_tick_time_msc=_optional_int(tick.get("time_msc")),
+                    observed_at=observed_at,
+                ).normalized_at
+            except MT5TimeNormalizationError as exc:
+                raise MT5SnapshotError(f"CLOCK_NORMALIZATION_FAILED: {exc}") from exc
+            if tick_time > observed_at:
+                # Preserve the exact normalized timestamp and wait only for the
+                # already-validated sub-second operational skew to become causal.
+                time.sleep((tick_time - observed_at).total_seconds())
+                observed_at = ensure_utc(self._clock())
+        if self._broker_time is None and tick_time > observed_at:
             raise MT5SnapshotError("CLOCK_SKEW: broker tick is later than observation time")
+        if tick_time > observed_at:
+            raise MT5SnapshotError(
+                "CLOCK_SKEW: normalized broker tick remains later than observation time"
+            )
         available_at = observed_at
         account = self._account(account_raw, observed_at)
         market = self._market(tick, symbol, tick_time, observed_at)
@@ -178,9 +210,14 @@ class MT5BrokerSnapshotProvider:
         if point is not None and bid is not None and ask is not None:
             spread = round((ask - bid) / point, 10)
         age_ms = (observed_at - tick_time).total_seconds() * 1_000
+        minimum_age_ms = (
+            -self._broker_time.policy.future_tolerance_seconds * 1_000
+            if self._broker_time is not None
+            else 0
+        )
         status = (
             FreshnessStatus.AVAILABLE
-            if 0 <= age_ms <= self._stale_after_ms
+            if minimum_age_ms <= age_ms <= self._stale_after_ms
             else FreshnessStatus.STALE
         )
         freshness = ComponentFreshness(
@@ -197,7 +234,7 @@ class MT5BrokerSnapshotProvider:
             freshness=freshness,
             bid=bid,
             ask=ask,
-            last=_optional_float(tick.get("last")),
+            last=_optional_broker_last(tick.get("last")),
             spread_points=spread,
             base_timeframe="TICK",
             market_data_version=self._source_version,
@@ -455,3 +492,10 @@ def _optional_str(value: object) -> str | None:
 def _optional_price(value: object) -> float | None:
     result = _optional_float(value)
     return None if result in {None, 0.0} else result
+
+
+def _optional_broker_last(value: object) -> float | None:
+    if isinstance(value, bool) or not isinstance(value, (int, float)):
+        return None
+    result = float(value)
+    return result if math.isfinite(result) and result > 0 else None

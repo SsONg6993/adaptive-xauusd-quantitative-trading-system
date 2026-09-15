@@ -69,7 +69,7 @@ def build_model(
         ))
     if config.architecture is Architecture.XGBOOST:
         try:
-            from xgboost import XGBClassifier  # type: ignore[import-not-found]
+            from xgboost import XGBClassifier  # type: ignore[import-not-found, unused-ignore]
         except ImportError as exc:
             raise RuntimeError("Install the optional xgboost dependency") from exc
         return cast(ProbabilisticClassifier, XGBClassifier(
@@ -79,7 +79,7 @@ def build_model(
         ))
     if config.architecture is Architecture.LIGHTGBM:
         try:
-            from lightgbm import LGBMClassifier  # type: ignore[import-not-found]
+            from lightgbm import LGBMClassifier  # type: ignore[import-not-found, unused-ignore]
         except ImportError as exc:
             raise RuntimeError("Install the optional lightgbm dependency") from exc
         device_type = "gpu" if selected_device == "cuda" else "cpu"

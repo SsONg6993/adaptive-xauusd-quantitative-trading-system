@@ -129,7 +129,7 @@ def test_rejection_outcome_is_structured_and_does_not_replace_event(tmp_path) ->
     assert records[0].record.record_type is JournalRecordType.RUNTIME_EVENT
     assert records[1].record.record_type is JournalRecordType.OUTCOME
     assert records[1].record.decode() == outcome
-    assert tuple(journal.events()) == (event,)
+    assert tuple(journal.events()) == ()
 
 
 def test_feature_snapshots_can_be_recovered_by_event_without_mutation(tmp_path) -> None:

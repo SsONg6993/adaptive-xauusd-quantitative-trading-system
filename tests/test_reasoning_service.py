@@ -4,7 +4,7 @@ from __future__ import annotations
 
 import json
 import sqlite3
-from collections.abc import Sequence
+from collections.abc import Mapping, Sequence
 from hashlib import sha256
 from pathlib import Path
 
@@ -19,6 +19,7 @@ from axq.reasoning.contracts import (
     ReflectionExplanationInput,
     canonical_reasoning_bytes,
 )
+from axq.reasoning.ollama import OllamaProvider
 from axq.reasoning.prompts import RenderedReasoningPrompt
 from axq.reasoning.provider import (
     LLMProviderConnectionError,
@@ -149,6 +150,43 @@ def _run(
         endpoint=provider.endpoint,
         local_elapsed_ms=5.0,
     )
+
+
+def test_unexpected_provider_exception_is_terminally_audited_without_message_leakage(
+    tmp_path: Path,
+) -> None:
+    class UnexpectedFailureProvider:
+        endpoint = "http://127.0.0.1:11434"
+
+        def verify_identity(self, expected: object, *, timeout_seconds: float) -> object:
+            raise RuntimeError("secret provider diagnostic")
+
+        def complete(self, *args: object, **kwargs: object) -> ProviderCompletion:
+            raise AssertionError("complete must not be reached")
+
+    store = SQLiteReasoningAuditStore(tmp_path / "reasoning.sqlite3")
+    result = run_reflection_explanation(
+        input_record=_input_record(),
+        expected_provider_model=provider_identity(),
+        provider=UnexpectedFailureProvider(),
+        store=store,
+        attempt_key="unexpected-001",
+        reuse_policy=LLMReusePolicy.NEVER_REUSE,
+        requested_at=utc("2026-09-12T00:00:00Z"),
+        started_at=utc("2026-09-12T00:00:00Z"),
+        completed_at=utc("2026-09-12T00:00:00Z"),
+        timeout_seconds=30.0,
+        endpoint=UnexpectedFailureProvider.endpoint,
+        local_elapsed_ms=0.0,
+    )
+
+    assert result.status is LLMAttemptStatus.PROVIDER_ERROR
+    attempts = store.all_attempts()
+    assert len(attempts) == 1
+    assert attempts[0].failure is not None
+    assert attempts[0].failure.code is LLMFailureCode.PROVIDER_ERROR
+    assert "RuntimeError" in attempts[0].failure.message
+    assert "secret provider diagnostic" not in attempts[0].failure.message
 
 
 def test_builds_persists_and_completes_one_strict_request(tmp_path: Path) -> None:
@@ -324,6 +362,110 @@ def test_invalid_output_persists_only_safe_digest_size_and_error(
     assert raw_content not in records
     assert "PRIVATE_RAW_TEXT" not in records
     assert "traceback" not in records.casefold()
+
+
+def test_semantic_validation_failure_preserves_completed_provider_usage(
+    tmp_path: Path,
+) -> None:
+    store = SQLiteReasoningAuditStore(tmp_path / "reasoning.sqlite3")
+    invalid = _output_json().replace(
+        '"context-weekly-summary"',
+        '"finding-a"',
+    )
+    provider = FakeReasoningProvider([_completion(invalid)])
+
+    result = _run(store=store, provider=provider, attempt_key="attempt-usage")
+
+    assert result.status is LLMAttemptStatus.INVALID_RESPONSE
+    attempt = store.all_attempts()[0]
+    assert attempt.prompt_token_count == 120
+    assert attempt.output_token_count == 42
+    assert attempt.provider_total_duration_ns == 4_000_000
+    assert attempt.provider_load_duration_ns == 100_000
+    assert attempt.provider_prompt_duration_ns == 1_000_000
+    assert attempt.provider_output_duration_ns == 2_900_000
+
+
+class RealShapedOllamaTransport:
+    def __init__(self, output: str) -> None:
+        self.output = output
+
+    def request(
+        self,
+        method: str,
+        path: str,
+        *,
+        payload: Mapping[str, object] | None,
+        timeout_seconds: float,
+        response_byte_limit: int,
+    ) -> bytes:
+        if (method, path) == ("GET", "/api/version"):
+            value: object = {"version": "0.12.6"}
+        elif (method, path) == ("GET", "/api/tags"):
+            value = {
+                "models": [
+                    {
+                        "name": "qwen3:8b",
+                        "model": "qwen3:8b",
+                        "digest": "a" * 64,
+                        "details": {
+                            "family": "qwen3",
+                            "quantization_level": "Q4_K_M",
+                        },
+                    }
+                ]
+            }
+        elif (method, path) == ("POST", "/api/chat"):
+            assert payload is not None
+            citation_items = payload["format"]["properties"]["cited_evidence_ids"]["items"]  # type: ignore[index]
+            assert citation_items["enum"] == [  # type: ignore[index]
+                "context-weekly-summary",
+                "weekly-reflection-aaaaaaaaaaaaaaaaaaaa",
+            ]
+            value = {
+                "model": "qwen3:8b",
+                "message": {"role": "assistant", "content": self.output},
+                "done": True,
+                "done_reason": "stop",
+                "prompt_eval_count": 120,
+                "eval_count": 42,
+                "total_duration": 4_000_000,
+                "load_duration": 100_000,
+                "prompt_eval_duration": 1_000_000,
+                "eval_duration": 2_900_000,
+            }
+        else:
+            raise AssertionError(f"unexpected Ollama call: {method} {path}")
+        return json.dumps(value, sort_keys=True, separators=(",", ":")).encode()
+
+
+def test_real_shaped_ollama_structured_response_completes_service_path(
+    tmp_path: Path,
+) -> None:
+    store = SQLiteReasoningAuditStore(tmp_path / "reasoning.sqlite3")
+    provider = OllamaProvider(
+        "http://127.0.0.1:11434",
+        transport=RealShapedOllamaTransport(_output_json()),
+    )
+
+    result = run_reflection_explanation(
+        input_record=_input_record(),
+        expected_provider_model=provider_identity(),
+        provider=provider,
+        store=store,
+        attempt_key="ollama-real-shape",
+        reuse_policy=LLMReusePolicy.NEVER_REUSE,
+        requested_at=utc("2026-09-12T00:00:00Z"),
+        started_at=utc("2026-09-12T00:00:00Z"),
+        completed_at=utc("2026-09-12T00:00:00Z"),
+        timeout_seconds=30.0,
+        endpoint=provider.endpoint,
+        local_elapsed_ms=5.0,
+    )
+
+    assert result.status is LLMAttemptStatus.COMPLETED
+    assert result.response_id is not None
+    assert store.response(result.response_id) is not None
 
 
 def test_unexpected_thinking_is_rejected_without_persisting_content(tmp_path: Path) -> None:

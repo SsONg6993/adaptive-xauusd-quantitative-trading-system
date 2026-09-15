@@ -10,6 +10,7 @@ from collections import Counter
 from collections.abc import Callable, Sequence
 from datetime import UTC, datetime
 from pathlib import Path
+from time import perf_counter
 
 from axq.reasoning.contracts import (
     LLMReusePolicy,
@@ -25,6 +26,7 @@ from axq.reasoning.store import SQLiteReasoningAuditStore
 
 ProviderFactory = Callable[[str], LLMProvider]
 Clock = Callable[[], datetime]
+MonotonicClock = Callable[[], float]
 
 
 def _parser() -> argparse.ArgumentParser:
@@ -117,6 +119,7 @@ def _run(
     *,
     provider_factory: ProviderFactory,
     clock: Clock,
+    monotonic_clock: MonotonicClock,
 ) -> int:
     input_record = _load_controlled_input(args.input)
     provider_model = ProviderModelIdentity(
@@ -143,6 +146,8 @@ def _run(
         timeout_seconds=args.timeout_seconds,
         endpoint=endpoint,
         local_elapsed_ms=0.0,
+        operational_clock=clock,
+        monotonic_clock=monotonic_clock,
     )
     payload = canonical_reasoning_bytes(result)
     _atomic_write(args.output, payload)
@@ -203,12 +208,18 @@ def main(
     *,
     provider_factory: ProviderFactory = OllamaProvider,
     clock: Clock = lambda: datetime.now(UTC),
+    monotonic_clock: MonotonicClock = perf_counter,
 ) -> int:
     """Dispatch the offline reasoning CLI."""
 
     args = _parser().parse_args(argv)
     if args.command == "run-reflection-explanation":
-        return _run(args, provider_factory=provider_factory, clock=clock)
+        return _run(
+            args,
+            provider_factory=provider_factory,
+            clock=clock,
+            monotonic_clock=monotonic_clock,
+        )
     handlers: dict[str, Callable[[argparse.Namespace], int]] = {
         "show-request": _show_request,
         "show-response": _show_response,

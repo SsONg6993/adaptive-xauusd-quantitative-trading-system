@@ -34,14 +34,18 @@ Every major phase ends with tests, documentation, a Git checkpoint, and a stop b
 phase. Before architecture changes, inspect `docs/project_status.md`, the relevant entries in
 `docs/decision_log.md`, tests, manifests, recent commits, and Graphify context when present.
 
-Phase 6 now implements the deterministic evidence vertical slice: canonical runtime events and
-shared state, clocks and ordered sources, a pure reducer, causal fact tools, specialist evidence and
-memory, the M5/intrabar thesis lifecycle, deterministic specialist baselines, `EvidenceKernel`, and
-an append-only journal with live-like/replay parity. The shared semantic path is
+Phases 6–7 implement the shared deterministic evidence/decision path, Master fusion, Discipline
+Guard, financial Risk, guarded demo execution boundaries, recovery, position management/actions,
+and system replay. Phase 8 Tasks 1–11 implement controlled offline experience, reflection,
+proposal/evaluation, review, and authorization boundaries without autonomous promotion. Phase 9
+Task 1 implements optional offline structured LLM reasoning. The Phase 9 stabilization work adds a
+read-only Live Shadow Runtime and local operator Dashboard while preserving the same semantic path:
 `RuntimeEvent -> reducer -> tools -> specialists -> scenario lifecycle -> EvidenceBundle`.
-Master fusion, Discipline Guard enforcement, agentic Risk integration, broker/simulated execution,
-position management, restart recovery, LLM reasoning, reflection, and autonomous evolution are not
-implemented. Do not infer those capabilities from their documented future interfaces.
+Completed M5 events always traverse that path in both Shadow and replay; the scanner is descriptive
+and never gates kernel execution. Snapshot-only broker refreshes remain state-only. Runtime journal
+decoding is version-dispatched and preserves legacy V1 Shadow cycles while current writes use V2.
+Phase 9 Task 2 retrieval/embedding work is PAUSED and must not be resumed implicitly. Live-money
+execution, an MQL5 IPC layer, simulated brokerage, and autonomous evolution are not implemented.
 
 ## Repository-start workflow
 

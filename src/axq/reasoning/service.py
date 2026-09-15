@@ -2,7 +2,9 @@
 
 from __future__ import annotations
 
+from collections.abc import Callable
 from datetime import datetime
+from time import perf_counter
 
 from pydantic import TypeAdapter, ValidationError
 
@@ -43,13 +45,13 @@ def build_reflection_explanation_request(
     input_record: ReflectionExplanationInput,
     provider_model: ProviderModelIdentity,
 ) -> LLMRequestEnvelope:
-    """Build the sole V1 request from validated bounded input and exact model identity."""
+    """Build the V2 request from validated bounded input and exact model identity."""
 
     validated_input = ReflectionExplanationInput.model_validate(input_record.model_dump())
     validated_provider = ProviderModelIdentity.model_validate(provider_model.model_dump())
     return LLMRequestEnvelope(
         provider_model=validated_provider,
-        prompt=reflection_explanation_prompt_identity(),
+        prompt=reflection_explanation_prompt_identity(validated_input),
         source_references=validated_input.source_references,
         context=validated_input.context,
         generation=validated_input.generation,
@@ -165,6 +167,8 @@ def run_reflection_explanation(
     timeout_seconds: float,
     endpoint: str,
     local_elapsed_ms: float,
+    operational_clock: Callable[[], datetime] | None = None,
+    monotonic_clock: Callable[[], float] = perf_counter,
 ) -> ReasoningRunResult:
     """Execute or exactly reuse one append-only offline reasoning attempt."""
 
@@ -180,6 +184,17 @@ def run_reflection_explanation(
         response_byte_limit=request.generation.response_byte_limit,
         endpoint=endpoint,
     )
+    operation_started = monotonic_clock() if operational_clock is not None else None
+    if operational_clock is not None:
+        started_at = operational_clock()
+
+    def completed_timing() -> tuple[datetime, float]:
+        if operational_clock is None or operation_started is None:
+            return completed_at, local_elapsed_ms
+        observed_completed_at = operational_clock()
+        observed_elapsed_ms = max(0.0, (monotonic_clock() - operation_started) * 1000.0)
+        return observed_completed_at, observed_elapsed_ms
+
     store.append_request(request)
 
     prior = next(
@@ -192,6 +207,7 @@ def run_reflection_explanation(
     if reuse_policy is LLMReusePolicy.REUSE_FIRST_COMPLETED_EXACT:
         reusable = store.first_completed_response(request.request_id)
         if reusable is not None:
+            actual_completed_at, actual_elapsed_ms = completed_timing()
             reused = _audit(
                 request=request,
                 attempt_key=attempt_key,
@@ -200,10 +216,10 @@ def run_reflection_explanation(
                 failure=None,
                 requested_at=requested_at,
                 started_at=started_at,
-                completed_at=completed_at,
+                completed_at=actual_completed_at,
                 timeout_seconds=timeout_seconds,
                 endpoint=endpoint,
-                local_elapsed_ms=local_elapsed_ms,
+                local_elapsed_ms=actual_elapsed_ms,
             )
             store.append_attempt(reused)
             return _result(reused)
@@ -215,6 +231,7 @@ def run_reflection_explanation(
             generation=request.generation,
         )
     )
+    completion: ProviderCompletion | None = None
     try:
         observed = provider.verify_identity(
             request.provider_model,
@@ -246,6 +263,7 @@ def run_reflection_explanation(
                 completion,
                 "Provider response failed strict structured-output validation.",
             )
+            actual_completed_at, actual_elapsed_ms = completed_timing()
             attempt = _audit(
                 request=request,
                 attempt_key=attempt_key,
@@ -254,14 +272,16 @@ def run_reflection_explanation(
                 failure=failure,
                 requested_at=requested_at,
                 started_at=started_at,
-                completed_at=completed_at,
+                completed_at=actual_completed_at,
                 timeout_seconds=timeout_seconds,
                 endpoint=endpoint,
-                local_elapsed_ms=local_elapsed_ms,
+                local_elapsed_ms=actual_elapsed_ms,
+                usage=completion.usage,
             )
             store.append_attempt(attempt)
             return _result(attempt)
         store.append_response(response)
+        actual_completed_at, actual_elapsed_ms = completed_timing()
         attempt = _audit(
             request=request,
             attempt_key=attempt_key,
@@ -270,15 +290,16 @@ def run_reflection_explanation(
             failure=None,
             requested_at=requested_at,
             started_at=started_at,
-            completed_at=completed_at,
+            completed_at=actual_completed_at,
             timeout_seconds=timeout_seconds,
             endpoint=endpoint,
-            local_elapsed_ms=local_elapsed_ms,
+            local_elapsed_ms=actual_elapsed_ms,
             usage=completion.usage,
         )
         store.append_attempt(attempt)
         return _result(attempt)
     except LLMProviderError as error:
+        actual_completed_at, actual_elapsed_ms = completed_timing()
         attempt = _audit(
             request=request,
             attempt_key=attempt_key,
@@ -287,10 +308,36 @@ def run_reflection_explanation(
             failure=_safe_failure(error.failure),
             requested_at=requested_at,
             started_at=started_at,
-            completed_at=completed_at,
+            completed_at=actual_completed_at,
             timeout_seconds=timeout_seconds,
             endpoint=endpoint,
-            local_elapsed_ms=local_elapsed_ms,
+            local_elapsed_ms=actual_elapsed_ms,
+            usage=None if completion is None else completion.usage,
+        )
+        store.append_attempt(attempt)
+        return _result(attempt)
+    except Exception as error:
+        actual_completed_at, actual_elapsed_ms = completed_timing()
+        failure = LLMFailureMetadata(
+            code=LLMFailureCode.PROVIDER_ERROR,
+            message=(
+                "Unexpected provider or response-persistence failure: "
+                f"{type(error).__name__}."
+            ),
+        )
+        attempt = _audit(
+            request=request,
+            attempt_key=attempt_key,
+            status=LLMAttemptStatus.PROVIDER_ERROR,
+            response_id=None,
+            failure=failure,
+            requested_at=requested_at,
+            started_at=started_at,
+            completed_at=actual_completed_at,
+            timeout_seconds=timeout_seconds,
+            endpoint=endpoint,
+            local_elapsed_ms=actual_elapsed_ms,
+            usage=None if completion is None else completion.usage,
         )
         store.append_attempt(attempt)
         return _result(attempt)

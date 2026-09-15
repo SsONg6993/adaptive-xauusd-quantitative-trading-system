@@ -26,6 +26,17 @@ from axq.versioning import canonical_hash
 
 AGENT_ORDER = ("chart", "quant", "historical", "regime", "news")
 
+BROKER_REFRESH_EVENT_TYPES = frozenset(
+    {
+        RuntimeEventType.TICK,
+        RuntimeEventType.ACCOUNT_UPDATED,
+        RuntimeEventType.POSITIONS_UPDATED,
+        RuntimeEventType.ORDERS_UPDATED,
+        RuntimeEventType.EXPOSURE_UPDATED,
+        RuntimeEventType.BROKER_CONSTRAINTS_UPDATED,
+    }
+)
+
 
 class EvidenceBundle(BaseModel):
     model_config = ConfigDict(extra="forbid", frozen=True)
@@ -194,5 +205,12 @@ class EvidenceKernel:
             RuntimeEventType.TICK,
         }:
             raise ValueError("decision-capable market events require kernel processing")
+        self._state = reduce_state(self._state, event, now=event.available_at)
+        return self._state
+
+    def reduce_broker_refresh_event(self, event: RuntimeEvent) -> SharedRuntimeState:
+        """Reduce one canonical broker snapshot fact without agent evaluation."""
+        if event.event_type not in BROKER_REFRESH_EVENT_TYPES:
+            raise ValueError("broker refresh reduction rejects non-snapshot event types")
         self._state = reduce_state(self._state, event, now=event.available_at)
         return self._state

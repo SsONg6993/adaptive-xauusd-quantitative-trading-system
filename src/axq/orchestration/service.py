@@ -12,6 +12,7 @@ from axq.execution_boundary import (
     ExecutionAdapter,
     ExecutionResult,
     ReconciliationReport,
+    ResumeBlockReason,
     ResumeReadiness,
     ResumeStatus,
     broker_snapshot_runtime_events,
@@ -80,6 +81,8 @@ class RuntimeRunner(Protocol):
         event: RuntimeEvent,
         feature_snapshot: CausalFeatureSnapshot | None,
     ) -> SemanticTraceStep: ...
+
+    def reduce_broker_refresh(self, event: RuntimeEvent) -> SharedRuntimeState: ...
 
     def restore_runtime(
         self,
@@ -180,6 +183,10 @@ class RuntimeOrchestrator:
             last_error=self._last_error,
         )
 
+    @property
+    def latest_plan(self) -> DecisionPlan:
+        return self._latest_plan
+
     def set_operator_controls(self, controls: OperatorControls) -> None:
         if self._controls.kill_switch and not controls.kill_switch:
             raise ValueError("kill switch cannot be cleared by replacing controls")
@@ -255,7 +262,7 @@ class RuntimeOrchestrator:
             snapshot, source_sequence_start=self._source_sequence
         ):
             self._source_sequence += 1
-            self.runner.process(event, None)
+            self.runner.reduce_broker_refresh(event)
             self._last_event_id = event.event_id
         self._phase = StartupPhase.RECONCILING
         self._reconciliation = reconcile_execution_state(
@@ -275,8 +282,18 @@ class RuntimeOrchestrator:
             continuity_status=self._continuity_status,
         )
         self._append_semantic(self._readiness, event_id=None)
-        if self._position_action_anomaly() or self._readiness.status is not ResumeStatus.SAFE:
+        if self._position_action_anomaly() or (
+            self._readiness.status is not ResumeStatus.SAFE
+            and not self._shadow_waiting_for_market_only()
+        ):
             self._block("startup recovery/readiness is unsafe")
+
+    def _shadow_waiting_for_market_only(self) -> bool:
+        return (
+            self.config.mode is RuntimeMode.SHADOW
+            and self._readiness is not None
+            and self._readiness.reason_codes == (ResumeBlockReason.MARKET_NOT_FRESH,)
+        )
 
     def _position_action_anomaly(self) -> bool:
         intent_ids = {item.intent_id for item in self.position_action_ledger.transitions()}
@@ -285,14 +302,17 @@ class RuntimeOrchestrator:
             for intent_id in intent_ids
         )
 
-    def process_event(self, event: RuntimeEvent) -> DecisionCycle:
+    def process_event(
+        self,
+        event: RuntimeEvent,
+        *,
+        feature_snapshot: CausalFeatureSnapshot | None = None,
+    ) -> DecisionCycle:
         if self._phase is not StartupPhase.SAFE:
             raise RuntimeError("startup recovery must be SAFE before event decisions")
-        feature = (
-            self._feature_provider(event, self.runner.state)
-            if self._feature_provider is not None
-            else None
-        )
+        feature = feature_snapshot
+        if feature is None and self._feature_provider is not None:
+            feature = self._feature_provider(event, self.runner.state)
         trace = self.runner.process(event, feature)
         self._last_event_id = event.event_id
         try:

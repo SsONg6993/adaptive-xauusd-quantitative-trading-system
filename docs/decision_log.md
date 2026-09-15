@@ -425,3 +425,65 @@ do not silently rewrite earlier decisions.
   while independent generations are not promised byte equality. No RAG, Experience Graph, cloud
   provider, arbitrary tool use, Final OOS, proposal promotion, deployment, runtime, broker, or MT5
   authority is introduced.
+
+## 2026-09-15 — Phase 9 stabilization preserves history and one semantic kernel
+
+- **Decision:** Version-dispatch runtime-journal semantic decoding, preserve V1 Shadow-cycle bytes
+  and IDs, and write interaction-bearing cycles as V2. Replay excludes rejected-only events while
+  preserving their event and outcome records. Every completed M5 event in Shadow and replay uses the
+  shared evidence kernel; the scanner remains observational.
+- **Reason:** Schema evolution, rejected-event resurrection, and scanner-gated quiet processing each
+  violated deterministic replay or historical-evidence guarantees.
+- **Consequence:** Mixed V1/V2 journals decode deterministically, unknown/corrupt versions fail
+  closed, and live/replay event semantics are aligned without changing Master, Discipline, Risk,
+  sizing, execution authorization, symbol selection, or alpha policy.
+
+## 2026-09-15 — Dataset completion and Final-OOS governance are explicit
+
+- **Decision:** Require a timezone-aware source-availability cutoff before dataset synchronization
+  and exclude bars that have not closed by it. Development training and comparison expose only
+  TRAIN/VALIDATION metrics; final OOS is an explicit, one-way post-freeze evaluation.
+- **Reason:** Supplied forming bars and repeated OOS inspection could contaminate causal features or
+  model selection even when downstream fitting code was otherwise chronological.
+- **Consequence:** M5/H1/H4 completion boundaries are testable and the conservative MTF lag remains
+  unchanged. Historical runs whose OOS metrics were inspected during experimentation are honestly
+  classified as contaminated for clean final-performance claims.
+
+## 2026-09-15 — Operator process ownership and offline audit failures fail closed
+
+- **Decision:** Measure LLM attempt duration with a monotonic clock, persist safe terminal failures
+  for unexpected provider/response-persistence exceptions, and exact-identity terminate spawned
+  Dashboard/Shadow children when readiness or durable registration fails. Exercise the singleton
+  lock with two real processes.
+- **Reason:** Zero-duration audits and unowned startup failures obstruct diagnosis and can leave
+  orphan processes even when trading semantics remain safe.
+- **Consequence:** Operational failure evidence is more accurate, startup cleanup remains
+  PID-reuse-resistant, and no new broker or runtime reasoning authority is introduced. Phase 9 Task
+  2 retrieval/embedding work remains PAUSED.
+
+## 2026-09-15 — Dashboard yields MT5 ownership to the managed runtime
+
+- **Decision:** Do not perform an implicit MT5 probe while rendering the Overview. Require the
+  operator's explicit **CHECK MT5 CONNECTION** action in stopped/error states, and suppress direct
+  Dashboard probes while a managed Shadow child is active.
+- **Reason:** Streamlit fragment rendering kept START unavailable during the terminal IPC timeout,
+  and an in-flight Dashboard probe could compete with the newly started child for MT5 ownership.
+- **Consequence:** START and duplicate START render promptly and the managed child has exclusive MT5
+  initialization ownership. The IPC timeout was isolated to a different terminal installation; the
+  configured Vantage terminal at `C:\Program Files\MetaTrader\terminal64.exe` initializes and
+  resolves `XAUUSD.sc`. The real Dashboard smoke reached RUNNING, processed a completed M5, reused
+  the exact managed instance on duplicate START, and stopped gracefully with zero broker mutation
+  or orphan process. Phase 9 Task 2 remains PAUSED.
+
+## 2026-09-15 — Same-bar Shadow restart remains fail-closed
+
+- **Decision:** Treat an immediate restart before a newer completed M5 exists as a known operational
+  constraint. Do not weaken persisted source-sequence, journal, replay, ordering, or decision
+  semantics to accept the already-processed completed bar.
+- **Reason:** The immediate restart rejected the same latest M5 as `stale source sequence`, while a
+  restart after the next genuinely completed M5 accepted that new bar naturally and returned to
+  healthy waiting. This distinguishes a timing edge from a restart-state defect.
+- **Consequence:** Operators wait for the next completed M5 before restarting a stopped instance
+  that already processed the latest bar. The verified newer-bar restart passed through RUNNING,
+  completed-M5 processing, HOLD, graceful STOP, and exact-process exit with zero broker mutation.
+  No runtime semantic change is authorized; the stabilization gate passes and Task 2 remains PAUSED.
