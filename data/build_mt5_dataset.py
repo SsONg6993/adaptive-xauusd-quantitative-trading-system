@@ -111,6 +111,7 @@ def main() -> None:
         feature_groups=feature_config.features.groups,
         feature_parameters=feature_config.features.parameters,
         label_definition=dataset.label,
+        data_available_at=end,
         row_policy=dataset.row_policy,
         split_policy=dataset.split,
         storage_format=dataset.storage_format,

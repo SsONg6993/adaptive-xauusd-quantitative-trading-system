@@ -17,6 +17,7 @@ dependencies = [
 
 [project.optional-dependencies]
 mt5 = ["MetaTrader5>=5.0.45; platform_system == 'Windows'"]
+dashboard = ["streamlit>=1.40,<2"]
 dev = ["mypy>=1.13,<2", "pandas-stubs>=2.2,<3", "pytest>=8.3,<9", "ruff>=0.8,<1"]
 dataset = ["pyarrow>=18,<24"]
 ml = ["scikit-learn>=1.5,<2", "joblib>=1.4,<2"]

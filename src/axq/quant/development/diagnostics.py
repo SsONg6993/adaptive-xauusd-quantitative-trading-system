@@ -153,22 +153,24 @@ def opportunity_utilization(signals: np.ndarray) -> dict[str, Any]:
 def overfitting_report(split_metrics: dict[str, dict[str, Any]]) -> dict[str, Any]:
     flags: list[str] = []
     train = split_metrics.get("train", {})
-    oos = split_metrics.get("oos", {})
+    validation = split_metrics.get("validation", {})
     train_score = train.get("balanced_accuracy")
-    oos_score = oos.get("balanced_accuracy")
+    validation_score = validation.get("balanced_accuracy")
     if (
         isinstance(train_score, (int, float))
-        and isinstance(oos_score, (int, float))
-        and float(train_score) - float(oos_score) >= 0.15
+        and isinstance(validation_score, (int, float))
+        and float(train_score) - float(validation_score) >= 0.15
     ):
-        flags.append("train_oos_gap")
-    coverage = oos.get("prediction_coverage")
+        flags.append("train_validation_gap")
+    coverage = validation.get("prediction_coverage")
     if isinstance(coverage, (int, float)) and float(coverage) < 0.05:
         flags.append("actionable_coverage_collapse")
     train_confidence = train.get("confidence", {}).get("mean") if train else None
-    oos_confidence = oos.get("confidence", {}).get("mean") if oos else None
+    validation_confidence = (
+        validation.get("confidence", {}).get("mean") if validation else None
+    )
     if isinstance(train_confidence, (int, float)) and isinstance(
-        oos_confidence, (int, float)
-    ) and float(train_confidence) - float(oos_confidence) >= 0.15:
+        validation_confidence, (int, float)
+    ) and float(train_confidence) - float(validation_confidence) >= 0.15:
         flags.append("confidence_degradation")
     return {"flags": flags, "requires_review": bool(flags), "automatic_decision": None}

@@ -1,6 +1,6 @@
 # Project status
 
-Last updated: 2026-09-09
+Last updated: 2026-09-15
 
 ## Current phase status
 
@@ -12,7 +12,12 @@ Last updated: 2026-09-09
 | 3 | Dataset + Labels | COMPLETE |
 | 4 | Quant Agent Framework | COMPLETE |
 | 5 | Local Quant Model Development | COMPLETE (framework only) |
-| 6+ | Later roadmap | NOT STARTED |
+| Architecture migration | Tool-augmented agentic design + deterministic replay | APPROVED / DOCUMENTED |
+| 6 | Shared runtime state, agent contracts, deterministic kernel vertical slice | COMPLETE |
+| 7 | Master, Discipline, Risk, execution, recovery, position actions, replay validation | COMPLETE |
+| 8 | Controlled learning and attribution | IN PROGRESS — TASKS 1–11 COMPLETE |
+| 9 | Optional intelligence | IN PROGRESS — TASK 1 + STABILIZATION IMPLEMENTED; FULL PASS; DASHBOARD/MT5 GATE PASSED; TASK 2 PAUSED |
+| 10+ | Later optional intelligence | NOT STARTED |
 
 Phases 0–4 established the local-first contracts, UTC market-data pipeline, causal versioned feature
 engine, immutable leakage-safe datasets/labels/splits, and manifest-bound Quant Agent training,
@@ -24,23 +29,258 @@ fold-local evaluation, machine-readable reports, calibration/HOLD/stability/trad
 diagnostics, advisory Challenger evidence, and completed-run comparison. Serious experiments remain
 user-run work and no model was promoted.
 
+Phase 6 implements the non-predictive-ML-required evidence baseline. Canonical events reduce into
+immutable shared state; fact-only tools feed stateful specialists; an M5-created thesis can receive
+causal tick/M1 confirmation or invalidation; and `EvidenceKernel` emits a deterministic
+`EvidenceBundle`. Live-like and replay adapters use this same semantic path. Existing ML remains
+intact as an optional specialist tool/Challenger and cannot become mandatory or self-promoting.
+
+Phase 8 Task 1 adds strict normalized experience contracts, exact-ID outcome attribution, a
+content-addressed replay-outcome artifact, and an append-only SQLite Experience Store. Its first
+corrected one-month baseline contains 37,183 complete experiences, including 166 completed trades;
+it performs descriptive analytics only and cannot reflect, propose, tune, or mutate policy.
+
+Phase 8 Task 2 adds immutable daily Reflection contracts, versioned diagnostic policy, explicit
+sample guards, deterministic UTC aggregation by `available_at`, and append-only SQLite revisions.
+The 30-day corrected baseline produced 122 measured findings and 378 guard records without changing
+any Phase 7 decision or policy. Reflection remains offline and observational.
+
+Phase 8 Task 3 adds immutable ISO-week reflections, exact daily/Experience provenance validation,
+guarded success/failure observations, and an explicit append-only knowledge lifecycle. Its baseline
+contains four complete and one incomplete week, five success and 21 failure patterns, and no status
+promotion. Weekly output remains descriptive and cannot modify runtime or trading policy.
+
+Phase 8 Tasks 4–5 add guarded advisory Improvement Proposals and preregistered evaluation
+governance. Task 6 executes only exact stored plans over content-digested DEVELOPMENT/VALIDATION
+metric-sample artifacts through `CANONICAL_METRIC_SAMPLES_V1`. Final OOS remains structurally
+unavailable, completed semantic retries reuse exact result bytes, and no candidate is tuned,
+promoted, deployed, or connected to runtime.
+
+Phase 8 Task 7 adds the governed producer side of that boundary. One allowlisted controlled-fixture
+engine causally emits exact Task 6 `CanonicalMetricSampleArtifact` records for DEVELOPMENT and
+VALIDATION only. Requests and terminal audits bind persisted proposal/candidate/plan identity,
+seed/environment, and canonical input/output digests; completed retries reuse output bytes. Full
+Phase 7 candidate injection and the seven baseline proposals remain untouched.
+
+Phase 8 Task 8 adds the first reviewed full-kernel candidate boundary. An immutable
+`SharedKernelPolicySet` preserves the Phase 7 composition by default, while one content-addressed
+`CONFIGURATION / MASTER_FUSION` candidate may replace only the Fusion policy. Exact
+DEVELOPMENT/VALIDATION CSV manifests run through the existing system replay and emit only
+preregistered allowlisted Task 6/7 metric artifacts. Final OOS, tuning, broker access, deployment,
+runtime mutation, automatic promotion, and the seven real proposals remain inaccessible.
+The controlled fixture produced two canonical artifacts from 140 M5 rows per scope, and a later
+semantic retry reused exact bytes without invoking the engine.
+
+Phase 8 Task 9 adds a comparison-only boundary over already-produced canonical baseline and
+candidate metric artifacts. Exact DEVELOPMENT/VALIDATION manifest, scope, seed, environment,
+policy/config, digest, and metric parity is explicit; mismatches are unavailable. The unchanged
+plan criterion evaluates only the candidate, while normalized decimal baseline/delta values remain
+evidence. The controlled fixture produced one PASS and one withheld Final-OOS UNAVAILABLE outcome;
+a later retry reused identical request/result/audit IDs and 4,161-byte result bytes.
+
+Phase 8 Task 10 adds a human-only review bridge over an exact immutable paired result. Reviews are
+content-addressed, strict-UTC, and stored as one append-only linear chain per result. Identical
+retries reuse the same review ID; stale or forked predecessors fail closed. Review records
+`ACCEPT_EVIDENCE`, `REJECT_EVIDENCE`, or `DEFER` only and cannot alter proposal status, paired-result
+bytes, criteria, runtime, deployment, Final OOS, or broker state.
+
+Phase 8 Task 11 adds an operator authorization record downstream of a current terminal
+`ACCEPT_EVIDENCE` review. V1 permits only `CANDIDATE -> VALIDATED`, revalidates the proposal's
+replayed `CANDIDATE` status and exact governance linkage, and persists a strict append-only chain.
+Authorization remains permission only and cannot apply the proposal transition or deploy anything.
+
+Phase 9 Task 1 adds a separate offline-only `axq.reasoning` package for one controlled
+`REFLECTION_EXPLANATION` task. Requests bind exact provider/model, prompt/schema, immutable source,
+bounded context, and generation identities. Native standard-library Ollama access is loopback-only;
+strict structured responses and every terminal attempt are stored append-only under migration 016.
+Exact completed-result reuse skips provider invocation and preserves response bytes, while failures
+remain permanent audit records. No reasoning dependency enters runtime, trading, proposal lifecycle,
+deployment, broker/MT5, or Final OOS paths. The full repository validation suite passes; the real
+Dashboard/MT5 lifecycle gate passes against the explicitly configured Vantage terminal.
+
+Phase 9 stabilization repairs the legacy/current Shadow-cycle schema boundary, rejected-event
+replay, completed-M5 Shadow/replay parity, explicit source-completion cutoffs in dataset assembly,
+and development-time Final-OOS isolation. Related hardening records measured reasoning timing and
+unexpected failures, cleans up exact spawned Dashboard/Shadow processes on failed startup,
+exercises the singleton lock across real processes, and validates historical-similarity snapshot
+compatibility. Historical journals remain append-only and unchanged. Dashboard smoke additionally
+made stopped-state MT5 probing explicit and yielded the connection to the managed child. The prior
+IPC timeout was traced to a different terminal installation; the managed default now targets the
+logged-in Vantage terminal at `C:\Program Files\MetaTrader\terminal64.exe`. START, RUNNING,
+completed-M5 processing, duplicate-START singleton ownership, graceful STOP, and exact-process exit
+were verified with zero broker mutation. An immediate restart while the already-processed completed
+M5 remained latest failed closed as `stale source sequence`; after the next genuinely completed M5,
+restart accepted the new bar naturally and returned to healthy waiting without any runtime,
+journal, replay, ordering, or decision-semantic change. This same-bar restart is a known operational
+constraint. The Dashboard/MT5 lifecycle gate is passed. Task 2 retrieval/embedding work remains
+PAUSED.
+
+Historical Quant development before this repair did inspect OOS metrics during candidate comparison.
+Those results are contaminated for model-selection claims and must not be represented as clean final
+OOS evidence. New development runs emit TRAIN/VALIDATION evidence only; final OOS is a separate,
+explicit post-freeze evaluation.
+
 ## Verified state
 
 - Stable Phase 4 checkpoint: `32132dd103087778fda88c1facf4159894aca653`.
 - Persistent-context checkpoint and Phase 5 base: `bf896ff03d98a405c532c1b8e5bd65e8e9a6725e`.
-- Phase 5 work is isolated on `codex/phase-5-quant-development`; see its final task report for fresh
-  pytest, Ruff, mypy, `pip check`, dry-run, device, and Graphify evidence.
+- Phase 5 branch checkpoint: `3e7620c12b46efd476370c03b2a639111744a218`.
+- Phase 5 merge checkpoint: `9e15b750da98a484e013dea8552995d7127df428`.
+- Phase 7 replay-validation and Phase 8 base: `512feefefe21f6fd2bfecd8a652bd987e795e57d`.
 - Prior tiny real-data smoke only: 96 XAUUSD M5 rows, 52 TRAIN, 14 VALIDATION, 20 OOS, CPU Logistic
   Regression with sigmoid calibration and 60% actionable coverage.
 - Serious model training has **not** been performed. Smoke metrics are pipeline diagnostics and are
   not profitability evidence.
+- Phase 9 Task 1 controlled fixture: one request, one response, one `COMPLETED` plus one `REUSED`
+  attempt; one provider verification/completion total; 221-byte completed and 217-byte reused result
+  artifacts. This is boundary validation, not model-quality evidence.
 
 ## Current architecture
 
 MT5 supplies UTC market data to Python ingestion, validation, immutable datasets, causal features,
-labels, and local model inference. Phase 5 development tooling remains outside the Phase 4 production
-trainer and cannot use immutable final OOS for model development. Future agents produce advisory
-`BUY`/`SELL`/`HOLD`; deterministic Python risk and the future MQL5 EA retain veto authority.
+labels, and optional local model inference. Phase 6 adds versioned shared runtime state and one
+deterministic evidence kernel above live-like/replay adapters. State includes market data
+plus MT5 balance, equity, margin, P/L, drawdown, positions, pending orders, exposure, and execution
+feedback. The implemented reducer, tools, specialists, scenario lifecycle, and evidence bundle serve
+live-like and replay identically. The Phase 7 Master, Discipline, and Risk boundaries preserve this
+shared-kernel rule; future execution integration must do the same.
+
+Completed M5 bars establish or update primary theses. The implemented intrabar path consumes
+causally available ticks and M1 closes to confirm or invalidate an existing
+scenario and make it entry-eligible before the next M5 close. Entry eligibility never bypasses
+setup/thesis identity and is evidence only; it cannot authorize or execute a trade.
+
+The runtime journal records immutable events, states, feature/tool/agent artifacts, bundles,
+thesis/scenario states, and applied/duplicate/no-op/rejected outcomes. `JournalEventSource` rebuilds
+causal event order and parity tests require identical semantic traces. Database row sequences are
+storage order only and are excluded from content identity.
+
+Phase 7 Task 1 adds a pure, versioned Master evidence-fusion boundary. `FusionPolicy` deterministically
+weights eligible specialist evidence and applies separate score, confidence, uncertainty,
+within-agent contradiction, and cross-agent disagreement gates. `MasterProposal` is advisory and
+content-addressed; failed gates produce `HOLD`.
+
+Phase 7 Task 2 adds a pure, versioned Discipline Guard downstream of `MasterProposal`. It emits a
+content-addressed `PASS`, `REJECT`, `PAUSE`, or `NO_ACTION` outcome from explicit policy, causal
+discipline state, and stable setup/thesis context. It enforces duplicate, re-entry, position-count,
+trade-cap, cooldown, and consecutive-loss cadence rules without performing financial Risk, sizing,
+or execution. Only `PASS` is eligible for the downstream Risk boundary.
+
+Phase 7 Task 3 adds a pure, versioned financial Risk boundary. Only a Discipline `PASS` is evaluated.
+The boundary consumes bounded causal account, market, position/order-book, exposure, broker, stop,
+margin, slippage, and normalized drawdown facts. It reuses the validated broker-specification sizing
+primitive and emits a content-addressed `PASS`, `REJECT`, `NO_ACTION`, or `EMERGENCY_STOP` outcome.
+Only Risk `PASS` is eligible for execution; Risk itself does not create or submit an order.
+
+Phase 7 Task 4 adds a strict, versioned execution boundary. A pure builder carries only a linked
+Risk `PASS` into a content-addressed `ExecutionIntent`; disabled and dry-run modes never call a
+transport, and the demo-only adapter rejects live accounts and changed pre-submit conditions. The
+idempotency ledger reserves an intent before submission, and `UNKNOWN` explicitly blocks retry until
+future broker reconciliation. Typed execution results reuse the Phase 6 execution-feedback event and
+reducer path. No direct MT5/MQL5 sender, durable reconciliation store, simulated broker, or position
+management has been implemented.
+
+Phase 7 Task 5 adds append-only SQLite execution transitions, deterministic exact-linkage broker
+reconciliation, canonical broker-state refresh events, recovery checkpoints, and a separate
+fail-closed safe-resume gate. Reservations and results survive process restart; terminal and UNKNOWN
+intents cannot be resubmitted. Reconciliation resolutions append a new report that supersedes the
+prior report. Checkpoints are recovery anchors only—the transition history remains authoritative.
+Freshness, unresolved exposure anomalies, missing intrabar continuity, and expired theses block new
+entries. Actual MT5/MQL5 transport and startup data acquisition remain unimplemented.
+
+Phase 7 Task 6 adds a pure deterministic core for already-open positions. Strict policy, context,
+and outcome contracts preserve original execution/setup/thesis/scenario provenance and require
+fresh, exactly reconciled Task 5 state before management. Stable theses hold; configured terminal
+lifecycle states request exit; and weakening may request only monotonic broker-valid protection
+toward break-even. Outputs remain journal-ready requests without transport, reversal, scale-in/out,
+or mutation of Master, Discipline, Risk, Execution, runtime, or thesis state.
+
+Phase 7 Task 7 adds a separate deterministic action-time safety boundary downstream of position
+management. Strict policy/context/outcome/intent contracts recheck Task 5 safe readiness, resolved
+reconciliation, exact intent/result/position linkage, current ticket/symbol/side/volume, component
+freshness, and action-time broker facts. HOLD creates no intent; only safety `PASS` creates a
+content-addressed protective-stop modification or full-close intent. Management, safety, and intent
+are recoverable through idempotent append-only runtime-journal records. No broker call is made.
+
+Phase 7 Task 8 adds a narrow lazy-loaded `MT5Gateway`, direct MetaTrader5 Python demo adapters, and a
+read-only `MT5BrokerSnapshotProvider`. Entry reuses the existing execution boundary and durable
+ledger. Protective-stop and full-close actions use a dedicated append-only transport result/ledger
+path. `DISABLED` is zero-touch, `DRY_RUN` performs complete preflight plus `order_check` without
+mutation, and `DEMO_ENABLED` revalidates a demo account and broker facts immediately before
+`order_send`. Missing or uncertain acknowledgements are durably `UNKNOWN` and never automatically
+resent. No live-money mode, runtime loop, MQL5 EA, IPC bridge, or simulated broker is included.
+
+Phase 7 Task 9 adds `RuntimeOrchestrator`, a strict operational config, structured status/operator
+gates, and deterministic run summaries. Startup restores committed state/cursors/memory/thesis,
+then live-like modes acquire and reduce broker truth, reconcile exact execution linkage, and require
+SAFE readiness before processing. Replay, shadow, and demo use one decision-cycle port; only DEMO
+may dispatch through the existing Task 8 adapters, with a fresh readiness check before every
+mutation. Feedback returns through canonical runtime events. Graceful shutdown checkpoints and
+flushes all append-only stores before closing MT5. There remains no live-money mode.
+
+Phase 8 Task 1 reconstructs `DecisionExperience`, `TradeExperience`,
+`RejectedDecisionExperience`, `PositionManagementExperience`, `RuntimeAnomalyExperience`, and
+`AgentContributionExperience` from existing Phase 7 records. Attribution uses exact semantic IDs;
+missing links remain explicit rather than inferred. The experience store rejects UPDATE/DELETE,
+idempotently accepts identical content, and fails closed on conflicting content under one ID.
+Counterfactual records are a separate `simulated=true` contract and are not generated in Task 1.
+
+Phase 8 Task 2 selects experiences through half-open UTC-day `available_at` intervals and creates
+content-addressed `DailyReflection` records. Findings cover supported direction, session, regime,
+confidence/outcome, excursion, rejection, exact-linked agent, position-management, and runtime
+patterns. Every diagnostic records `PASSED`, `INSUFFICIENT`, or `UNAVAILABLE`; unsupported facts are
+never represented as zero. Same-day revisions append and explicitly supersede the latest immutable
+record. Identical builds reuse the existing ID.
+
+Phase 8 Task 3 resolves terminal daily supersession chains and aggregates Monday-to-Monday UTC
+weeks. Incomplete weeks remain auditable through exact present/missing dates and cannot emit
+patterns. Every pattern starts as `OBSERVATION`; later knowledge status is derived only from an
+explicit append-only operator/evaluation transition chain. There is no mutable current-status row
+and no automatic `VALIDATED` promotion.
+
+Phase 8 Task 4 creates immutable advisory `ImprovementProposal` records only when the same semantic
+pattern key appears in at least two complete weeks and every required weekly/provenance guard passes.
+The builder revalidates exact weekly-pattern, finding, daily-reflection, and Experience links and
+uses deterministic category templates. Proposals start as `OBSERVATION`; supersession and status
+transitions are append-only. `VALIDATED` records evidence status and never deploys or mutates policy.
+
+Phase 8 Task 5 adds immutable `EvaluationCandidateSpec`, preregistered `ProposalEvaluationPlan`,
+externally supplied `ProposalEvaluationResult`, and separate `OperatorEvaluationDecision` records.
+Plans register only for an exact persisted `CANDIDATE` proposal and reproduce its canonical source
+collections. Results apply only preregistered criteria; Final OOS is structurally reporting-only and
+cannot affect candidate acceptance, selection, tuning, or calibration. Every correction and
+operator decision appends with explicit predecessor linkage. Task 5 contains no evaluator,
+challenger, replay, deployment, proposal promotion, or runtime mutation path.
+
+Phase 8 Task 6 adds immutable execution requests and completed audits around one deterministic,
+closed-set canonical metric-sample adapter. Requests bind the exact plan, candidate, seed,
+environment, and DEVELOPMENT/VALIDATION artifact IDs and byte digests. Operational timestamps are
+strict UTC but excluded from semantic identities. Preregistered Final OOS metrics remain present as
+`UNAVAILABLE` / `FINAL_OOS_NOT_ACCESSED` without opening a Final OOS artifact.
+
+Phase 8 Task 7 adds immutable candidate replay requests and audits plus durable canonical sample
+artifacts. New requests require an exact currently-CANDIDATE proposal and stored plan. The only
+engine replays controlled causal metric observations; it neither aggregates nor changes parameters.
+Outputs pass unchanged into Task 6, while Final OOS remains structurally absent.
+
+Phase 8 Task 8 threads a complete content-addressed policy set through the existing system-replay
+composition root. The default set retains prior behavior; V1 candidate resolution verifies the
+exact baseline and replaces only Master Fusion. Migration 012 preserves configs, manifests,
+requests, replay-result references, metric artifacts, and audits append-only. Completed requests
+reuse stored bytes without executing the shared kernel again.
+
+Phase 8 Task 9 does not execute the kernel. It compares exact canonical evidence from one baseline
+policy and frozen candidate under the same persisted plan and manifests. Candidate-only criteria
+remain preregistered; decimal deltas are descriptive. Migration 013 persists immutable requests,
+source links, results, and audits, and the CLI exposes no Final OOS input.
+
+Phase 8 Task 10 appends operator review evidence to those immutable paired results. Exact authority
+and optional supporting-result links are revalidated. Current review state is derived by replaying
+the append-only predecessor chain; no mutable current row or proposal transition is introduced.
+
+Phase 8 Task 11 appends transition authorization only after exact current-candidate and terminal
+accepted-review checks. The authorization history is replay-derived and separate from the proposal
+status-transition history; no lifecycle mutation occurs.
 
 ## Important risks
 
@@ -50,14 +290,27 @@ trainer and cannot use immutable final OOS for model development. Future agents 
 - Joblib artifacts are trusted-local only; hashes detect corruption but do not sandbox pickle.
 - Registry and suite-state files are not designed for concurrent writers to the same run directory.
 - Broker history depth, data gaps, spread anomalies, and multi-year regime coverage remain broker-specific.
-- No claim of profitability, execution-ready trading, or autonomous learning exists.
+- No claim of profitability, live-money readiness, prescriptive learning, or autonomous learning exists.
+- Tick-history quality, broker event ordering, spread/slippage simulation, and deterministic replay
+  of asynchronous slow-path context remain unresolved implementation risks.
+- Real-terminal demo mutation has not been exercised by automated validation; fake-gateway tests
+  cover transport behavior without placing trades.
+- A production scheduler/service host, simulated fills/P&L, MQL5/IPC transport, automated resolution
+  of unknown broker outcomes, runtime LLM use, RAG/Experience Graph, vision, broader candidate kinds,
+  and execution of real governed proposals are absent.
+- Fresh LLM generations are not byte-deterministic across model builds, Ollama versions, hardware,
+  or environments. Only semantic request identity, validation, content-addressed responses, and
+  explicitly selected exact-result reuse are guaranteed.
 
 ## Working principle and next task
 
-Codex writes auditable local pipelines and runs tiny tests. The user runs serious training and returns
-completed reports for analysis. The next task must be chosen only after reviewing real Phase 5 Quant
-evidence. A possible Phase 6 is a separate Chart Agent framework, but its causal data representation,
-model contract, and compute limits require explicit design approval. Do not start it implicitly.
+Codex writes auditable local pipelines and runs bounded validation. The user runs serious training
+and large replays. Phase 8 Tasks 1–11 remain checkpointed. Phase 9 Task 1 is isolated on
+`codex/phase-9-llm-reasoning`; Stages 1–8 implement its offline boundary and Stage 9 is the next
+separately authorized final validation gate. Broader reasoning, candidate kinds, or execution of real
+proposals require separate approval and must remain unable to mutate production behavior implicitly.
+Future work must preserve the shared live/replay contracts and may not infer authority for
+continuous execution, live-money support, simulated brokerage, or later-phase intelligence.
 
 ## Roadmap
 
@@ -67,4 +320,8 @@ model contract, and compute limits require explicit design approval. Do not star
 4. Phase 3 — Dataset + Labels
 5. Phase 4 — Quant Agent Framework
 6. Phase 5 — Local Quant Model Development and Evaluation
-7. Phase 6+ — Remaining agents and execution roadmap, to be re-approved before implementation
+7. Architecture migration — Tool-augmented shared deterministic kernel (documented)
+8. Phase 6 — Runtime state, event/replay contracts, specialist evidence, kernel vertical slice
+9. Phase 7 — Master fusion, Discipline Guard, Risk and MT5 execution integration
+10. Phase 8 — Reflection, attribution, rejected-opportunity and reliability analysis
+11. Phase 9 — Optional LLM, vision, ML challengers and advanced similarity

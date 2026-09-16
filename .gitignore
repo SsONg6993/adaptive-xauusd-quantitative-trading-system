@@ -12,7 +12,7 @@ __pycache__/
 .ruff_cache/
 
 # Runtime state, databases, logs, and transient IPC
-runtime/
+/runtime/
 logs/
 *.log
 *.sqlite

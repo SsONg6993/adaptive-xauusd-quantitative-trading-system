@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import json
+from datetime import timedelta
 from pathlib import Path
 
 import numpy as np
@@ -63,6 +64,8 @@ def build(
         feature_parameters={
             "volatility_v2": {"atr_period": 2, "rolling_period": 3}
         },
+        data_available_at=pd.to_datetime(frame["timestamp"].iloc[-1], utc=True)
+        + timedelta(minutes=5),
         label_definition=definition(threshold),
         row_policy=RowPolicy(
             critical_feature_columns=["pa_body", "pa_range", "vol_atr_2"]
@@ -186,6 +189,8 @@ def test_mtf_causality_and_exact_close_boundary() -> None:
         row_policy=RowPolicy(),
         split_policy=None,
         storage_format="csv_debug",
+        data_available_at=pd.to_datetime(m5["timestamp"].iloc[-1], utc=True)
+        + timedelta(minutes=5),
     )
     baseline = assemble_dataset({"M5": m5, "H1": h1}, **kwargs)
     first_ratio = baseline.frame["mtf_close_ratio_h1"].first_valid_index()
@@ -203,11 +208,91 @@ def test_mtf_causality_and_exact_close_boundary() -> None:
     )
 
 
+def test_h4_context_appears_only_after_exact_close_boundary() -> None:
+    m5 = candles(132)
+    h4 = candles(3, "4h")
+    result = assemble_dataset(
+        {"M5": m5, "H4": h4},
+        dataset_name="mtf-h4",
+        symbol="XAUUSD",
+        base_timeframe="M5",
+        feature_set_version="test",
+        feature_groups=["price_action", "multi_timeframe"],
+        feature_parameters={},
+        label_definition=LabelDefinition(
+            name="next_1", version="v1", kind=LabelKind.DIRECTION, horizon_bars=1
+        ),
+        row_policy=RowPolicy(),
+        storage_format="csv_debug",
+        data_available_at=pd.to_datetime(m5["timestamp"].iloc[-1], utc=True)
+        + timedelta(minutes=5),
+    )
+
+    first_ratio = result.frame["mtf_close_ratio_h4"].first_valid_index()
+    assert first_ratio is not None
+    assert result.frame.loc[first_ratio, "decision_timestamp"] == pd.Timestamp(
+        "2026-01-05 04:05Z"
+    )
+
+
+def test_missing_base_bar_is_not_synthesized_into_dataset() -> None:
+    source = candles()
+    missing_open = pd.to_datetime(source.loc[40, "timestamp"], utc=True)
+    source = source.drop(index=40).reset_index(drop=True)
+
+    result = build(source)
+
+    assert missing_open + timedelta(minutes=5) not in set(
+        result.frame["decision_timestamp"]
+    )
+
+
 def test_duplicate_timestamp_rejected() -> None:
     source = candles()
     duplicated = pd.concat([source, source.iloc[[5]]], ignore_index=True)
     with pytest.raises(ValueError, match="duplicate"):
         build(duplicated)
+
+
+def test_incomplete_base_bar_is_excluded_at_as_of_boundary() -> None:
+    source = candles()
+    cutoff = pd.to_datetime(source["timestamp"].iloc[-1], utc=True) + timedelta(minutes=2)
+    result = assemble_dataset(
+        {"M5": source},
+        dataset_name="causal-cutoff",
+        symbol="XAUUSD",
+        base_timeframe="M5",
+        feature_set_version="test-v1",
+        feature_groups=["price_action", "volatility"],
+        feature_parameters={"volatility_v2": {"atr_period": 2, "rolling_period": 3}},
+        label_definition=definition(),
+        data_available_at=cutoff,
+        row_policy=RowPolicy(
+            critical_feature_columns=["pa_body", "pa_range", "vol_atr_2"]
+        ),
+        storage_format="csv_debug",
+    )
+
+    assert (result.frame["decision_timestamp"] <= cutoff).all()
+    assert (
+        pd.to_datetime(source["timestamp"].iloc[-1], utc=True) + timedelta(minutes=5)
+        > cutoff
+    )
+
+
+def test_naive_dataset_availability_boundary_is_rejected() -> None:
+    with pytest.raises(ValueError, match="timezone-aware"):
+        assemble_dataset(
+            {"M5": candles()},
+            dataset_name="naive-cutoff",
+            symbol="XAUUSD",
+            base_timeframe="M5",
+            feature_set_version="test-v1",
+            feature_groups=["price_action"],
+            feature_parameters={},
+            label_definition=definition(),
+            data_available_at=pd.Timestamp("2026-01-06"),
+        )
 
 
 def test_immutable_debug_storage(tmp_path: Path) -> None:

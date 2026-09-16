@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 import json
-from datetime import UTC, datetime
+from datetime import UTC, datetime, timedelta
 from pathlib import Path
 
 import numpy as np
@@ -54,6 +54,8 @@ def dataset_dir(tmp_path: Path) -> Path:
         feature_set_version="phase4-test-v1",
         feature_groups=["price_action", "volatility"],
         feature_parameters={"volatility_v2": {"atr_period": 2, "rolling_period": 3}},
+        data_available_at=pd.to_datetime(candles()["timestamp"].iloc[-1], utc=True)
+        + timedelta(minutes=5),
         label_definition=LabelDefinition(
             name="next_3", version="direction-3-test", kind=LabelKind.DIRECTION,
             horizon_bars=3, neutral_threshold=0.0002,

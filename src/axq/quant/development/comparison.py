@@ -25,7 +25,7 @@ def compare_runs(
         if verify:
             verify_development_run(root)
         summary = _read(root / "run_summary.json")
-        metrics = _read(root / "metrics.json").get("oos", {})
+        metrics = _read(root / "metrics.json").get("validation", {})
         rows.append(
             {
                 "run_id": summary.get("run_id"),
@@ -39,6 +39,7 @@ def compare_runs(
                 "actionable_coverage": metrics.get("prediction_coverage"),
                 "temporal_stability": summary.get("temporal_stability"),
                 "artifact_identity": summary.get("model_id"),
+                "selection_scope": "VALIDATION",
                 "final_oos_use": summary.get("final_oos_use"),
             }
         )

@@ -3,6 +3,7 @@ symbol: XAUUSD
 base_timeframe: M5
 source_files:
   M5: data/processed/xauusd_m5_sample.csv
+data_available_at: 2026-08-03T06:00:00Z
 feature_config: configs/base.yaml
 label:
   name: next_5_bar_direction

@@ -87,7 +87,7 @@ def test_overfitting_and_challenger_contract_are_advisory() -> None:
     flags = overfitting_report(
         {
             "train": {"balanced_accuracy": 0.95, "prediction_coverage": 0.9},
-            "oos": {"balanced_accuracy": 0.51, "prediction_coverage": 0.01},
+            "validation": {"balanced_accuracy": 0.51, "prediction_coverage": 0.01},
         }
     )
     evidence = evaluate_challenger_evidence(
@@ -104,7 +104,7 @@ def test_overfitting_and_challenger_contract_are_advisory() -> None:
         minimum_folds=3,
     )
 
-    assert "train_oos_gap" in flags["flags"]
+    assert "train_validation_gap" in flags["flags"]
     assert "actionable_coverage_collapse" in flags["flags"]
     assert evidence["eligible_for_review"] is False
     assert "minimum_sample_size" in evidence["unmet_requirements"]

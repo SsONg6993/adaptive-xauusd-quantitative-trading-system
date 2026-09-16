@@ -1,0 +1,15 @@
+schema_version: "1.0"
+mode: DISABLED
+symbol: XAUUSD
+broker_symbol: XAUUSD.demo
+runtime_journal_path: runtime/demo/runtime-journal.sqlite3
+execution_ledger_path: runtime/demo/execution-ledger.sqlite3
+position_action_ledger_path: runtime/demo/position-action-ledger.sqlite3
+mt5_terminal_path: null
+event_poll_interval_ms: 1000
+snapshot_interval_ms: 5000
+safe_shutdown_timeout_seconds: 15
+feature_source: causal-m5
+policy_references:
+  - configs/master/default.yaml
+  - configs/risk/conservative.yaml
