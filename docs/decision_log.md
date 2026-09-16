@@ -487,3 +487,21 @@ do not silently rewrite earlier decisions.
   that already processed the latest bar. The verified newer-bar restart passed through RUNNING,
   completed-M5 processing, HOLD, graceful STOP, and exact-process exit with zero broker mutation.
   No runtime semantic change is authorized; the stabilization gate passes and Task 2 remains PAUSED.
+
+## 2026-09-16 — Live compute is causal-event-driven and discussion impact is explicit
+
+- **Decision:** Restrict idle Shadow polling to quote health plus a two-row completed-M5 probe;
+  compute full M5 features only for a new completed M5 and reuse M15 results until a new completed
+  M15. Separate the Dashboard's two-second lifecycle-control fragment from five-minute analytical
+  fragments. Record operational performance in a non-semantic sidecar. Persist a bounded interaction
+  impact record with exact Master before/after values.
+- **Reason:** Full M5/M15 history reads and page-wide analytical rerenders were recurring without a
+  new causal event. Master attribution also needed to distinguish excluded no-stance evidence from
+  valid uncertainty and contradiction penalties, while discussion effects needed a measured result.
+- **Consequence:** Idle polls do not run feature engineering, specialists, historical similarity,
+  LLM, Master, or interaction. Broker health remains independently refreshed. Fusion thresholds and
+  formulas are unchanged: no-stance evidence retains zero applied weight, and aligned raw confidence
+  may correctly remain below threshold after recorded uncertainty/internal-contradiction penalties.
+  Large live journals are queried by indexed semantic subsets for recovery and Candidate context,
+  avoiding repeated full-history decoding without rewriting history or changing replay. V1 discussion
+  remains advisory and records zero confidence/stance change. Phase 9 Task 2 remains PAUSED.

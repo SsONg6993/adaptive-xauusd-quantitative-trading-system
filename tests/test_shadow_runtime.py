@@ -205,7 +205,16 @@ def test_stale_availability_is_journaled_without_scanner_specialists_or_executio
         reason_code="STALE_QUOTE",
     )
 
-    runtime.record_availability(availability)
+    assert runtime.record_availability(availability) is True
+    repeated = availability.model_copy(
+        update={
+            "availability_id": "",
+            "observed_at": T0.replace(second=2),
+            "available_at": T0.replace(second=2),
+        }
+    )
+    repeated = ShadowMarketAvailability.model_validate(repeated.model_dump())
+    assert runtime.record_availability(repeated) is False
 
     assert runner.quiet_calls == 0
     assert runner.process_calls == 0

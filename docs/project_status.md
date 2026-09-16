@@ -1,6 +1,6 @@
 # Project status
 
-Last updated: 2026-09-15
+Last updated: 2026-09-16
 
 ## Current phase status
 
@@ -114,6 +114,17 @@ restart accepted the new bar naturally and returned to healthy waiting without a
 journal, replay, ordering, or decision-semantic change. This same-bar restart is a known operational
 constraint. The Dashboard/MT5 lifecycle gate is passed. Task 2 retrieval/embedding work remains
 PAUSED.
+
+Post-gate runtime profiling makes idle live operation causal-event-driven: a frequent poll now reads
+quote health and two M5 rows, full M5 work occurs only on a new completion, and M15 feature context
+is cached until its next completed boundary. Dashboard lifecycle controls remain responsive at two
+seconds while analytical panels refresh every five minutes or manually. A non-semantic telemetry
+sidecar measures stage latency, cache behavior, CPU, and RSS memory. Master fusion was not changed:
+persisted attribution proves unavailable/no-stance evidence is excluded, while uncertainty and
+internal contradiction explain the observed low confidence. Bounded interaction now persists an
+explicit before/after impact measurement and remains unable to mutate evidence or decisions. Indexed
+operational journal reads reduce the preserved-directory Candidate cycle from about 48.7 seconds to
+about 105 milliseconds without changing or rewriting historical rows.
 
 Historical Quant development before this repair did inspect OOS metrics during candidate comparison.
 Those results are contaminated for model-selection claims and must not be represented as clean final

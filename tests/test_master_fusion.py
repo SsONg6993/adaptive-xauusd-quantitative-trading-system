@@ -196,6 +196,47 @@ def test_internal_counterevidence_is_distinct_from_cross_agent_disagreement() ->
     assert FusionReason.HIGH_CONTRADICTION in proposal.reason_codes
 
 
+def test_aligned_raw_confidence_can_correctly_remain_low_after_recorded_penalties() -> None:
+    bundle = _bundle(
+        {
+            "chart": _evidence(
+                "chart",
+                DirectionalBias.BEARISH,
+                confidence=0.7425,
+                uncertainty=0.2575,
+                support_strength=0.7,
+                contradiction_strength=0.15,
+            ),
+            "quant": _evidence(
+                "quant",
+                DirectionalBias.BEARISH,
+                confidence=0.6625,
+                uncertainty=0.3375,
+                support_strength=0.7,
+                contradiction_strength=0.4,
+            ),
+            "historical": _evidence(
+                "historical", None, status=AgentStatus.ABSTAINED
+            ),
+            "regime": _evidence("regime", None, confidence=0.7),
+            "news": _evidence("news", None, status=AgentStatus.ABSTAINED),
+        }
+    )
+
+    proposal = fuse_evidence(bundle, default_fusion_policy())
+    by_agent = {item.agent_name: item for item in proposal.contributions}
+
+    assert proposal.bearish_score == pytest.approx(0.49510625)
+    assert proposal.disagreement == 0.0
+    assert proposal.contradiction == pytest.approx(0.259431, abs=1e-6)
+    assert proposal.confidence == pytest.approx(0.366660, abs=1e-6)
+    assert proposal.decision is Signal.HOLD
+    assert proposal.reason_codes == (FusionReason.LOW_CONFIDENCE,)
+    assert by_agent["historical"].applied_weight == 0.0
+    assert by_agent["regime"].applied_weight == 0.0
+    assert by_agent["news"].applied_weight == 0.0
+
+
 def test_degraded_abstained_and_error_evidence_have_explicit_dispositions() -> None:
     bundle = _bundle(
         {

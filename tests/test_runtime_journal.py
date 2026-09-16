@@ -100,6 +100,28 @@ def test_journal_is_append_only_and_keeps_deterministic_order(tmp_path) -> None:
     assert tuple(journal.events()) == (first, second)
 
 
+def test_indexed_journal_query_decodes_only_requested_semantics(tmp_path) -> None:
+    first = _event(T0, 1)
+    second = _event(T0 + timedelta(minutes=5), 2)
+    snapshot = _snapshot(second)
+    journal = SQLiteRuntimeJournal(tmp_path / "runtime.sqlite3")
+    journal.append_semantic(first, event_id=first.event_id)
+    journal.append_semantic(snapshot, event_id=second.event_id)
+    journal.append_semantic(second, event_id=second.event_id)
+
+    records = journal.query_records(
+        record_types=(JournalRecordType.RUNTIME_EVENT,),
+        event_id=second.event_id,
+        newest_first=True,
+        limit=1,
+    )
+
+    assert len(records) == 1
+    assert records[0].record.decode() == second
+    assert journal.contains_semantic_id(snapshot.snapshot_id)
+    assert not journal.contains_semantic_id("missing-semantic-id")
+
+
 def test_journal_replay_orders_events_by_causal_availability(tmp_path) -> None:
     earlier = _event(T0, 1)
     later = _event(T0 + timedelta(minutes=5), 2)

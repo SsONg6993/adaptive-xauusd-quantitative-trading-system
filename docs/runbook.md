@@ -524,3 +524,21 @@ enable DEMO or live money.
 Preserved journal compatibility is read-only. Do not migrate or rewrite historical payloads in
 place. V1/V2 decoding and unknown-version failure policy are documented in
 `docs/journal_compatibility.md`. Phase 9 Task 2 remains PAUSED after this gate.
+
+### Runtime compute and Dashboard cadence
+
+`runtime-performance.json` is an operational sidecar in the configured Shadow output directory.
+It reports the latest poll/cycle/stage timings, specialist timings, M15 cache counts, process CPU,
+RSS memory, and the last expensive-computation timestamp. It is not a source-controlled artifact
+and must not be used as replay or trading evidence.
+
+Large preserved journals must be read through the indexed operational query helpers when the live
+path needs only recovery state, Shadow execution history, or the scan for one event. Do not replace
+those queries with `journal.records()` on a recurring Candidate path; full decoding is reserved for
+explicit replay/audit work and leaves persisted rows untouched.
+
+The Dashboard START/STOP status fragment refreshes every two seconds. Analytical Overview and Live
+Monitor fragments refresh every five minutes and also expose a manual refresh button. Automatic
+Dashboard rendering reads persisted files only; the explicit stopped-state MT5 connection check is
+the sole Dashboard action that may initialize MT5. Shadow polling and processing continue in the
+managed child regardless of the Dashboard refresh cadence.

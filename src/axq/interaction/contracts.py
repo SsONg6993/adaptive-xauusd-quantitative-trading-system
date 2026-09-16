@@ -11,6 +11,7 @@ from pydantic import BaseModel, ConfigDict, Field, model_validator
 from axq.agents import DirectionalBias
 from axq.runtime.kernel import AGENT_ORDER
 from axq.runtime.state import UTCDateTime
+from axq.schemas import Signal
 from axq.versioning import canonical_hash
 
 
@@ -180,6 +181,39 @@ class SpecialistInteractionResolution(InteractionModel):
         if self.resolution_id and self.resolution_id != expected:
             raise ValueError("resolution_id does not match content")
         object.__setattr__(self, "resolution_id", expected)
+        return self
+
+
+class SpecialistInteractionImpact(InteractionModel):
+    """Auditable before/after measurement; it does not authorize decision mutation."""
+
+    impact_id: str = ""
+    discussion_id: str = Field(min_length=1)
+    resolution_id: str = Field(min_length=1)
+    event_id: str = Field(min_length=1)
+    master_before_id: str = Field(min_length=1)
+    master_after_id: str = Field(min_length=1)
+    confidence_before: float = Field(ge=0.0, le=1.0)
+    confidence_after: float = Field(ge=0.0, le=1.0)
+    confidence_delta: float = Field(ge=-1.0, le=1.0)
+    stance_before: Signal
+    stance_after: Signal
+    stance_changed: bool
+    final_reason: str = Field(min_length=1, max_length=300)
+    as_of: UTCDateTime
+    available_at: UTCDateTime
+
+    @model_validator(mode="after")
+    def validate_and_bind(self) -> SpecialistInteractionImpact:
+        expected_delta = self.confidence_after - self.confidence_before
+        if abs(self.confidence_delta - expected_delta) > 1e-12:
+            raise ValueError("interaction confidence delta does not match before/after values")
+        if self.stance_changed != (self.stance_before is not self.stance_after):
+            raise ValueError("interaction stance-change flag does not match before/after values")
+        expected = _bind_id(self, "impact_id", "sii")
+        if self.impact_id and self.impact_id != expected:
+            raise ValueError("impact_id does not match content")
+        object.__setattr__(self, "impact_id", expected)
         return self
 
 

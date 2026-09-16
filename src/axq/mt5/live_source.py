@@ -4,7 +4,9 @@ from __future__ import annotations
 
 import math
 from collections.abc import Callable, Mapping
+from dataclasses import dataclass
 from datetime import UTC, datetime, timedelta
+from time import perf_counter
 from typing import Any, NamedTuple, cast
 
 import pandas as pd
@@ -41,6 +43,18 @@ class LiveShadowPoll(NamedTuple):
     status: LiveMarketStatus
     availability: ShadowMarketAvailability
     bar: LiveShadowBar | None = None
+
+
+@dataclass(frozen=True)
+class LiveSourcePerformance:
+    """Operational timings that never participate in event or decision identity."""
+
+    poll_latency_ms: float
+    feature_latency_ms: float = 0.0
+    m5_feature_latency_ms: float = 0.0
+    m15_feature_latency_ms: float = 0.0
+    expensive_cycle: bool = False
+    m15_cache_hit: bool | None = None
 
 
 def _tick_epochs(tick: Mapping[str, object]) -> tuple[int, int | None] | None:
@@ -152,6 +166,8 @@ class MT5CompletedM5Source:
         self._stale_after_ms = stale_after_ms
         self._broker_time = broker_time_normalizer
         self._last_close: datetime | None = None
+        self._m15_cache: tuple[datetime, pd.Series, MT5TimestampNormalizationTrace] | None = None
+        self._last_performance = LiveSourcePerformance(poll_latency_ms=0.0)
         registry = default_registry()
         self._manifest = registry.manifest(
             feature_set_version="live-shadow-v1",
@@ -162,6 +178,31 @@ class MT5CompletedM5Source:
     @property
     def feature_manifest_id(self) -> str:
         return self._manifest.manifest_id
+
+    @property
+    def last_performance(self) -> LiveSourcePerformance:
+        return self._last_performance
+
+    def _finish(
+        self,
+        started: float,
+        result: LiveShadowPoll,
+        *,
+        feature_latency_ms: float = 0.0,
+        m5_feature_latency_ms: float = 0.0,
+        m15_feature_latency_ms: float = 0.0,
+        expensive_cycle: bool = False,
+        m15_cache_hit: bool | None = None,
+    ) -> LiveShadowPoll:
+        self._last_performance = LiveSourcePerformance(
+            poll_latency_ms=(perf_counter() - started) * 1_000.0,
+            feature_latency_ms=feature_latency_ms,
+            m5_feature_latency_ms=m5_feature_latency_ms,
+            m15_feature_latency_ms=m15_feature_latency_ms,
+            expensive_cycle=expensive_cycle,
+            m15_cache_hit=m15_cache_hit,
+        )
+        return result
 
     def _availability(
         self,
@@ -187,6 +228,7 @@ class MT5CompletedM5Source:
         )
 
     def poll(self) -> LiveShadowPoll:
+        started = perf_counter()
         raw_now = self._clock()
         if raw_now.tzinfo is None or raw_now.utcoffset() is None:
             raise ValueError("shadow source clock must be timezone-aware")
@@ -199,7 +241,7 @@ class MT5CompletedM5Source:
                 reason_code="QUOTE_UNAVAILABLE",
                 tick_at=None,
             )
-            return LiveShadowPoll(availability.status, availability)
+            return self._finish(started, LiveShadowPoll(availability.status, availability))
         # Arrival/observation time is captured after the broker response.
         now = self._clock().astimezone(UTC)
         tick_epochs = _tick_epochs(tick)
@@ -210,7 +252,7 @@ class MT5CompletedM5Source:
                 reason_code="QUOTE_TIMESTAMP_UNAVAILABLE",
                 tick_at=None,
             )
-            return LiveShadowPoll(availability.status, availability)
+            return self._finish(started, LiveShadowPoll(availability.status, availability))
         raw_tick_time, raw_tick_time_msc = tick_epochs
         raw_tick_at = datetime.fromtimestamp(
             (raw_tick_time_msc / 1_000) if raw_tick_time_msc else raw_tick_time,
@@ -230,7 +272,7 @@ class MT5CompletedM5Source:
                 tick_at=None,
                 raw_tick_at=raw_tick_at,
             )
-            return LiveShadowPoll(availability.status, availability)
+            return self._finish(started, LiveShadowPoll(availability.status, availability))
         tick_at = tick_trace.normalized_at
         age_ms = (now - tick_at).total_seconds() * 1_000
         if (
@@ -244,7 +286,7 @@ class MT5CompletedM5Source:
                 tick_at=tick_at,
                 raw_tick_at=raw_tick_at,
             )
-            return LiveShadowPoll(availability.status, availability)
+            return self._finish(started, LiveShadowPoll(availability.status, availability))
         quote = _quote(tick)
         if quote is None:
             availability = self._availability(
@@ -254,14 +296,13 @@ class MT5CompletedM5Source:
                 tick_at=tick_at,
                 raw_tick_at=raw_tick_at,
             )
-            return LiveShadowPoll(availability.status, availability)
-        m5_raw = self._gateway.copy_rates_from_pos(self._broker_symbol, "M5", 0, self._history_bars)
-        m15_raw = self._gateway.copy_rates_from_pos(
-            self._broker_symbol, "M15", 0, self._history_bars
-        )
-        m5 = _frame(m5_raw, 5, now, self._broker_time)
-        m15 = _frame(m15_raw, 15, now, self._broker_time)
-        close_time = m5.iloc[-1]["timestamp"].to_pydatetime() + timedelta(minutes=5)
+            return self._finish(started, LiveShadowPoll(availability.status, availability))
+
+        # The two-row probe is the only bar work performed while idle. Full history and
+        # feature computation are deferred until a genuinely new completed M5 exists.
+        m5_probe_raw = self._gateway.copy_rates_from_pos(self._broker_symbol, "M5", 0, 2)
+        m5_probe = _frame(m5_probe_raw, 5, now, self._broker_time)
+        close_time = m5_probe.iloc[-1]["timestamp"].to_pydatetime() + timedelta(minutes=5)
         completed_bar_age_ms = (now - close_time).total_seconds() * 1_000
         if completed_bar_age_ms < 0 or completed_bar_age_ms > self._stale_after_ms:
             availability = self._availability(
@@ -272,7 +313,7 @@ class MT5CompletedM5Source:
                 latest_m5=close_time,
                 raw_tick_at=raw_tick_at,
             )
-            return LiveShadowPoll(availability.status, availability)
+            return self._finish(started, LiveShadowPoll(availability.status, availability))
         if self._last_close == close_time:
             availability = self._availability(
                 now=now,
@@ -282,27 +323,63 @@ class MT5CompletedM5Source:
                 latest_m5=close_time,
                 raw_tick_at=raw_tick_at,
             )
-            return LiveShadowPoll(availability.status, availability)
-        m15 = m15.loc[m15["timestamp"] + timedelta(minutes=15) <= close_time]
-        if m15.empty:
+            return self._finish(started, LiveShadowPoll(availability.status, availability))
+
+        m5_raw = self._gateway.copy_rates_from_pos(
+            self._broker_symbol, "M5", 0, self._history_bars
+        )
+        m5 = _frame(m5_raw, 5, now, self._broker_time)
+        m5 = m5.loc[m5["timestamp"] + timedelta(minutes=5) <= close_time]
+        if m5.empty:
+            raise ValueError("no completed M5 history is causally available")
+
+        m15_probe_raw = self._gateway.copy_rates_from_pos(self._broker_symbol, "M15", 0, 2)
+        m15_probe = _frame(m15_probe_raw, 15, now, self._broker_time)
+        m15_probe = m15_probe.loc[
+            m15_probe["timestamp"] + timedelta(minutes=15) <= close_time
+        ]
+        if m15_probe.empty:
             raise ValueError("no completed M15 context is causally available")
+        m15_close = (
+            m15_probe.iloc[-1]["timestamp"].to_pydatetime() + timedelta(minutes=15)
+        )
+        m15_cache_hit = self._m15_cache is not None and self._m15_cache[0] == m15_close
         m5_trace = self._broker_time.trace(
             raw_epoch_seconds=int(m5.iloc[-1]["_raw_broker_time"]),
             source_kind="M5",
         )
-        m15_trace = self._broker_time.trace(
-            raw_epoch_seconds=int(m15.iloc[-1]["_raw_broker_time"]),
-            source_kind="M15",
-        )
+        feature_started = perf_counter()
+        registry = default_registry()
+        m5_feature_started = perf_counter()
+        m5_features = registry.compute(m5, enabled_groups=_GROUPS)
+        m5_feature_latency_ms = (perf_counter() - m5_feature_started) * 1_000.0
+        m5_row = m5_features.iloc[-1]
+        m15_feature_latency_ms = 0.0
+        if m15_cache_hit:
+            assert self._m15_cache is not None
+            _, m15_row, m15_trace = self._m15_cache
+        else:
+            m15_raw = self._gateway.copy_rates_from_pos(
+                self._broker_symbol, "M15", 0, self._history_bars
+            )
+            m15 = _frame(m15_raw, 15, now, self._broker_time)
+            m15 = m15.loc[m15["timestamp"] + timedelta(minutes=15) <= close_time]
+            if m15.empty:
+                raise ValueError("no completed M15 context is causally available")
+            m15_feature_started = perf_counter()
+            m15_features = registry.compute(m15, enabled_groups=_GROUPS)
+            m15_feature_latency_ms = (perf_counter() - m15_feature_started) * 1_000.0
+            m15_row = m15_features.iloc[-1]
+            m15_trace = self._broker_time.trace(
+                raw_epoch_seconds=int(m15.iloc[-1]["_raw_broker_time"]),
+                source_kind="M15",
+            )
+            self._m15_cache = (m15_close, m15_row, m15_trace)
         if m5_trace.normalized_at + timedelta(minutes=5) != close_time:
             raise ValueError("normalized M5 trace does not match decision close")
         if m15_trace.normalized_at + timedelta(minutes=15) > close_time:
             raise ValueError("normalized M15 context violates causal availability")
-        registry = default_registry()
-        m5_features = registry.compute(m5, enabled_groups=_GROUPS)
-        m15_features = registry.compute(m15, enabled_groups=_GROUPS)
-        m5_row = m5_features.iloc[-1]
-        m15_row = m15_features.iloc[-1]
+        feature_latency_ms = (perf_counter() - feature_started) * 1_000.0
         values: dict[str, object] = {
             "m15_structure_bias": m15_row["structure_bias"],
             "m15_trend_adx_14": m15_row["trend_adx_14"],
@@ -419,16 +496,30 @@ class MT5CompletedM5Source:
             latest_m5=close_time,
             raw_tick_at=raw_tick_at,
         )
-        return LiveShadowPoll(
-            availability.status,
-            availability,
-            LiveShadowBar(
-                event=event,
-                feature_snapshot=snapshot,
-                m5_trace=m5_trace,
-                m15_trace=m15_trace,
+        return self._finish(
+            started,
+            LiveShadowPoll(
+                availability.status,
+                availability,
+                LiveShadowBar(
+                    event=event,
+                    feature_snapshot=snapshot,
+                    m5_trace=m5_trace,
+                    m15_trace=m15_trace,
+                ),
             ),
+            feature_latency_ms=feature_latency_ms,
+            m5_feature_latency_ms=m5_feature_latency_ms,
+            m15_feature_latency_ms=m15_feature_latency_ms,
+            expensive_cycle=True,
+            m15_cache_hit=m15_cache_hit,
         )
 
 
-__all__ = ["LiveMarketStatus", "LiveShadowBar", "LiveShadowPoll", "MT5CompletedM5Source"]
+__all__ = [
+    "LiveMarketStatus",
+    "LiveShadowBar",
+    "LiveShadowPoll",
+    "LiveSourcePerformance",
+    "MT5CompletedM5Source",
+]

@@ -46,6 +46,7 @@ from axq.runtime.journal import (
     JournalRecordType,
     JournalSemantic,
     RuntimeJournal,
+    SQLiteRuntimeJournal,
 )
 from axq.runtime.replay import SemanticTraceStep
 from axq.tools import CausalFeatureSnapshot
@@ -234,7 +235,18 @@ class RuntimeOrchestrator:
         latest: ThesisState | None = None
         latest_state: SharedRuntimeState | None = None
         memories: dict[str, AgentMemory] = {}
-        for entry in self.journal.records():
+        records = (
+            self.journal.query_records(
+                record_types=(
+                    JournalRecordType.THESIS_STATE,
+                    JournalRecordType.RUNTIME_STATE,
+                    JournalRecordType.AGENT_MEMORY,
+                )
+            )
+            if isinstance(self.journal, SQLiteRuntimeJournal)
+            else self.journal.records()
+        )
+        for entry in records:
             if entry.record.record_type is JournalRecordType.THESIS_STATE:
                 latest = ThesisState.model_validate(entry.record.decode())
             elif entry.record.record_type is JournalRecordType.RUNTIME_STATE:

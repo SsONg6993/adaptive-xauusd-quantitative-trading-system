@@ -3,6 +3,8 @@
 from __future__ import annotations
 
 from collections.abc import Mapping
+from dataclasses import dataclass
+from time import perf_counter
 from typing import Literal
 
 from pydantic import BaseModel, ConfigDict, Field, model_validator
@@ -36,6 +38,21 @@ BROKER_REFRESH_EVENT_TYPES = frozenset(
         RuntimeEventType.BROKER_CONSTRAINTS_UPDATED,
     }
 )
+
+
+@dataclass(frozen=True)
+class KernelPerformance:
+    """Non-semantic timings for the latest evidence-kernel evaluation."""
+
+    tool_latency_ms: float = 0.0
+    agent_latencies_ms: tuple[tuple[str, float], ...] = ()
+
+    @property
+    def historical_similarity_latency_ms(self) -> float | None:
+        return next(
+            (latency for name, latency in self.agent_latencies_ms if name == "historical"),
+            None,
+        )
 
 
 class EvidenceBundle(BaseModel):
@@ -128,10 +145,15 @@ class EvidenceKernel:
         self._agents = tuple(by_name[name] for name in AGENT_ORDER)
         self._memories: dict[str, AgentMemory] = {}
         self._last_processed: tuple[str, str | None, EvidenceBundle] | None = None
+        self._last_performance = KernelPerformance()
 
     @property
     def state(self) -> SharedRuntimeState:
         return self._state
+
+    @property
+    def last_performance(self) -> KernelPerformance:
+        return self._last_performance
 
     def restore(
         self,
@@ -168,8 +190,12 @@ class EvidenceKernel:
         inputs: list[AgentInput] = []
         evidence_items: list[AgentEvidence] = []
         memories: list[AgentMemory] = []
+        tool_latency_ms = 0.0
+        agent_latencies: list[tuple[str, float]] = []
         for agent in self._agents:
+            tool_started = perf_counter()
             results = self._catalog.evaluate(self._tool_access[agent.name], tool_input)
+            tool_latency_ms += (perf_counter() - tool_started) * 1_000.0
             agent_input = AgentInput.from_runtime(
                 state=state,
                 feature_snapshot_id=(
@@ -178,7 +204,11 @@ class EvidenceKernel:
                 tool_results=results,
                 previous_memory=self._memories.get(agent.name),
             )
+            agent_started = perf_counter()
             evidence, memory = agent.observe(agent_input)
+            agent_latencies.append(
+                (agent.name, (perf_counter() - agent_started) * 1_000.0)
+            )
             inputs.append(agent_input)
             evidence_items.append(evidence)
             memories.append(memory)
@@ -195,6 +225,10 @@ class EvidenceKernel:
             memory.agent_name: memory for memory in bundle.memories
         }
         self._last_processed = (event.event_id, snapshot_id, bundle)
+        self._last_performance = KernelPerformance(
+            tool_latency_ms=tool_latency_ms,
+            agent_latencies_ms=tuple(agent_latencies),
+        )
         return bundle
 
     def reduce_event(self, event: RuntimeEvent) -> SharedRuntimeState:

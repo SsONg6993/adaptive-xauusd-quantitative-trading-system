@@ -253,7 +253,12 @@ def test_processor_persists_interaction_but_final_master_uses_original_bundle(tm
         JournalRecordType.SPECIALIST_INTERACTION_TURN,
         JournalRecordType.SPECIALIST_INTERACTION_TURN,
         JournalRecordType.SPECIALIST_INTERACTION_RESOLUTION,
+        JournalRecordType.SPECIALIST_INTERACTION_IMPACT,
     )
+    impact = journal.records()[-1].record.decode()
+    assert impact.confidence_delta == 0.0
+    assert impact.stance_changed is False
+    assert impact.master_before_id == impact.master_after_id == original_master.proposal_id
 
 
 def test_interaction_does_not_change_memory_or_evidence_bytes(tmp_path) -> None:

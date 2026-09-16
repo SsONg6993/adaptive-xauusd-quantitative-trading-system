@@ -355,3 +355,19 @@ source row whose close is later than that cutoff before validation, synchronizat
 labels. The existing conservative higher-timeframe availability lag is retained. Quant development
 uses TRAIN for fitting, VALIDATION for calibration/selection/diagnostics, and never emits OOS metrics;
 final OOS is invoked only as a distinct frozen-candidate evaluation.
+
+Live Shadow scheduling is causal and event-driven. The frequent idle path reads the current quote
+and a two-row M5 completion probe only. Full M5 history and feature computation run once for a new
+completed M5; cached M15 context is reused until a newly completed M15 makes it causally stale.
+H1/H4 computations are not part of the current live-shadow feature contract. Broker/account health
+refresh remains independently cadence-bounded and never invokes specialists. Operational timing,
+CPU, memory, and cache telemetry is written to a replace-in-place sidecar and is excluded from
+event, replay, journal, decision, and content identities. Live recovery and Candidate-cycle
+operational lookups use indexed journal subsets (record type, semantic identity, or event identity)
+instead of decoding every historical row. This changes neither append-only history nor replay order.
+
+The bounded specialist interaction remains one evidence-bound round for material directional
+disagreement. It cannot alter immutable evidence, confidence, stance, memory, or fusion policy.
+An append-only impact record explicitly persists Master before/after identity, confidence delta,
+stance change, and the final reason; V1 therefore measures a zero delta rather than implying that
+discussion improved a decision.

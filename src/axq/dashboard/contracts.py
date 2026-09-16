@@ -11,12 +11,14 @@ from axq.discipline.contracts import DisciplineOutcome
 from axq.execution_boundary.contracts import ExecutionIntent
 from axq.interaction.contracts import (
     MasterConflictAssessment,
+    SpecialistInteractionImpact,
     SpecialistInteractionResolution,
     SpecialistInteractionRound,
     SpecialistInteractionTurn,
 )
 from axq.master.contracts import MasterProposal
 from axq.mt5.symbols import ResolvedBrokerInstrument
+from axq.orchestration.performance import RuntimePerformanceSnapshot
 from axq.reasoning.contracts import (
     LLMExecutionAttemptAudit,
     LLMRequestEnvelope,
@@ -86,6 +88,70 @@ class RuntimeSnapshot(DashboardModel):
     latest_interaction_round: SpecialistInteractionRound | None = None
     latest_interaction_turns: tuple[SpecialistInteractionTurn, ...] = ()
     latest_interaction_resolution: SpecialistInteractionResolution | None = None
+    latest_interaction_impact: SpecialistInteractionImpact | None = None
+
+
+class CurrentCycleView(DashboardModel):
+    cycle_timestamp: str
+    symbol: str
+    completed_m5_timestamp: str
+    trading_window_state: str
+    m15_context: str
+    scanner_result: str
+    scenario: str
+    thesis: str
+    agents_invoked: tuple[str, ...] = ()
+    evidence_status: str
+    master_decision: str
+    decision_confidence: str
+    discipline_outcome: str
+    risk_outcome: str
+    final_action: str
+    execution_authorization: str
+    persistence_status: str
+    journal_sequence: int = Field(gt=0)
+    event_id: str
+    cycle_id: str
+    scan_id: str
+    evidence_bundle_id: str | None = None
+    thesis_id: str | None = None
+    scenario_id: str | None = None
+    decision_id: str | None = None
+    raw_reason_codes: tuple[str, ...] = ()
+
+
+class RuntimeActivityView(DashboardModel):
+    occurred_at: str
+    label: str
+    detail: str | None = None
+    journal_sequence: int = Field(gt=0)
+    record_type: str
+    event_id: str | None = None
+    semantic_id: str
+    cycle_id: str | None = None
+    reason_codes: tuple[str, ...] = ()
+    raw_persisted_timestamp: str
+    grouped_record_count: int = Field(default=1, gt=0)
+
+
+class DecisionExplanationView(DashboardModel):
+    title: str
+    result: str
+    points: tuple[str, ...]
+
+
+class PipelineStageView(DashboardModel):
+    stage: str
+    status: str
+    detail: str | None = None
+
+
+class RuntimeObservabilitySnapshot(DashboardModel):
+    component: ComponentStatus
+    current_cycle: CurrentCycleView | None = None
+    recent_activity: tuple[RuntimeActivityView, ...] = ()
+    decision_explanation: DecisionExplanationView | None = None
+    pipeline: tuple[PipelineStageView, ...] = ()
 
 
 class PerformanceSnapshot(DashboardModel):
@@ -107,6 +173,11 @@ class PerformanceSnapshot(DashboardModel):
     equity_curve: tuple[float, ...] | None = None
 
 
+class RuntimeComputeSnapshot(DashboardModel):
+    component: ComponentStatus
+    metrics: RuntimePerformanceSnapshot | None = None
+
+
 __all__ = [
     "ComponentState",
     "ComponentStatus",
@@ -114,5 +185,11 @@ __all__ = [
     "PerformanceSnapshot",
     "ReasoningAttemptView",
     "ReasoningSnapshot",
+    "CurrentCycleView",
+    "DecisionExplanationView",
+    "PipelineStageView",
+    "RuntimeActivityView",
+    "RuntimeObservabilitySnapshot",
+    "RuntimeComputeSnapshot",
     "RuntimeSnapshot",
 ]

@@ -3,9 +3,15 @@
 from axq.dashboard.contracts import (
     ComponentState,
     ComponentStatus,
+    CurrentCycleView,
+    DecisionExplanationView,
     PerformanceSnapshot,
+    PipelineStageView,
     ReasoningAttemptView,
     ReasoningSnapshot,
+    RuntimeActivityView,
+    RuntimeComputeSnapshot,
+    RuntimeObservabilitySnapshot,
     RuntimeSnapshot,
 )
 from axq.dashboard.mt5_reader import (
@@ -17,6 +23,8 @@ from axq.dashboard.mt5_reader import (
 from axq.dashboard.readers import (
     load_performance_snapshot,
     load_reasoning_snapshot,
+    load_runtime_observability,
+    load_runtime_performance,
     load_runtime_snapshot,
     read_ollama_status,
 )
@@ -24,15 +32,23 @@ from axq.dashboard.readers import (
 __all__ = [
     "ComponentState",
     "ComponentStatus",
+    "CurrentCycleView",
+    "DecisionExplanationView",
     "PerformanceSnapshot",
+    "PipelineStageView",
     "ReasoningAttemptView",
     "ReasoningSnapshot",
     "RuntimeSnapshot",
+    "RuntimeActivityView",
+    "RuntimeComputeSnapshot",
+    "RuntimeObservabilitySnapshot",
     "LiveMT5Position",
     "LiveMT5Snapshot",
     "MetaTrader5ReadOnlyAdapter",
     "load_performance_snapshot",
     "load_reasoning_snapshot",
+    "load_runtime_observability",
+    "load_runtime_performance",
     "load_runtime_snapshot",
     "read_ollama_status",
     "read_live_mt5_snapshot",

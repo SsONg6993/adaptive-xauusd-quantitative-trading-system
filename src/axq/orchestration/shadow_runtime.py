@@ -36,6 +36,7 @@ from axq.mt5 import (
 from axq.mt5.live_source import LiveShadowPoll, MT5CompletedM5Source
 from axq.orchestration.config import RuntimeConfig
 from axq.orchestration.contracts import DecisionPlan, RuntimeMode
+from axq.orchestration.performance import RuntimePerformanceTracker
 from axq.orchestration.processor import (
     DeterministicDecisionProcessor,
     EntryDecisionInputs,
@@ -162,14 +163,20 @@ class _LiveContext:
     def _shadow_history(
         self, at: datetime
     ) -> tuple[int, datetime | None, Signal | None, tuple[str, ...], tuple[str, ...]]:
+        operational_history = self.journal.query_records(
+            record_types=(
+                JournalRecordType.EXECUTION_INTENT,
+                JournalRecordType.SHADOW_EXECUTION,
+            )
+        )
         intents = {
             item.record.semantic_id: item.record.decode()
-            for item in self.journal.records()
+            for item in operational_history
             if item.record.record_type is JournalRecordType.EXECUTION_INTENT
         }
         executions = [
             cast(ShadowExecutionRecord, item.record.decode())
-            for item in self.journal.records()
+            for item in operational_history
             if item.record.record_type is JournalRecordType.SHADOW_EXECUTION
             and item.record.available_at.date() == at.date()
         ]
@@ -301,6 +308,11 @@ class _FailClosedLiveProcessor:
     def __init__(self, delegate: DeterministicDecisionProcessor, fusion_policy: Any) -> None:
         self.delegate = delegate
         self.fusion_policy = fusion_policy
+        self._fallback_master_latency_ms = 0.0
+
+    @property
+    def last_master_latency_ms(self) -> float:
+        return max(self.delegate.last_master_latency_ms, self._fallback_master_latency_ms)
 
     def evaluate(
         self,
@@ -310,12 +322,16 @@ class _FailClosedLiveProcessor:
         readiness: Any,
         controls: Any,
     ) -> DecisionPlan:
+        self._fallback_master_latency_ms = 0.0
         try:
             return self.delegate.evaluate(event, state, trace, readiness, controls)
         except ValueError as error:
             if "live broker" not in str(error):
                 raise
-            return DecisionPlan(master=fuse_evidence(trace.bundle, self.fusion_policy))
+            started = time.perf_counter()
+            master = fuse_evidence(trace.bundle, self.fusion_policy)
+            self._fallback_master_latency_ms = (time.perf_counter() - started) * 1_000.0
+            return DecisionPlan(master=master)
 
 
 def _poll_after_recovery_refresh(
@@ -370,10 +386,7 @@ def _run_live_shadow_locked(
         broker_time_normalizer=broker_time,
     )
     journal.append_semantic(resolution, event_id=None)
-    if not any(
-        item.record.semantic_id == broker_time.resolution.resolution_id
-        for item in journal.records()
-    ):
+    if not journal.contains_semantic_id(broker_time.resolution.resolution_id):
         journal.append_semantic(
             broker_time.resolution,
             event_id=None,
@@ -424,13 +437,13 @@ def _run_live_shadow_locked(
     fail_closed_processor = _FailClosedLiveProcessor(delegate, policies.fusion_policy)
 
     def scan_id_for_event(event_id: str) -> str | None:
-        for item in reversed(journal.records()):
-            if (
-                item.record.event_id == event_id
-                and item.record.record_type is JournalRecordType.M5_CANDIDATE_SCAN
-            ):
-                return item.record.semantic_id
-        return None
+        records = journal.query_records(
+            record_types=(JournalRecordType.M5_CANDIDATE_SCAN,),
+            event_id=event_id,
+            newest_first=True,
+            limit=1,
+        )
+        return None if not records else records[0].record.semantic_id
 
     interaction_processor = EvidenceBoundInteractionProcessor(
         delegate=fail_closed_processor,
@@ -476,6 +489,7 @@ def _run_live_shadow_locked(
         instrument_resolution_id=resolution.resolution_id,
         execution_sink=JournalShadowExecutionSink(journal),
     )
+    performance = RuntimePerformanceTracker(output_dir / "runtime-performance.json")
     try:
         while True:
             if control is not None and control.stop_requested():
@@ -510,6 +524,16 @@ def _run_live_shadow_locked(
                     available_at=poll.bar.event.available_at,
                 )
                 runtime.process(poll.bar.event, poll.bar.feature_snapshot)
+                performance.record(
+                    source=source.last_performance,
+                    cycle_latency_ms=runtime.last_performance.cycle_latency_ms,
+                    scanner_latency_ms=runtime.last_performance.scanner_latency_ms,
+                    kernel=runner.last_kernel_performance,
+                    master_latency_ms=interaction_processor.last_master_latency_ms,
+                    discussion_latency_ms=interaction_processor.last_discussion_latency_ms,
+                )
+            else:
+                performance.record(source=source.last_performance)
             if once:
                 break
             deadline = time.monotonic() + poll_seconds
@@ -636,8 +660,9 @@ def resolve_session_broker_time(
     except MT5TimeNormalizationError as inference_error:
         persisted = tuple(
             MT5BrokerTimeOffsetResolution.model_validate(item.record.decode())
-            for item in journal.records()
-            if item.record.record_type is JournalRecordType.MT5_TIME_OFFSET_RESOLUTION
+            for item in journal.query_records(
+                record_types=(JournalRecordType.MT5_TIME_OFFSET_RESOLUTION,)
+            )
         )
         for prior in reversed(persisted):
             try:
