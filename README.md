@@ -1,12 +1,20 @@
-# Adaptive XAUUSD Multi-Agent Trading System
+# Adaptive XAUUSD Quantitative Trading System
 
-Production-oriented, local-first foundation for a measurable, tool-augmented multi-agent MT5 trading
-system. Phases 0–7 are complete, Phase 8 Tasks 1–11 are checkpointed, and the offline-only Phase 9
-Task 1 reasoning boundary is implemented on an isolated branch pending its final validation gate.
-There is no production-trained model,
-autonomous strategy, live execution EA, or claim of trading profitability.
+Local-first Python framework for developing and evaluating a measurable, tool-augmented,
+multi-agent quantitative trading system for XAUUSD. It connects leakage-aware market-data and
+machine-learning research workflows to deterministic runtime, replay, risk, recovery, and
+read-only MT5 shadow-operation boundaries. Phases 0–8, the offline Phase 9 Task 1 reasoning
+boundary, and the Phase 9 runtime stabilization baseline are checkpointed. There is no
+production-trained model, autonomous strategy, live execution EA, or claim of trading
+profitability.
 
-## Current capabilities
+## About
+
+This quantitative engineering research project is designed for local experimentation with
+auditable configurations, explicit causal ordering, and clearly separated data, decision, risk,
+recovery, and broker boundaries.
+
+## Key Features
 
 - Strict agent, master, risk, and execution contracts with `BUY`/`SELL`/`HOLD` semantics.
 - Bounded MT5 historical downloader for XAUUSD M5/M15/H1/H4 using UTC.
@@ -115,21 +123,31 @@ and [runbook](docs/runbook.md) before running
 models. The exact user-run sequence is in
 [Phase 5 local runs](docs/phase5_local_runs.md).
 
-## Setup (Windows PowerShell)
+## Tech Stack
+
+- Python 3.12
+- Pandas and NumPy
+- scikit-learn
+- Pydantic and PyYAML
+- SQLite
+- MetaTrader 5 (optional, Windows)
+- Pytest, Ruff, and mypy
+
+## Getting Started
 
 ```powershell
 py -3.12 -m venv .venv
 .venv\Scripts\Activate.ps1
 python -m pip install --upgrade pip
-python -m pip install -e ".[dev,mt5]"
-python -m pip install -e ".[dataset]"
-python -m pip install -e ".[ml]"
+python -m pip install -e ".[dev,dataset,ml,mt5]"
 Copy-Item .env.example .env
+python -m pytest
 ```
 
+MetaTrader 5 is optional and is only required for downloading broker history on Windows.
 Do not put broker credentials or API keys in tracked files.
 
-## Lightweight verification
+## Lightweight Verification
 
 ```powershell
 python -m pytest
@@ -140,6 +158,13 @@ python scripts/init_db.py --path runtime/smoke.sqlite3
 
 These checks do not connect to a broker or run serious training. Model tests use only tiny,
 deterministic temporary fits.
+
+## Status
+
+Framework Prototype — the local data, feature, dataset, quantitative experiment, deterministic
+runtime/replay, recovery, governance, offline reasoning, dashboard, and MT5 shadow-lifecycle
+components described above are implemented and regression-tested. Live-production operation and
+profitability have not been validated.
 
 ## Download and validate a small sample
 
