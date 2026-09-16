@@ -16,6 +16,7 @@ from axq.dashboard.readers import (
     load_runtime_snapshot,
     read_ollama_status,
 )
+from axq.dashboard.views import is_agent_room_setup
 from axq.interaction import build_evidence_bound_interaction
 from axq.master import default_fusion_policy, fuse_evidence
 from axq.mt5.symbols import GoldSymbolConfiguration, resolve_gold_instrument
@@ -31,9 +32,10 @@ from axq.reasoning.contracts import (
 from axq.reasoning.service import build_reflection_explanation_request
 from axq.reasoning.store import SQLiteReasoningAuditStore
 from axq.runtime.journal import SQLiteRuntimeJournal
-from axq.runtime.shadow import LiveMarketStatus, ShadowMarketAvailability
+from axq.runtime.shadow import LiveMarketStatus, ShadowCycleStage, ShadowMarketAvailability
 from tests.reasoning_test_support import provider_identity, utc
 from tests.test_master_fusion import _bundle, _evidence
+from tests.test_shadow_persistence import insert_preserved_interaction_v1_record
 
 
 def _reasoning_database(path: Path) -> tuple[str, str]:
@@ -145,6 +147,24 @@ def test_runtime_projection_preserves_canonical_and_resolved_symbol_identity(
     assert snapshot.market_availability == availability
     assert snapshot.instrument_resolution.canonical_instrument.value == "XAUUSD"
     assert snapshot.instrument_resolution.resolved_broker_symbol == "XAUUSD.sc"
+
+
+def test_runtime_projection_reads_preserved_interaction_v1_without_mutation(
+    tmp_path: Path,
+) -> None:
+    path = tmp_path / "runtime.sqlite3"
+    SQLiteRuntimeJournal(path)
+    insert_preserved_interaction_v1_record(path)
+    before = sha256(path.read_bytes()).hexdigest()
+
+    snapshot = load_runtime_snapshot(path, now=utc("2026-09-14T11:31:00Z"))
+
+    assert snapshot.component.state is ComponentState.ONLINE
+    assert snapshot.latest_shadow_cycle is not None
+    assert snapshot.latest_shadow_cycle.cycle_id == "scycle-03d3c2acb8ab10687716"
+    assert snapshot.latest_shadow_cycle.stage is ShadowCycleStage.QUIET
+    assert is_agent_room_setup(snapshot) is False
+    assert sha256(path.read_bytes()).hexdigest() == before
 
 
 def test_performance_reader_reports_known_range_and_metrics(tmp_path: Path) -> None:

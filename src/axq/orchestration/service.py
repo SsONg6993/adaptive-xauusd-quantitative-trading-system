@@ -12,6 +12,7 @@ from axq.execution_boundary import (
     ExecutionAdapter,
     ExecutionResult,
     ReconciliationReport,
+    ResolutionStatus,
     ResumeBlockReason,
     ResumeReadiness,
     ResumeStatus,
@@ -284,15 +285,30 @@ class RuntimeOrchestrator:
         self._append_semantic(self._readiness, event_id=None)
         if self._position_action_anomaly() or (
             self._readiness.status is not ResumeStatus.SAFE
-            and not self._shadow_waiting_for_market_only()
+            and not self._shadow_recovery_event_is_safe()
         ):
             self._block("startup recovery/readiness is unsafe")
 
-    def _shadow_waiting_for_market_only(self) -> bool:
+    def _shadow_recovery_event_is_safe(self) -> bool:
+        if self.config.mode is not RuntimeMode.SHADOW or self._readiness is None:
+            return False
+        reasons = set(self._readiness.reason_codes)
+        recoverable = {
+            ResumeBlockReason.MARKET_NOT_FRESH,
+            ResumeBlockReason.THESIS_EXPIRED,
+        }
+        if not reasons or not reasons <= recoverable:
+            return False
+        if ResumeBlockReason.THESIS_EXPIRED not in reasons:
+            return True
+        state = self.runner.state
         return (
-            self.config.mode is RuntimeMode.SHADOW
-            and self._readiness is not None
-            and self._readiness.reason_codes == (ResumeBlockReason.MARKET_NOT_FRESH,)
+            self._reconciliation is not None
+            and self._reconciliation.status is ResolutionStatus.RESOLVED
+            and not state.positions.positions
+            and not state.orders.orders
+            and state.exposure.gross_lots == 0.0
+            and state.exposure.net_lots == 0.0
         )
 
     def _position_action_anomaly(self) -> bool:
@@ -314,6 +330,7 @@ class RuntimeOrchestrator:
         if feature is None and self._feature_provider is not None:
             feature = self._feature_provider(event, self.runner.state)
         trace = self.runner.process(event, feature)
+        self._source_sequence = max(self._source_sequence, event.source_sequence + 1)
         self._last_event_id = event.event_id
         try:
             plan = self.processor.evaluate(

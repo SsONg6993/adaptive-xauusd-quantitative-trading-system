@@ -39,14 +39,13 @@ from axq.reasoning.ollama import (
     validate_loopback_ollama_url,
 )
 from axq.risk_boundary.contracts import RiskOutcome
-from axq.runtime.journal import JournalRecord, JournalRecordType
+from axq.runtime.journal import DecodedShadowRuntimeCycle, JournalRecord, JournalRecordType
 from axq.runtime.kernel import EvidenceBundle
 from axq.runtime.shadow import (
     HypotheticalTradePlan,
     M5CandidateScan,
     M15ContextSnapshot,
     ShadowMarketAvailability,
-    ShadowRuntimeCycle,
 )
 from axq.runtime.state import SharedRuntimeState
 
@@ -417,7 +416,7 @@ def load_runtime_snapshot(
             latest_shadow_cycle=(
                 None
                 if shadow_cycle_record is None
-                else cast(ShadowRuntimeCycle, shadow_cycle_record.decode())
+                else cast(DecodedShadowRuntimeCycle, shadow_cycle_record.decode())
             ),
             latest_trade_plan=(
                 None

@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 from datetime import UTC, datetime, timedelta
+from hashlib import sha256
 
 import pytest
 
@@ -38,6 +39,7 @@ from axq.tools import (
     ToolCatalog,
     ToolCategory,
 )
+from tests.test_shadow_persistence import insert_preserved_interaction_v1_record
 
 T0 = datetime(2025, 1, 6, 12, 0, tzinfo=UTC)
 POLICY = ScenarioPolicy(ttl_seconds=900, max_m5_bars=3)
@@ -377,6 +379,19 @@ def test_mixed_accepted_rejected_and_duplicate_events_replay_original_trace(
         first_step.bundle_id,
         second_step.bundle_id,
     )
+
+
+def test_replay_loader_reads_preserved_interaction_v1_without_mutation(tmp_path) -> None:
+    event = _event(T0, 1)
+    journal = SQLiteRuntimeJournal(tmp_path / "runtime.sqlite3")
+    journal.append_semantic(event, event_id=event.event_id)
+    insert_preserved_interaction_v1_record(journal.path)
+    before = sha256(journal.path.read_bytes()).hexdigest()
+
+    replay_events = tuple(JournalEventSource(journal).events())
+
+    assert replay_events == (event,)
+    assert sha256(journal.path.read_bytes()).hexdigest() == before
 
 
 def test_scenario_continuity_status_is_preserved_in_journal(tmp_path) -> None:

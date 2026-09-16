@@ -3,6 +3,7 @@ from __future__ import annotations
 import pytest
 
 from axq.mt5 import BrokerSymbolSelectionMode
+from axq.orchestration import shadow_runtime
 from axq.orchestration.shadow_runtime import (
     build_argument_parser,
     managed_control_configuration,
@@ -56,3 +57,22 @@ def test_managed_runtime_identity_and_control_database_must_be_supplied_together
     )
     assert configured is not None
     assert configured[0] == "instance-a"
+
+
+def test_live_poll_refreshes_before_source_constructs_event() -> None:
+    calls: list[str] = []
+
+    class Orchestrator:
+        def refresh_snapshot_if_due(self) -> bool:
+            calls.append("refresh")
+            return True
+
+    class Source:
+        def poll(self) -> object:
+            calls.append("poll")
+            return object()
+
+    poll = shadow_runtime._poll_after_recovery_refresh(Orchestrator(), Source())  # type: ignore[arg-type]
+
+    assert poll is not None
+    assert calls == ["refresh", "poll"]

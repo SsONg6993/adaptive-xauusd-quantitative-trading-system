@@ -7,8 +7,11 @@ model shape.
 `JournalRecord` dispatches decoding by `(record_type, semantic_schema_version)`. For
 `SHADOW_RUNTIME_CYCLE`:
 
-- V1 is a decoder-only contract for the original cycle shape. Its identity excludes the later
-  `interaction_resolution_id` field and therefore preserves the stored historical `cycle_id`.
+- V1 has two strict decoder-only shapes. The original shape omits `interaction_resolution_id` and
+  preserves the identity calculated without it. A transitional shape explicitly contains
+  `interaction_resolution_id` (including a persisted `null`) and preserves the identity calculated
+  with that field. Dispatch selects between these shapes from the parsed payload keys before strict
+  payload-model validation; neither shape permits unrelated extras.
 - V2 is the current writer contract. Its identity includes interaction linkage.
 - unknown versions fail closed;
 - malformed payloads, envelope/payload version mismatches, semantic-ID mismatches, and corrupt

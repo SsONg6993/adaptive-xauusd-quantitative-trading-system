@@ -41,6 +41,7 @@ from axq.runtime.shadow import (
     HypotheticalTradePlan,
     M5CandidateScan,
     M15ContextSnapshot,
+    ShadowCycleStage,
     ShadowExecutionRecord,
     ShadowMarketAvailability,
     ShadowRuntimeCycle,
@@ -193,7 +194,7 @@ _MODEL_BY_RECORD_TYPE: dict[JournalRecordType, type[BaseModel]] = {
 }
 
 
-class _ShadowRuntimeCycleV1(BaseModel):
+class LegacyShadowRuntimeCycleV1(BaseModel):
     """Decoder-only contract for immutable pre-interaction Shadow cycle records."""
 
     model_config = ConfigDict(extra="forbid", frozen=True)
@@ -205,7 +206,7 @@ class _ShadowRuntimeCycleV1(BaseModel):
     canonical_instrument: Literal["XAUUSD"]
     resolved_broker_symbol: str = Field(min_length=1)
     instrument_resolution_id: str = Field(min_length=1)
-    stage: str = Field(min_length=1)
+    stage: ShadowCycleStage
     as_of: UTCDateTime
     evidence_bundle_id: str | None = None
     master_proposal_id: str | None = None
@@ -216,7 +217,7 @@ class _ShadowRuntimeCycleV1(BaseModel):
     shadow_execution_id: str | None = None
 
     @model_validator(mode="after")
-    def validate_legacy_identity(self) -> _ShadowRuntimeCycleV1:
+    def validate_legacy_identity(self) -> LegacyShadowRuntimeCycleV1:
         identity = self.model_dump(mode="json", exclude={"cycle_id"})
         expected = f"scycle-{canonical_hash(identity)[:20]}"
         if self.cycle_id and self.cycle_id != expected:
@@ -225,13 +226,26 @@ class _ShadowRuntimeCycleV1(BaseModel):
         return self
 
 
+class LegacyShadowRuntimeCycleV1WithInteraction(LegacyShadowRuntimeCycleV1):
+    """Decoder-only contract for transitional V1 cycles with interaction linkage."""
+
+    interaction_resolution_id: str | None = None
+
+
+DecodedShadowRuntimeCycle = (
+    ShadowRuntimeCycle
+    | LegacyShadowRuntimeCycleV1
+    | LegacyShadowRuntimeCycleV1WithInteraction
+)
+
+
 def _semantic_model(
     record_type: JournalRecordType,
     semantic_schema_version: str,
 ) -> type[BaseModel]:
     if record_type is JournalRecordType.SHADOW_RUNTIME_CYCLE:
         if semantic_schema_version == "1.0":
-            return _ShadowRuntimeCycleV1
+            return LegacyShadowRuntimeCycleV1
         if semantic_schema_version == "2.0":
             return ShadowRuntimeCycle
         raise ValueError(
@@ -256,7 +270,15 @@ def _decode_semantic(
     payload_version = payload.get("schema_version")
     if payload_version != semantic_schema_version:
         raise ValueError("journal semantic schema version does not match payload")
-    model = _semantic_model(record_type, semantic_schema_version)
+    model: type[BaseModel]
+    if (
+        record_type is JournalRecordType.SHADOW_RUNTIME_CYCLE
+        and semantic_schema_version == "1.0"
+        and "interaction_resolution_id" in payload
+    ):
+        model = LegacyShadowRuntimeCycleV1WithInteraction
+    else:
+        model = _semantic_model(record_type, semantic_schema_version)
     return model.model_validate(payload)
 
 

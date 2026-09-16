@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+from collections.abc import Callable
 from datetime import UTC, datetime, timedelta
 from pathlib import Path
 from types import SimpleNamespace
@@ -7,6 +8,7 @@ from types import SimpleNamespace
 import pytest
 from pydantic import ValidationError
 
+from axq.agents import ContinuityStatus
 from axq.execution_boundary import (
     BrokerRecoverySnapshot,
     ExecutionIntent,
@@ -367,6 +369,7 @@ def _service(
     plan: DecisionPlan | None = None,
     action_adapter: FakePositionActionAdapter | None = None,
     snapshot: BrokerRecoverySnapshot | None = None,
+    clock: Callable[[], datetime] | None = None,
 ):
     config = RuntimeConfig(
         mode=mode,
@@ -392,7 +395,7 @@ def _service(
         snapshot_provider=FakeSnapshotProvider(snapshot or _snapshot()),
         entry_adapter=entry,
         position_action_adapter=action_adapter,
-        clock=lambda: T0,
+        clock=clock or (lambda: T0),
     )
     return service, gateway, entry, processor
 
@@ -553,6 +556,43 @@ def test_shadow_startup_reduces_snapshot_and_is_safe_but_non_mutating(tmp_path: 
     assert entry.calls == 0
 
 
+def test_refresh_sequence_advances_past_accepted_market_event(tmp_path: Path) -> None:
+    now = [T0]
+    service, _, _, _ = _service(
+        tmp_path,
+        RuntimeMode.SHADOW,
+        clock=lambda: now[0],
+    )
+    assert service.startup().startup_phase is StartupPhase.SAFE
+    event = _market_event(sequence=1_000_600).model_copy(
+        update={"source": "mt5-fixture"}
+    )
+
+    service.process_event(event)
+    now[0] = T0 + timedelta(seconds=6)
+
+    assert service.refresh_snapshot_if_due() is True
+    assert service.status.startup_phase is StartupPhase.SAFE
+    assert service.runner.broker_refreshed[-1].source_sequence == 1_000_606
+
+
+def test_created_event_submitted_after_newer_refresh_is_rejected(tmp_path: Path) -> None:
+    now = [T0 + timedelta(seconds=1)]
+    service, _, _, _ = _service(
+        tmp_path,
+        RuntimeMode.SHADOW,
+        snapshot=_snapshot(T0 + timedelta(seconds=1)),
+        clock=lambda: now[0],
+    )
+    assert service.startup().startup_phase is StartupPhase.SAFE
+    created_event = _market_event(sequence=1_000_600)
+    now[0] = T0 + timedelta(seconds=7)
+    assert service.refresh_snapshot_if_due() is True
+
+    with pytest.raises(ValueError, match="event violates global event order"):
+        service.process_event(created_event)
+
+
 def test_real_runner_stale_startup_refresh_never_enters_scenario_path(
     tmp_path: Path,
 ) -> None:
@@ -670,6 +710,28 @@ def test_shadow_stale_market_is_healthy_waiting_while_demo_remains_blocked(
     assert shadow._readiness is not None
     assert shadow._readiness.reason_codes == (ResumeBlockReason.MARKET_NOT_FRESH,)
     assert demo_status.startup_phase is StartupPhase.BLOCKED
+
+
+def test_shadow_flat_recovery_can_accept_event_that_supersedes_expired_thesis(
+    tmp_path: Path,
+) -> None:
+    service, _, entry, processor = _service(tmp_path, RuntimeMode.SHADOW)
+    service.runner._thesis = SimpleNamespace(
+        continuity_status=ContinuityStatus.COMPLETE,
+        expires_at=T0 - timedelta(seconds=1),
+        state_id="thesis-state-expired",
+        scenarios=(),
+    )
+
+    status = service.startup()
+
+    assert status.startup_phase is StartupPhase.SAFE
+    assert status.resume_status == ResumeStatus.BLOCKED.value
+    assert service._readiness is not None
+    assert service._readiness.reason_codes == (ResumeBlockReason.THESIS_EXPIRED,)
+    service.process_event(_market_event())
+    assert processor.calls == [_market_event().event_id]
+    assert entry.calls == 0
 
 
 def test_demo_runs_entry_then_reduces_canonical_feedback(tmp_path: Path) -> None:

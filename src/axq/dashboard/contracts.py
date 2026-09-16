@@ -23,13 +23,13 @@ from axq.reasoning.contracts import (
     LLMStructuredResponseArtifact,
 )
 from axq.risk_boundary.contracts import RiskOutcome
+from axq.runtime.journal import DecodedShadowRuntimeCycle
 from axq.runtime.kernel import EvidenceBundle
 from axq.runtime.shadow import (
     HypotheticalTradePlan,
     M5CandidateScan,
     M15ContextSnapshot,
     ShadowMarketAvailability,
-    ShadowRuntimeCycle,
 )
 from axq.runtime.state import SharedRuntimeState
 
@@ -78,7 +78,7 @@ class RuntimeSnapshot(DashboardModel):
     latest_execution_intent: ExecutionIntent | None = None
     latest_m15_context: M15ContextSnapshot | None = None
     latest_candidate_scan: M5CandidateScan | None = None
-    latest_shadow_cycle: ShadowRuntimeCycle | None = None
+    latest_shadow_cycle: DecodedShadowRuntimeCycle | None = None
     latest_trade_plan: HypotheticalTradePlan | None = None
     instrument_resolution: ResolvedBrokerInstrument | None = None
     market_availability: ShadowMarketAvailability | None = None

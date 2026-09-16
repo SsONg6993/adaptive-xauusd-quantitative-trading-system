@@ -33,7 +33,7 @@ from axq.mt5 import (
     infer_broker_time_offset,
     resolve_gold_instrument,
 )
-from axq.mt5.live_source import MT5CompletedM5Source
+from axq.mt5.live_source import LiveShadowPoll, MT5CompletedM5Source
 from axq.orchestration.config import RuntimeConfig
 from axq.orchestration.contracts import DecisionPlan, RuntimeMode
 from axq.orchestration.processor import (
@@ -318,6 +318,15 @@ class _FailClosedLiveProcessor:
             return DecisionPlan(master=fuse_evidence(trace.bundle, self.fusion_policy))
 
 
+def _poll_after_recovery_refresh(
+    orchestrator: RuntimeOrchestrator,
+    source: MT5CompletedM5Source,
+) -> LiveShadowPoll:
+    """Refresh broker facts before constructing the next source-available event."""
+    orchestrator.refresh_snapshot_if_due()
+    return source.poll()
+
+
 def _run_live_shadow_locked(
     *,
     broker_symbol: str | None,
@@ -476,7 +485,7 @@ def _run_live_shadow_locked(
                     reason_code="EXACT_INSTANCE_STOP_ACCEPTED",
                 )
                 break
-            poll = source.poll()
+            poll = _poll_after_recovery_refresh(orchestrator, source)
             runtime.record_availability(poll.availability)
             if control is not None:
                 waiting = poll.availability.status.value in {"STALE_QUOTE", "UNAVAILABLE"}
@@ -500,7 +509,6 @@ def _run_live_shadow_locked(
                     event_id=poll.bar.event.event_id,
                     available_at=poll.bar.event.available_at,
                 )
-                orchestrator.refresh_snapshot_if_due()
                 runtime.process(poll.bar.event, poll.bar.feature_snapshot)
             if once:
                 break

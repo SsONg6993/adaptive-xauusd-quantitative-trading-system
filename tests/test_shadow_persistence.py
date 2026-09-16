@@ -1,7 +1,11 @@
 from __future__ import annotations
 
 import json
+import sqlite3
 from datetime import UTC, datetime, timedelta
+from pathlib import Path
+
+import pytest
 
 from axq.execution_boundary import ExecutionIntent, ExecutionMode, ExecutionOrderType
 from axq.runtime.journal import JournalRecord, JournalRecordType, SQLiteRuntimeJournal
@@ -19,6 +23,74 @@ from axq.schemas import Signal
 from axq.versioning import canonical_hash
 
 T0 = datetime(2026, 9, 14, 12, 0, tzinfo=UTC)
+
+PRESERVED_INTERACTION_V1_PAYLOAD = {
+    "as_of": "2026-09-14T11:30:00Z",
+    "canonical_instrument": "XAUUSD",
+    "cycle_id": "scycle-03d3c2acb8ab10687716",
+    "discipline_outcome_id": None,
+    "event_id": "ev-b24b98433525634f530f",
+    "evidence_bundle_id": None,
+    "execution_intent_id": None,
+    "instrument_resolution_id": "rbi-37a1de1c2c819b71302d",
+    "interaction_resolution_id": None,
+    "m15_context_id": None,
+    "master_proposal_id": None,
+    "resolved_broker_symbol": "XAUUSD",
+    "risk_outcome_id": None,
+    "scan_id": "scan-eb72a17a67bb9259d2fd",
+    "schema_version": "1.0",
+    "shadow_execution_id": None,
+    "stage": "QUIET",
+    "trade_plan_id": None,
+}
+PRESERVED_INTERACTION_V1_RECORD = {
+    "available_at": "2026-09-14T11:30:00Z",
+    "event_id": "ev-b24b98433525634f530f",
+    "event_time": None,
+    "observed_at": None,
+    "parent_id": None,
+    "payload_json": json.dumps(
+        PRESERVED_INTERACTION_V1_PAYLOAD,
+        sort_keys=True,
+        separators=(",", ":"),
+    ),
+    "previous_id": None,
+    "record_id": "jr-c5d2689d8135cfef116d",
+    "record_type": "SHADOW_RUNTIME_CYCLE",
+    "schema_version": "1.0",
+    "semantic_id": "scan-eb72a17a67bb9259d2fd",
+    "semantic_schema_version": "1.0",
+    "source": None,
+}
+PRESERVED_INTERACTION_V1_RECORD_JSON = json.dumps(
+    PRESERVED_INTERACTION_V1_RECORD,
+    sort_keys=True,
+    separators=(",", ":"),
+)
+
+
+def insert_preserved_interaction_v1_record(path: Path) -> None:
+    record = PRESERVED_INTERACTION_V1_RECORD
+    with sqlite3.connect(path) as connection:
+        connection.execute(
+            """
+            INSERT INTO runtime_journal(
+                record_id, record_type, semantic_id, event_id,
+                parent_id, previous_id, available_at, record_json
+            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+            """,
+            (
+                record["record_id"],
+                record["record_type"],
+                record["semantic_id"],
+                record["event_id"],
+                record["parent_id"],
+                record["previous_id"],
+                record["available_at"],
+                PRESERVED_INTERACTION_V1_RECORD_JSON,
+            ),
+        )
 
 
 def _scan() -> M5CandidateScan:
@@ -134,6 +206,26 @@ def test_legacy_v1_shadow_cycle_decodes_without_rewriting_identity() -> None:
     assert record.semantic_id == "scan-legacy"
 
 
+def test_preserved_interaction_bearing_v1_cycle_decodes_exact_identity() -> None:
+    record = JournalRecord.model_validate_json(PRESERVED_INTERACTION_V1_RECORD_JSON)
+
+    decoded = record.decode()
+
+    assert record.record_id == "jr-c5d2689d8135cfef116d"
+    assert decoded.cycle_id == "scycle-03d3c2acb8ab10687716"
+    assert decoded.model_dump()["interaction_resolution_id"] is None
+
+
+def test_corrupt_interaction_bearing_v1_cycle_still_rejects_extra_fields() -> None:
+    corrupt = dict(PRESERVED_INTERACTION_V1_RECORD)
+    payload = dict(PRESERVED_INTERACTION_V1_PAYLOAD)
+    payload["unexpected_field"] = "must-fail"
+    corrupt["payload_json"] = json.dumps(payload, sort_keys=True, separators=(",", ":"))
+
+    with pytest.raises(ValueError, match="unexpected_field"):
+        JournalRecord.model_validate(corrupt)
+
+
 def test_unknown_shadow_cycle_schema_version_fails_closed() -> None:
     payload = {
         "schema_version": "9.9",
@@ -163,36 +255,7 @@ def test_unknown_shadow_cycle_schema_version_fails_closed() -> None:
 
 
 def test_mixed_v1_v2_shadow_cycles_decode_in_append_order(tmp_path) -> None:
-    legacy_identity = {
-        "schema_version": "1.0",
-        "event_id": "ev-legacy-mixed",
-        "scan_id": "scan-legacy-mixed",
-        "m15_context_id": None,
-        "canonical_instrument": "XAUUSD",
-        "resolved_broker_symbol": "XAUUSD.sc",
-        "instrument_resolution_id": "rbi-legacy",
-        "stage": "QUIET",
-        "as_of": T0.isoformat().replace("+00:00", "Z"),
-        "evidence_bundle_id": None,
-        "master_proposal_id": None,
-        "discipline_outcome_id": None,
-        "risk_outcome_id": None,
-        "execution_intent_id": None,
-        "trade_plan_id": None,
-        "shadow_execution_id": None,
-    }
-    legacy_payload = {
-        "cycle_id": f"scycle-{canonical_hash(legacy_identity)[:20]}",
-        **legacy_identity,
-    }
-    legacy_record = JournalRecord(
-        record_type=JournalRecordType.SHADOW_RUNTIME_CYCLE,
-        semantic_id="scan-legacy-mixed",
-        event_id="ev-legacy-mixed",
-        available_at=T0,
-        semantic_schema_version="1.0",
-        payload_json=json.dumps(legacy_payload, sort_keys=True, separators=(",", ":")),
-    )
+    legacy_record = JournalRecord.model_validate_json(PRESERVED_INTERACTION_V1_RECORD_JSON)
     current_cycle = ShadowRuntimeCycle(
         event_id="ev-current-mixed",
         scan_id="scan-current-mixed",
