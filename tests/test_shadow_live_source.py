@@ -18,6 +18,7 @@ class FakeRatesGateway:
         self.now = now
         self.mutations = 0
         self.rate_calls = 0
+        self.rate_requests: list[tuple[str, int]] = []
         self.symbol_info_calls = 0
         self.tick_symbols: list[str] = []
 
@@ -38,10 +39,11 @@ class FakeRatesGateway:
     def copy_rates_from_pos(
         self, symbol: str, timeframe: str, start_pos: int, count: int
     ) -> tuple[dict[str, object], ...]:
-        del symbol, start_pos, count
+        del symbol, start_pos
         self.rate_calls += 1
+        self.rate_requests.append((timeframe, count))
         minutes = 5 if timeframe == "M5" else 15
-        rows = 320
+        rows = count
         last_open = self.now.replace(second=0, microsecond=0)
         last_open -= timedelta(minutes=last_open.minute % minutes)
         result = []
@@ -129,6 +131,56 @@ def test_live_source_uses_latest_completed_m5_once_and_exact_symbol() -> None:
     assert second.bar is None
     assert gateway.mutations == 0
     assert gateway.symbol_info_calls == 0
+    assert gateway.rate_requests == [("M5", 2), ("M5", 320), ("M15", 2), ("M15", 320), ("M5", 2)]
+
+
+def test_idle_poll_only_checks_tick_and_two_m5_rows() -> None:
+    now = datetime(2026, 9, 14, 12, 2, tzinfo=UTC)
+    gateway = FakeRatesGateway(now)
+    source = MT5CompletedM5Source(
+        gateway=gateway,
+        internal_symbol="XAUUSD",
+        broker_symbol="XAUUSD.sc",
+        instrument_resolution_id="rbi-shadow",
+        point_size=0.01,
+        clock=lambda: now,
+        broker_time_normalizer=_normalizer(now),
+    )
+
+    assert source.poll().bar is not None
+    gateway.rate_requests.clear()
+
+    for _ in range(20):
+        result = source.poll()
+        assert result.status is LiveMarketStatus.WAITING_FOR_NEXT_M5
+        assert source.last_performance.expensive_cycle is False
+
+    assert gateway.rate_requests == [("M5", 2)] * 20
+
+
+def test_new_m5_reuses_causally_unchanged_m15_features() -> None:
+    gateway = FakeRatesGateway(datetime(2026, 9, 14, 12, 2, tzinfo=UTC))
+    source = MT5CompletedM5Source(
+        gateway=gateway,
+        internal_symbol="XAUUSD",
+        broker_symbol="XAUUSD.sc",
+        instrument_resolution_id="rbi-shadow",
+        point_size=0.01,
+        clock=lambda: gateway.now,
+        broker_time_normalizer=_normalizer(gateway.now),
+    )
+
+    assert source.poll().bar is not None
+    assert source.last_performance.m15_cache_hit is False
+    gateway.rate_requests.clear()
+    gateway.now += timedelta(minutes=5)
+
+    second = source.poll()
+
+    assert second.bar is not None
+    assert source.last_performance.m15_cache_hit is True
+    assert source.last_performance.m15_feature_latency_ms == 0.0
+    assert gateway.rate_requests == [("M5", 2), ("M5", 320), ("M15", 2)]
 
 
 def test_live_source_uses_startup_resolution_without_reresolving_or_fallback() -> None:

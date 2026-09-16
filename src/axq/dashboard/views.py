@@ -7,7 +7,12 @@ from collections.abc import Mapping
 from datetime import UTC, datetime, timedelta
 from zoneinfo import ZoneInfo
 
-from axq.dashboard.contracts import ComponentState, RuntimeSnapshot
+from axq.dashboard.contracts import (
+    ComponentState,
+    CurrentCycleView,
+    RuntimeActivityView,
+    RuntimeSnapshot,
+)
 from axq.reasoning.contracts import LLMRequestEnvelope, ReflectionExplanation
 
 NOT_AVAILABLE = "Not available yet"
@@ -98,6 +103,56 @@ def next_m5_close_text(now: datetime) -> str:
     boundary += timedelta(minutes=minutes)
     remaining = max(0, int((boundary - utc_now).total_seconds()))
     return f"{remaining // 60}m {remaining % 60:02d}s"
+
+
+def malaysia_timestamp(value: str) -> str:
+    """Render a persisted ISO timestamp in the operator's Malaysia timezone."""
+
+    if value == "Not available":
+        return value
+    try:
+        parsed = datetime.fromisoformat(value.replace("Z", "+00:00"))
+    except ValueError:
+        return "Not available"
+    if parsed.tzinfo is None or parsed.utcoffset() is None:
+        return NOT_AVAILABLE
+    return parsed.astimezone(_MALAYSIA).strftime("%Y-%m-%d %H:%M:%S MYT")
+
+
+def current_cycle_rows(cycle: CurrentCycleView) -> tuple[dict[str, str], ...]:
+    """Return concise operator rows without inferring absent cycle evidence."""
+
+    agents = ", ".join(cycle.agents_invoked) if cycle.agents_invoked else "Not required"
+    return (
+        {"Field": "Time", "Value": malaysia_timestamp(cycle.cycle_timestamp)},
+        {"Field": "Symbol", "Value": cycle.symbol},
+        {"Field": "Completed M5", "Value": malaysia_timestamp(cycle.completed_m5_timestamp)},
+        {"Field": "Trading window", "Value": cycle.trading_window_state},
+        {"Field": "M15 Context", "Value": cycle.m15_context},
+        {"Field": "M5 Scanner", "Value": cycle.scanner_result},
+        {"Field": "Scenario", "Value": cycle.scenario},
+        {"Field": "Thesis", "Value": cycle.thesis},
+        {"Field": "Agents Invoked", "Value": agents},
+        {"Field": "Evidence", "Value": cycle.evidence_status},
+        {"Field": "Master Decision", "Value": cycle.master_decision},
+        {"Field": "Confidence", "Value": cycle.decision_confidence},
+        {"Field": "Discipline Guard", "Value": cycle.discipline_outcome},
+        {"Field": "Risk", "Value": cycle.risk_outcome},
+        {"Field": "Final Action", "Value": cycle.final_action},
+        {"Field": "Execution", "Value": cycle.execution_authorization},
+        {"Field": "Cycle Persisted", "Value": cycle.persistence_status},
+    )
+
+
+def activity_rows(items: tuple[RuntimeActivityView, ...]) -> tuple[dict[str, str], ...]:
+    return tuple(
+        {
+            "Time": malaysia_timestamp(item.occurred_at),
+            "Activity": item.label,
+            "Detail": item.detail or "",
+        }
+        for item in items
+    )
 
 
 def uncertainty_text(output: ReflectionExplanation) -> str:

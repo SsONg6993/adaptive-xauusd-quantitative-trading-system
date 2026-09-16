@@ -42,6 +42,7 @@ def test_live_mt5_is_explicit_configured_and_separate_from_runtime() -> None:
     assert '"MT5 terminal path (optional)"' in text
     assert "Auto-refresh" in text
     assert "st.fragment" in text
+    assert "_persisted_mt5_snapshot(current_runtime, mt5_symbol)" in text
     assert "XAUUSD" not in text
     assert "_account_metrics(st, live_mt5)" in text
 
@@ -71,12 +72,32 @@ def test_overview_is_shadow_first_and_hides_agent_room_without_setup() -> None:
     assert "if not is_agent_room_setup(runtime):" in text
 
 
+def test_overview_renders_read_only_runtime_observability_inside_auto_refresh() -> None:
+    text = APP_PATH.read_text(encoding="utf-8")
+    for label in (
+        "Current Cycle",
+        "Recent Runtime Activity",
+        "Why No Action",
+        "Current Pipeline Stage",
+    ):
+        assert label in text
+    readers_text = Path("src/axq/dashboard/readers.py").read_text(encoding="utf-8")
+    assert "Shadow mode only" in readers_text
+    assert "load_runtime_observability(runtime_path)" in text
+    assert "st.fragment(run_every=2.0)(render_runtime_controls)()" in text
+    assert "st.fragment(run_every=300.0)(render_overview)()" in text
+    assert 'st.button("Refresh analytical panels"' in text
+
+
 def test_agent_room_renders_persisted_evidence_bound_turns_only() -> None:
     text = APP_PATH.read_text(encoding="utf-8")
     assert "Evidence-bound interaction" in text
     assert "latest_interaction_turns" in text
     assert "Interaction was not required" in text
     assert "Interaction unavailable" in text
+    assert "Master confidence attribution" in text
+    assert "Master before → Master after" in text
+    assert "Confidence delta" in text
 
 
 def test_overview_has_durable_shadow_process_controls_without_session_ownership() -> None:

@@ -9,11 +9,23 @@ from datetime import UTC, datetime
 from pathlib import Path
 from typing import Any
 
-from axq.dashboard.contracts import ComponentState, ComponentStatus, RuntimeSnapshot
-from axq.dashboard.mt5_reader import LiveMT5Snapshot, read_live_mt5_snapshot
+from axq.dashboard.contracts import (
+    ComponentState,
+    ComponentStatus,
+    RuntimeComputeSnapshot,
+    RuntimeObservabilitySnapshot,
+    RuntimeSnapshot,
+)
+from axq.dashboard.mt5_reader import (
+    LiveMT5Position,
+    LiveMT5Snapshot,
+    read_live_mt5_snapshot,
+)
 from axq.dashboard.readers import (
     load_performance_snapshot,
     load_reasoning_snapshot,
+    load_runtime_observability,
+    load_runtime_performance,
     load_runtime_snapshot,
     read_ollama_status,
 )
@@ -26,6 +38,8 @@ from axq.dashboard.views import (
     LIVE_ACCOUNT_NOT_CONNECTED,
     NAVIGATION_PAGES,
     NOT_AVAILABLE,
+    activity_rows,
+    current_cycle_rows,
     display_value,
     is_agent_room_setup,
     malaysia_trading_window,
@@ -109,6 +123,56 @@ def _managed_mt5_placeholder(symbol: str) -> LiveMT5Snapshot:
         configured_symbol=symbol,
         resolved_broker_symbol=symbol,
         last_refreshed=observed_at,
+    )
+
+
+def _persisted_mt5_snapshot(runtime: RuntimeSnapshot, symbol: str) -> LiveMT5Snapshot:
+    """Project persisted broker facts without initializing MT5 from the Dashboard."""
+
+    state = runtime.state
+    if state is None:
+        return _idle_mt5_placeholder(symbol)
+    resolved = (
+        runtime.instrument_resolution.resolved_broker_symbol
+        if runtime.instrument_resolution is not None
+        else symbol
+    )
+    positions = tuple(
+        LiveMT5Position(
+            symbol=item.symbol,
+            direction=item.side.value,
+            volume=item.volume_lots,
+            open_price=item.open_price,
+            current_price=item.current_price,
+            floating_pnl=item.floating_pnl,
+        )
+        for item in state.positions.positions
+    )
+    return LiveMT5Snapshot(
+        component=runtime.component,
+        quote_component=ComponentStatus(
+            component="Persisted quote",
+            state=(
+                ComponentState.AVAILABLE
+                if state.market.bid is not None and state.market.ask is not None
+                else ComponentState.UNAVAILABLE
+            ),
+            detail="Read from runtime journal; Dashboard did not initialize MT5.",
+            as_of=state.as_of.isoformat(),
+        ),
+        configured_symbol=symbol,
+        resolved_broker_symbol=resolved,
+        balance=state.account.balance,
+        equity=state.account.equity,
+        margin=state.account.used_margin,
+        free_margin=state.account.free_margin,
+        floating_pnl=state.account.floating_pnl,
+        positions=positions,
+        bid=state.market.bid,
+        ask=state.market.ask,
+        spread=state.market.spread_points,
+        last_refreshed=state.as_of,
+        quote_updated_at=state.market.as_of,
     )
 
 
@@ -228,20 +292,162 @@ def _shadow_runtime_controls(
     return managed
 
 
-def _overview(
+def _runtime_observability_panels(
+    st: Any,
+    observability: RuntimeObservabilitySnapshot,
+) -> None:
+    st.subheader("Current Cycle")
+    cycle = observability.current_cycle
+    if cycle is None:
+        st.info("Not available")
+    else:
+        st.dataframe(
+            current_cycle_rows(cycle),
+            hide_index=True,
+            use_container_width=True,
+        )
+
+    st.subheader(
+        "Why No Action"
+        if observability.decision_explanation is None
+        else observability.decision_explanation.title
+    )
+    explanation = observability.decision_explanation
+    if explanation is None:
+        st.info("Not available")
+    else:
+        for point in explanation.points:
+            st.write(point)
+        st.markdown(f"**Result: {explanation.result}**")
+
+    st.subheader("Current Pipeline Stage")
+    if not observability.pipeline:
+        st.info("Not available")
+    else:
+        st.dataframe(
+            tuple(
+                {
+                    "Stage": stage.stage,
+                    "Status": stage.status.replace("_", " ").title(),
+                    "Detail": stage.detail or "",
+                }
+                for stage in observability.pipeline
+            ),
+            hide_index=True,
+            use_container_width=True,
+        )
+
+    st.subheader("Recent Runtime Activity")
+    if not observability.recent_activity:
+        st.info("Not available")
+    else:
+        st.dataframe(
+            activity_rows(observability.recent_activity),
+            hide_index=True,
+            use_container_width=True,
+        )
+
+    _technical_details(
+        st,
+        "Technical details · runtime observability",
+        observability.model_dump(mode="json"),
+    )
+
+
+def _runtime_compute_panel(st: Any, snapshot: RuntimeComputeSnapshot) -> None:
+    st.subheader("Compute / performance telemetry")
+    metrics = snapshot.metrics
+    if metrics is None:
+        st.info(snapshot.component.detail)
+        return
+    columns = st.columns(4)
+    columns[0].metric("Latest poll", f"{metrics.latest_poll_latency_ms:.2f} ms")
+    columns[1].metric(
+        "Latest M5 cycle",
+        NOT_AVAILABLE
+        if metrics.latest_cycle_latency_ms is None
+        else f"{metrics.latest_cycle_latency_ms:.2f} ms",
+    )
+    columns[2].metric(
+        "CPU",
+        NOT_AVAILABLE if metrics.cpu_percent is None else f"{metrics.cpu_percent:.1f}%",
+    )
+    columns[3].metric(
+        "Memory",
+        NOT_AVAILABLE
+        if metrics.memory_rss_bytes is None
+        else f"{metrics.memory_rss_bytes / (1024 * 1024):.1f} MiB",
+    )
+    st.caption(
+        f"Idle polls {metrics.idle_poll_count}/{metrics.poll_count} · "
+        f"M15 cache hit/miss {metrics.m15_cache_hits}/{metrics.m15_cache_misses} · "
+        "last expensive computation "
+        + str(
+            display_value(
+                None
+                if metrics.last_expensive_computation_at is None
+                else metrics.last_expensive_computation_at.isoformat()
+            )
+        )
+    )
+    _technical_details(st, "Technical details · runtime compute", metrics.model_dump(mode="json"))
+
+
+def _master_attribution_rows(runtime: RuntimeSnapshot) -> tuple[dict[str, object], ...]:
+    proposal = runtime.latest_master
+    bundle = runtime.latest_evidence_bundle
+    if proposal is None or bundle is None or proposal.bundle_id != bundle.bundle_id:
+        return ()
+    evidence_by_name = {item.agent_name: item for item in bundle.evidence}
+    global_multiplier = (1.0 - proposal.disagreement) * (1.0 - proposal.contradiction)
+    rows: list[dict[str, object]] = []
+    for contribution in proposal.contributions:
+        evidence = evidence_by_name[contribution.agent_name]
+        rows.append(
+            {
+                "Agent": contribution.agent_name.title(),
+                "Stance": (
+                    "No stance" if contribution.direction is None else contribution.direction.value
+                ),
+                "Raw confidence": f"{evidence.confidence:.1%}",
+                "Evidence": contribution.disposition.value.replace("_", " ").title(),
+                "Configured weight": contribution.configured_weight,
+                "Applied weight": contribution.applied_weight,
+                "Uncertainty": f"{contribution.uncertainty:.1%}",
+                "Internal contradiction": f"{contribution.internal_contradiction:.1%}",
+                "Pre-global strength": round(contribution.effective_strength, 4),
+                "Final signed contribution": round(
+                    contribution.signed_score * global_multiplier, 4
+                ),
+            }
+        )
+    return tuple(rows)
+
+
+def _overview_controls_panel(
     st: Any,
     runtime: RuntimeSnapshot,
-    ollama: Any,
-    live_mt5_reader: Callable[[], LiveMT5Snapshot],
     controller: ShadowRuntimeController,
     managed_config: ManagedShadowConfig,
     managed_status: ManagedShadowSnapshot,
 ) -> None:
     st.header("Overview")
     st.error("SHADOW MODE — NO ORDER SENT")
-    managed_status = _shadow_runtime_controls(
-        st, controller, managed_config, managed_status, runtime
-    )
+    _shadow_runtime_controls(st, controller, managed_config, managed_status, runtime)
+
+
+def _overview(
+    st: Any,
+    runtime: RuntimeSnapshot,
+    observability: RuntimeObservabilitySnapshot,
+    compute: RuntimeComputeSnapshot,
+    ollama: Any,
+    live_mt5_reader: Callable[[], LiveMT5Snapshot],
+    managed_config: ManagedShadowConfig,
+    managed_status: ManagedShadowSnapshot,
+) -> None:
+    if st.button("Refresh analytical panels", use_container_width=True):
+        pass
     if _managed_runtime_owns_mt5(managed_status.status):
         live_mt5 = _managed_mt5_placeholder(managed_config.gold_symbols[1])
     elif st.button("CHECK MT5 CONNECTION", use_container_width=True):
@@ -300,6 +506,9 @@ def _overview(
     ):
         st.warning("MARKET CLOSED / STALE QUOTE — WAITING FOR FRESH DATA")
 
+    _runtime_observability_panels(st, observability)
+    _runtime_compute_panel(st, compute)
+
     if not is_agent_room_setup(runtime):
         st.info("No agent discussion required.")
         _technical_details(
@@ -334,6 +543,18 @@ def _overview(
                 st.write(f"{stance} · {evidence.confidence:.0%} confidence")
                 reason = evidence.rationale or evidence.hypothesis
                 st.caption(operator_text(reason))
+
+    st.markdown("**Master confidence attribution**")
+    attribution = _master_attribution_rows(runtime)
+    if attribution:
+        st.dataframe(attribution, hide_index=True, use_container_width=True)
+        st.caption(
+            "No-stance, abstained, error, and terminal evidence has zero applied weight. "
+            "Directional confidence is reduced by recorded uncertainty, then by global "
+            "disagreement and contradiction."
+        )
+    else:
+        st.info("Attribution unavailable for the current persisted cycle.")
 
     st.markdown("**Agreement / conflict**")
     if proposal is None:
@@ -377,6 +598,24 @@ def _overview(
                 "Interaction unavailable — Master used the original evidence only "
                 f"({resolution.status.value.replace('_', ' ').title()})."
             )
+
+    st.markdown("**Master before → Master after**")
+    impact = runtime.latest_interaction_impact
+    if impact is None:
+        st.info("No completed discussion impact measurement is persisted for this cycle.")
+    else:
+        before, after, delta = st.columns(3)
+        before.metric(
+            "Master before",
+            f"{impact.stance_before.value} · {impact.confidence_before:.1%}",
+        )
+        after.metric(
+            "Master after",
+            f"{impact.stance_after.value} · {impact.confidence_after:.1%}",
+        )
+        delta.metric("Confidence delta", f"{impact.confidence_delta:+.1%}")
+        st.write("Stance changed: " + ("Yes" if impact.stance_changed else "No"))
+        st.caption(impact.final_reason)
 
     with st.container(border=True):
         st.markdown("**Master synthesis**")
@@ -685,11 +924,7 @@ def main() -> None:
             )
             output_path = st.text_input(
                 "Shadow Runtime output directory",
-                value=str(
-                    Path(args.runtime_db).parent
-                    if args.runtime_db
-                    else defaults.output_dir
-                ),
+                value=str(Path(args.runtime_db).parent if args.runtime_db else defaults.output_dir),
             )
             metrics_path = st.text_input(
                 "Historical metrics file",
@@ -719,9 +954,7 @@ def main() -> None:
 
     managed_output = Path(output_path).resolve()
     runtime_path = (
-        Path(args.runtime_db)
-        if args.runtime_db
-        else managed_output / "shadow-runtime.sqlite3"
+        Path(args.runtime_db) if args.runtime_db else managed_output / "shadow-runtime.sqlite3"
     )
     managed_config = ManagedShadowConfig(
         project_root=project_root,
@@ -731,9 +964,7 @@ def main() -> None:
         output_dir=managed_output,
         poll_seconds=float(poll_seconds),
     )
-    controller = ShadowRuntimeController(
-        control_db=managed_output / "shadow-control.sqlite3"
-    )
+    controller = ShadowRuntimeController(control_db=managed_output / "shadow-control.sqlite3")
 
     recent_attempts = 10
     if page in {"AI Reasoning", "History / Audit"}:
@@ -748,43 +979,59 @@ def main() -> None:
     )
 
     if page == "Overview":
-        def render_overview() -> None:
+
+        def render_runtime_controls() -> None:
             current_runtime = load_runtime_snapshot(runtime_path)
             managed_status = controller.status(now=datetime.now(UTC))
-            _overview(
+            _overview_controls_panel(
                 st,
                 current_runtime,
-                ollama,
-                lambda: read_live_mt5_snapshot(
-                    symbol=mt5_symbol,
-                    terminal_path=mt5_terminal_path or None,
-                ),
                 controller,
                 managed_config,
                 managed_status,
             )
 
-        st.fragment(run_every=2.0)(render_overview)()
+        st.fragment(run_every=2.0)(render_runtime_controls)()
+
+        def render_overview() -> None:
+            current_runtime = load_runtime_snapshot(runtime_path)
+            current_observability = load_runtime_observability(runtime_path)
+            current_compute = load_runtime_performance(managed_output / "runtime-performance.json")
+            managed_status = controller.status(now=datetime.now(UTC))
+            _overview(
+                st,
+                current_runtime,
+                current_observability,
+                current_compute,
+                ollama,
+                lambda: read_live_mt5_snapshot(
+                    symbol=mt5_symbol,
+                    terminal_path=mt5_terminal_path or None,
+                ),
+                managed_config,
+                managed_status,
+            )
+
+        st.fragment(run_every=300.0)(render_overview)()
     elif page == "Live Monitor":
         refresh_label = st.selectbox(
             "Auto-refresh",
-            ("Off", "5 seconds", "15 seconds", "30 seconds", "60 seconds"),
+            ("Off", "5 minutes", "10 minutes", "15 minutes"),
             index=1,
         )
         refresh_seconds = {
             "Off": None,
-            "5 seconds": 5,
-            "15 seconds": 15,
-            "30 seconds": 30,
-            "60 seconds": 60,
+            "5 minutes": 300,
+            "10 minutes": 600,
+            "15 minutes": 900,
         }[refresh_label]
 
         def render_live_monitor() -> None:
-            live_mt5 = read_live_mt5_snapshot(
-                symbol=mt5_symbol,
-                terminal_path=mt5_terminal_path or None,
-            )
-            _live_monitor(st, runtime, live_mt5)
+            if st.button("Refresh live monitor", use_container_width=True):
+                pass
+            current_runtime = load_runtime_snapshot(runtime_path)
+            live_mt5 = _persisted_mt5_snapshot(current_runtime, mt5_symbol)
+            _live_monitor(st, current_runtime, live_mt5)
 
         st.fragment(run_every=refresh_seconds)(render_live_monitor)()
     elif page == "AI Reasoning":

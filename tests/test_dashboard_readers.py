@@ -13,13 +13,15 @@ from axq.dashboard.contracts import ComponentState
 from axq.dashboard.readers import (
     load_performance_snapshot,
     load_reasoning_snapshot,
+    load_runtime_performance,
     load_runtime_snapshot,
     read_ollama_status,
 )
 from axq.dashboard.views import is_agent_room_setup
-from axq.interaction import build_evidence_bound_interaction
+from axq.interaction import SpecialistInteractionImpact, build_evidence_bound_interaction
 from axq.master import default_fusion_policy, fuse_evidence
 from axq.mt5.symbols import GoldSymbolConfiguration, resolve_gold_instrument
+from axq.orchestration.performance import RuntimePerformanceSnapshot
 from axq.reasoning.contracts import (
     LLMAttemptStatus,
     LLMExecutionAttemptAudit,
@@ -109,9 +111,32 @@ def test_missing_and_unconfigured_sources_are_explicit(tmp_path: Path) -> None:
     assert load_reasoning_snapshot(None).component.state is ComponentState.NOT_CONFIGURED
     assert load_runtime_snapshot(None).component.state is ComponentState.NOT_CONFIGURED
     assert load_performance_snapshot(None).component.state is ComponentState.NOT_CONFIGURED
+    assert load_runtime_performance(None).component.state is ComponentState.NOT_CONFIGURED
     missing = tmp_path / "missing.sqlite3"
     assert load_reasoning_snapshot(missing).component.state is ComponentState.UNAVAILABLE
     assert load_runtime_snapshot(missing).component.state is ComponentState.UNAVAILABLE
+
+
+def test_runtime_performance_reader_is_bounded_and_typed(tmp_path: Path) -> None:
+    path = tmp_path / "runtime-performance.json"
+    value = RuntimePerformanceSnapshot(
+        observed_at=utc("2026-09-16T12:00:00Z"),
+        poll_count=10,
+        idle_poll_count=9,
+        expensive_cycle_count=1,
+        latest_poll_latency_ms=0.8,
+        latest_cycle_latency_ms=12.3,
+        m15_cache_hits=1,
+        m15_cache_misses=1,
+        cpu_percent=0.4,
+        memory_rss_bytes=100_000_000,
+    )
+    path.write_text(value.model_dump_json(), encoding="utf-8")
+
+    snapshot = load_runtime_performance(path)
+
+    assert snapshot.component.state is ComponentState.AVAILABLE
+    assert snapshot.metrics == value
 
 
 def test_runtime_projection_preserves_canonical_and_resolved_symbol_identity(
@@ -294,6 +319,23 @@ def test_runtime_reader_projects_only_persisted_interaction_turns(tmp_path: Path
     for turn in interaction.turns:
         journal.append_semantic(turn, event_id=bundle.event_id)
     journal.append_semantic(interaction.resolution, event_id=bundle.event_id)
+    impact = SpecialistInteractionImpact(
+        discussion_id=interaction.round.round_id,
+        resolution_id=interaction.resolution.resolution_id,
+        event_id=bundle.event_id,
+        master_before_id=proposal.proposal_id,
+        master_after_id=proposal.proposal_id,
+        confidence_before=proposal.confidence,
+        confidence_after=proposal.confidence,
+        confidence_delta=0.0,
+        stance_before=proposal.decision,
+        stance_after=proposal.decision,
+        stance_changed=False,
+        final_reason="Evidence remained unchanged.",
+        as_of=proposal.as_of,
+        available_at=proposal.as_of,
+    )
+    journal.append_semantic(impact, event_id=bundle.event_id)
 
     snapshot = load_runtime_snapshot(path, now=proposal.as_of)
 
@@ -301,3 +343,4 @@ def test_runtime_reader_projects_only_persisted_interaction_turns(tmp_path: Path
     assert snapshot.latest_interaction_round == interaction.round
     assert snapshot.latest_interaction_turns == interaction.turns
     assert snapshot.latest_interaction_resolution == interaction.resolution
+    assert snapshot.latest_interaction_impact == impact

@@ -19,7 +19,7 @@ from axq.runtime.journal import (
     RuntimeJournal,
     SQLiteRuntimeJournal,
 )
-from axq.runtime.kernel import EvidenceBundle, EvidenceKernel
+from axq.runtime.kernel import EvidenceBundle, EvidenceKernel, KernelPerformance
 from axq.runtime.source import EventSource
 from axq.runtime.state import SharedRuntimeState, UTCDateTime
 from axq.tools import CausalFeatureSnapshot, ToolResult
@@ -140,6 +140,10 @@ class RuntimeStreamRunner:
     @property
     def thesis(self) -> ThesisState | None:
         return self._thesis
+
+    @property
+    def last_kernel_performance(self) -> KernelPerformance:
+        return self._kernel.last_performance
 
     def restore_thesis(self, thesis: ThesisState) -> None:
         """Restore durable thesis continuity before accepting a new event."""

@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 from collections.abc import Callable
+from time import perf_counter
 
 from pydantic import BaseModel, ConfigDict
 
@@ -79,6 +80,11 @@ class DeterministicDecisionProcessor:
         self._entry_context_provider = entry_context_provider
         self._position_context_provider = position_context_provider
         self._position_action_context_provider = position_action_context_provider
+        self._last_master_latency_ms = 0.0
+
+    @property
+    def last_master_latency_ms(self) -> float:
+        return self._last_master_latency_ms
 
     def evaluate(
         self,
@@ -89,7 +95,9 @@ class DeterministicDecisionProcessor:
         controls: OperatorControls,
     ) -> DecisionPlan:
         """Compose existing pure functions; adapters provide causal context only."""
+        master_started = perf_counter()
         proposal = fuse_evidence(trace.bundle, self._fusion_policy)
+        self._last_master_latency_ms = (perf_counter() - master_started) * 1_000.0
         inputs = self._entry_context_provider(event, state, trace)
         discipline = evaluate_discipline(
             proposal,

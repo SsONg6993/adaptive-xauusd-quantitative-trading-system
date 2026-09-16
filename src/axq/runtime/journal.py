@@ -4,7 +4,7 @@ from __future__ import annotations
 
 import json
 import sqlite3
-from collections.abc import Iterator
+from collections.abc import Iterable, Iterator
 from enum import StrEnum
 from pathlib import Path
 from typing import Any, Literal, Protocol, cast
@@ -21,6 +21,7 @@ from axq.execution_boundary.recovery_contracts import (
 )
 from axq.interaction.contracts import (
     MasterConflictAssessment,
+    SpecialistInteractionImpact,
     SpecialistInteractionResolution,
     SpecialistInteractionRound,
     SpecialistInteractionTurn,
@@ -88,6 +89,7 @@ class JournalRecordType(StrEnum):
     SPECIALIST_INTERACTION_ROUND = "SPECIALIST_INTERACTION_ROUND"
     SPECIALIST_INTERACTION_TURN = "SPECIALIST_INTERACTION_TURN"
     SPECIALIST_INTERACTION_RESOLUTION = "SPECIALIST_INTERACTION_RESOLUTION"
+    SPECIALIST_INTERACTION_IMPACT = "SPECIALIST_INTERACTION_IMPACT"
 
 
 class JournalOutcomeStatus(StrEnum):
@@ -152,6 +154,7 @@ JournalSemantic = (
     | SpecialistInteractionRound
     | SpecialistInteractionTurn
     | SpecialistInteractionResolution
+    | SpecialistInteractionImpact
 )
 
 _MODEL_BY_RECORD_TYPE: dict[JournalRecordType, type[BaseModel]] = {
@@ -191,6 +194,7 @@ _MODEL_BY_RECORD_TYPE: dict[JournalRecordType, type[BaseModel]] = {
     JournalRecordType.SPECIALIST_INTERACTION_ROUND: SpecialistInteractionRound,
     JournalRecordType.SPECIALIST_INTERACTION_TURN: SpecialistInteractionTurn,
     JournalRecordType.SPECIALIST_INTERACTION_RESOLUTION: SpecialistInteractionResolution,
+    JournalRecordType.SPECIALIST_INTERACTION_IMPACT: SpecialistInteractionImpact,
 }
 
 
@@ -332,6 +336,7 @@ def _record_type(value: JournalSemantic) -> JournalRecordType:
             SpecialistInteractionResolution,
             JournalRecordType.SPECIALIST_INTERACTION_RESOLUTION,
         ),
+        (SpecialistInteractionImpact, JournalRecordType.SPECIALIST_INTERACTION_IMPACT),
     )
     for model_type, record_type in types:
         if isinstance(value, model_type):
@@ -367,6 +372,7 @@ def _semantic_id(value: JournalSemantic) -> str:
         "assessment_id",
         "round_id",
         "turn_id",
+        "impact_id",
     )
     for field in fields:
         candidate = getattr(value, field, None)
@@ -571,6 +577,10 @@ class SQLiteRuntimeJournal:
                 "SELECT journal_sequence, record_json FROM runtime_journal "
                 "ORDER BY journal_sequence"
             ).fetchall()
+        return self._entries(rows)
+
+    @staticmethod
+    def _entries(rows: Iterable[sqlite3.Row]) -> tuple[JournalEntry, ...]:
         return tuple(
             JournalEntry(
                 sequence=int(row["journal_sequence"]),
@@ -578,6 +588,48 @@ class SQLiteRuntimeJournal:
             )
             for row in rows
         )
+
+    def query_records(
+        self,
+        *,
+        record_types: tuple[JournalRecordType, ...] = (),
+        event_id: str | None = None,
+        newest_first: bool = False,
+        limit: int | None = None,
+    ) -> tuple[JournalEntry, ...]:
+        """Decode only the indexed semantic subset needed by an operational reader."""
+        if limit is not None and limit <= 0:
+            raise ValueError("journal query limit must be positive")
+        clauses: list[str] = []
+        parameters: list[object] = []
+        if record_types:
+            placeholders = ", ".join("?" for _ in record_types)
+            clauses.append(f"record_type IN ({placeholders})")
+            parameters.extend(item.value for item in record_types)
+        if event_id is not None:
+            clauses.append("event_id = ?")
+            parameters.append(event_id)
+        where = "" if not clauses else " WHERE " + " AND ".join(clauses)
+        order = "DESC" if newest_first else "ASC"
+        query = (
+            "SELECT journal_sequence, record_json FROM runtime_journal"
+            f"{where} ORDER BY journal_sequence {order}"
+        )
+        if limit is not None:
+            query += " LIMIT ?"
+            parameters.append(limit)
+        with self._connect() as connection:
+            rows = connection.execute(query, parameters).fetchall()
+        return self._entries(rows)
+
+    def contains_semantic_id(self, semantic_id: str) -> bool:
+        """Check indexed semantic identity without decoding historical rows."""
+        with self._connect() as connection:
+            row = connection.execute(
+                "SELECT 1 FROM runtime_journal WHERE semantic_id = ? LIMIT 1",
+                (semantic_id,),
+            ).fetchone()
+        return row is not None
 
     def events(self) -> Iterator[RuntimeEvent]:
         values: dict[str, RuntimeEvent] = {}

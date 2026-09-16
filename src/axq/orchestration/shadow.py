@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
+from time import perf_counter
 from typing import Protocol, cast
 
 from axq.orchestration.contracts import DecisionCycle, DecisionPlan
@@ -47,6 +48,12 @@ class ShadowProcessOutcome:
     decision_cycle: DecisionCycle | None
 
 
+@dataclass(frozen=True)
+class ShadowProcessPerformance:
+    scanner_latency_ms: float = 0.0
+    cycle_latency_ms: float = 0.0
+
+
 class LiveShadowRuntime:
     """Observe the scanner while every completed M5 follows the shared decision kernel."""
 
@@ -70,6 +77,12 @@ class LiveShadowRuntime:
         self._resolved_broker_symbol = resolved_broker_symbol
         self._instrument_resolution_id = instrument_resolution_id
         self._execution_sink = execution_sink
+        self._last_performance = ShadowProcessPerformance()
+        self._last_availability_signature: tuple[object, ...] | None = None
+
+    @property
+    def last_performance(self) -> ShadowProcessPerformance:
+        return self._last_performance
 
     def _append(self, value: object, event_id: str) -> None:
         self._journal.append(
@@ -84,6 +97,8 @@ class LiveShadowRuntime:
         event: RuntimeEvent,
         feature_snapshot: CausalFeatureSnapshot,
     ) -> ShadowProcessOutcome:
+        cycle_started = perf_counter()
+        scanner_started = perf_counter()
         context, scan = scan_m5_candidate(
             event,
             feature_snapshot,
@@ -92,6 +107,7 @@ class LiveShadowRuntime:
             instrument_resolution_id=self._instrument_resolution_id,
             expected_manifest_id=self._feature_manifest_id,
         )
+        scanner_latency_ms = (perf_counter() - scanner_started) * 1_000.0
         if context is not None:
             self._append(context, event.event_id)
         self._append(scan, event.event_id)
@@ -105,6 +121,10 @@ class LiveShadowRuntime:
         }:
             shadow_cycle = ShadowRuntimeCycle.from_scan(scan)
             self._append(shadow_cycle, event.event_id)
+            self._last_performance = ShadowProcessPerformance(
+                scanner_latency_ms=scanner_latency_ms,
+                cycle_latency_ms=(perf_counter() - cycle_started) * 1_000.0,
+            )
             return ShadowProcessOutcome(context, scan, shadow_cycle, decision_cycle)
 
         plan = self._orchestrator.latest_plan
@@ -146,9 +166,13 @@ class LiveShadowRuntime:
             interaction_resolution_id=plan.interaction_resolution_id,
         )
         self._append(shadow_cycle, event.event_id)
+        self._last_performance = ShadowProcessPerformance(
+            scanner_latency_ms=scanner_latency_ms,
+            cycle_latency_ms=(perf_counter() - cycle_started) * 1_000.0,
+        )
         return ShadowProcessOutcome(context, scan, shadow_cycle, decision_cycle)
 
-    def record_availability(self, availability: object) -> None:
+    def record_availability(self, availability: object) -> bool:
         from axq.runtime.shadow import ShadowMarketAvailability
 
         value = cast(ShadowMarketAvailability, availability)
@@ -157,7 +181,18 @@ class LiveShadowRuntime:
             or value.instrument_resolution_id != self._instrument_resolution_id
         ):
             raise ValueError("market availability does not match resolved instrument")
+        signature = (
+            value.status,
+            value.reason_code,
+            value.latest_completed_m5_at,
+            value.resolved_broker_symbol,
+            value.instrument_resolution_id,
+        )
+        if signature == self._last_availability_signature:
+            return False
         self._append(value, event_id=value.availability_id)
+        self._last_availability_signature = signature
+        return True
 
 
-__all__ = ["LiveShadowRuntime", "ShadowProcessOutcome"]
+__all__ = ["LiveShadowRuntime", "ShadowProcessOutcome", "ShadowProcessPerformance"]
