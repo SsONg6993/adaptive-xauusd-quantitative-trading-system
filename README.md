@@ -14,6 +14,199 @@ This quantitative engineering research project is designed for local experimenta
 auditable configurations, explicit causal ordering, and clearly separated data, decision, risk,
 recovery, and broker boundaries.
 
+## Architecture Overview
+
+AXQ separates research, runtime decision-making, risk, recovery, broker interaction, and offline governance into explicit boundaries. Expensive or advisory components do not directly control execution, and Shadow/Replay/Demo modes share the same deterministic runtime semantics.
+
+```mermaid
+flowchart TB
+    subgraph DATA["Data & Research Layer"]
+        A1[MT5 Historical Data<br/>M5 / M15 / H1 / H4]
+        A2[Cleaning & Validation]
+        A3[Multi-Timeframe Synchronization]
+        A4[Feature Engineering]
+        A5[Labels & Dataset Contracts]
+        A6[Quant Research / Training]
+        A7[Model Registry & Experiment Audit]
+        A1 --> A2 --> A3 --> A4 --> A5 --> A6 --> A7
+    end
+
+    subgraph RUNTIME["Deterministic Runtime Kernel"]
+        B1[Ordered Runtime Events]
+        B2[Pure Reducer]
+        B3[Shared Runtime State]
+        B4[Fact-Only Tools]
+        B5[Specialist Agents]
+        B6[Scenario / Thesis Lifecycle]
+        B7[Evidence Bundle]
+        B8[Master Fusion]
+        B9[Discipline]
+        B10[Risk]
+        B1 --> B2 --> B3 --> B4 --> B5 --> B6 --> B7 --> B8 --> B9 --> B10
+    end
+
+    subgraph EXECUTION["Operation Modes & Broker Boundary"]
+        C1{Runtime Mode}
+        C2[Replay]
+        C3[Shadow<br/>Read-Only / No Order Sent]
+        C4[Demo-Safe Execution]
+        C5[MT5 Adapter]
+        C1 -->|Replay| C2
+        C1 -->|Shadow| C3
+        C1 -->|Demo| C4 --> C5
+    end
+
+    subgraph OPS["Recovery & Observability"]
+        D1[Append-Only Runtime Journal]
+        D2[Startup Recovery]
+        D3[Broker Reconciliation]
+        D4[Replay Validation]
+        D5[Read-Only Dashboard]
+        D1 --> D2
+        D1 --> D3
+        D1 --> D4
+        D1 --> D5
+    end
+
+    subgraph GOVERNANCE["Offline Experience & Governance"]
+        E1[Experience Store]
+        E2[Daily Reflection]
+        E3[Weekly Reflection]
+        E4[Improvement Proposals]
+        E5[Candidate Evaluation]
+        E6[Operator Review / Authorization]
+        E1 --> E2 --> E3 --> E4 --> E5 --> E6
+    end
+
+    A5 --> B1
+    A7 -. Optional predictive evidence .-> B4
+    B10 --> C1
+    B2 --> D1
+    C5 --> B1
+    D3 --> B1
+    B7 --> E1
+    D4 --> E1
+```
+
+The core runtime path is intentionally deterministic. Predictive ML, offline reasoning, reflection, and improvement proposals are advisory inputs or governance artifacts; none of them bypass Master, Discipline, Risk, recovery, or execution safeguards.
+
+## Decision Pipeline
+
+A completed market event moves through evidence construction before any execution decision is considered.
+
+```mermaid
+flowchart LR
+    A[New Causal Market Event] --> B[Shared Runtime State]
+    B --> C[M15 / M5 Context]
+    C --> D[M5 Scanner]
+    D --> E{Candidate?}
+    E -->|No| F[HOLD / Wait]
+    E -->|Yes| G[Scenario / Thesis]
+    G --> H[Chart Agent]
+    G --> I[Quant Agent]
+    G --> J[Regime Agent]
+    G --> K[Historical / Memory Agent]
+    G --> L[Macro Context]
+    H --> M[Evidence Bundle]
+    I --> M
+    J --> M
+    K --> M
+    L --> M
+    M --> N{Agent Discussion Needed?}
+    N -->|No| O[Master Synthesis]
+    N -->|Yes| P[Bounded Evidence-Based Discussion]
+    P --> O
+    O --> Q{Master Decision}
+    Q -->|HOLD| F
+    Q -->|BUY / SELL Candidate| R[Discipline]
+    R --> S{Discipline Pass?}
+    S -->|No| F
+    S -->|Yes| T[Risk]
+    T --> U{Risk Pass?}
+    U -->|No| F
+    U -->|Yes| V[Guarded Execution Intent]
+    V --> W{Mode}
+    W -->|Shadow| X[Observe Only]
+    W -->|Replay| Y[Replay Outcome]
+    W -->|Demo| Z[Demo-Safe Broker Adapter]
+```
+
+### Safety principle
+
+No specialist agent can place an order directly.
+
+```text
+Market / Runtime Facts
+        ↓
+Deterministic Tools
+        ↓
+Specialist Evidence
+        ↓
+Master
+        ↓
+Discipline
+        ↓
+Risk
+        ↓
+Guarded Execution Boundary
+```
+
+## Live Shadow Runtime
+
+Shadow mode uses the same decision kernel while preventing broker mutation.
+
+```mermaid
+sequenceDiagram
+    participant MT5 as MetaTrader 5
+    participant SRC as Market Source
+    participant RT as AXQ Runtime
+    participant RED as Reducer
+    participant AG as Specialists
+    participant MAS as Master
+    participant DR as Discipline / Risk
+    participant J as Runtime Journal
+    participant UI as Dashboard
+
+    MT5->>SRC: completed bars / broker snapshot
+    SRC->>RT: RuntimeEvent
+    RT->>RED: validate + reduce event
+    RED-->>RT: SharedRuntimeState
+    RT->>J: append canonical event/state evidence
+
+    alt New relevant completed M5
+        RT->>AG: build specialist evidence
+        AG-->>RT: structured AgentEvidence
+        RT->>MAS: fuse EvidenceBundle
+        MAS-->>RT: BUY / SELL / HOLD
+        RT->>DR: validate actionable decision
+        DR-->>RT: pass / veto
+    else No new relevant causal input
+        RT-->>RT: lightweight health / M5 probe only
+    end
+
+    Note over RT,MT5: Shadow mode never sends broker orders
+    J-->>UI: bounded read-only queries
+    UI-->>UI: operator observability only
+```
+
+### Shadow-mode guarantees
+
+- Broker state can be observed without allowing Shadow execution.
+- Startup recovery must resolve before event decisions continue.
+- Runtime events remain causally ordered.
+- Dashboard rendering is read-only.
+- Dashboard refresh does not trigger agents, MT5 initialization, LLM calls, or feature recomputation.
+- Repeated idle polling does not recompute the full decision pipeline.
+
+## Paused Phase 9 retrieval scope
+
+Phase 9 Task 2 is paused after its strict offline contract foundation. The repository contains
+retrieval identities, manifests, audit contracts, package exports, and contract tests only. Source
+adapters, rendering, embedding providers, persistence, indexing, ranking, services, CLI commands,
+and Task 1 context adaptation are not implemented. Nothing in `axq.retrieval` is imported by the
+live/replay fast path, initializes Ollama, builds an index, connects to MT5, or gains decision,
+broker, deployment, governance, or Final OOS authority.
+
 ## Key Features
 
 - Strict agent, master, risk, and execution contracts with `BUY`/`SELL`/`HOLD` semantics.
@@ -209,6 +402,7 @@ src/axq/orchestration/  Task 9 deterministic startup/event/decision/recovery com
 src/axq/experience/     Phase 8 exact attribution, immutable experiences, store, analytics, CLI
 src/axq/reflection/     Phase 8 reflections, proposals, preregistered evaluation evidence, CLI
 src/axq/reasoning/      Phase 9 offline structured LLM boundary, Ollama adapter, audit store, CLI
+src/axq/retrieval/      paused Phase 9 Task 2 offline contract foundation; no runtime integration
 src/axq/dashboard/      optional read-only Streamlit operator views over explicit artifact paths
 src/axq/replay_validation/ shared Phase 7 replay and immutable policy composition
 master/ risk/ execution/ Phase 7 integration boundaries and operator-facing documentation

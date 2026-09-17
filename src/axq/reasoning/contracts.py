@@ -103,6 +103,7 @@ class ReasoningTask(StrEnum):
 
 
 class ReasoningSourceKind(StrEnum):
+    EXPERIENCE = "EXPERIENCE"
     DAILY_REFLECTION = "DAILY_REFLECTION"
     WEEKLY_REFLECTION = "WEEKLY_REFLECTION"
     PATTERN = "PATTERN"
