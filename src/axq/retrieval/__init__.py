@@ -1,4 +1,7 @@
-"""Offline, non-authoritative Phase 8 evidence retrieval contracts."""
+"""Paused Phase 9 Task 2 offline retrieval contract exports.
+
+Importing this package has no provider, persistence, indexing, runtime, or broker side effects.
+"""
 
 from axq.retrieval.contracts import (
     CandidateManifestMember,

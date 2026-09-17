@@ -1,5 +1,10 @@
 # Phase 9 Task 2 Experience Retrieval and Embeddings Implementation Plan
 
+> **Status:** PAUSED after the contract-foundation stage below. Only
+> `src/axq/retrieval/contracts.py`, package exports, the additive Task 1 `EXPERIENCE` source kind,
+> and their focused tests are implemented. Internal Tasks 2–11 have not started; there is no
+> renderer, provider, store, index, ranking service, CLI, automatic Ollama call, or runtime path.
+
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
 **Goal:** Build an offline, append-only, causally bounded retrieval layer that indexes exact Phase 8 evidence, ranks complete exact-vector candidate sets, and emits Task 1-compatible bounded context without gaining truth, trading, governance, or deployment authority.

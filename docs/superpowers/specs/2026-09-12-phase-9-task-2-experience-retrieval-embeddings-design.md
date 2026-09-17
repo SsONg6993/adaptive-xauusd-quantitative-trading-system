@@ -2,14 +2,16 @@
 
 ## Status
 
-Approved architecture captured for review. This document is a design specification only. Phase 9
-Task 2 implementation, its implementation plan, migrations, tests, documentation updates, indexing,
-and any Ollama invocation have not started.
+Approved architecture captured for review. The strict contract-foundation stage is implemented and
+tested: immutable retrieval identities/manifests/audit contracts, package exports, and the additive
+Task 1 `EXPERIENCE` source kind. All later implementation remains PAUSED. There are no source
+adapters, renderers, embedding providers, migrations, stores, indexes, ranking services, CLI
+commands, automatic Ollama invocations, or live/replay imports.
 
 Base checkpoint:
 
 - branch: `codex/phase-9-llm-reasoning`;
-- commit: `9b9b70e1ff232550626c16e5cea98274a5795e52`;
+- original design commit: `9b9b70e1ff232550626c16e5cea98274a5795e52`;
 - prerequisite: completed Phase 9 Task 1 offline structured-reasoning boundary.
 
 ## Goal

@@ -14,9 +14,6 @@ This quantitative engineering research project is designed for local experimenta
 auditable configurations, explicit causal ordering, and clearly separated data, decision, risk,
 recovery, and broker boundaries.
 
-<<<<<<< HEAD
-=======
-
 ## Architecture Overview
 
 AXQ separates research, runtime decision-making, risk, recovery, broker interaction, and offline governance into explicit boundaries. Expensive or advisory components do not directly control execution, and Shadow/Replay/Demo modes share the same deterministic runtime semantics.
@@ -201,7 +198,15 @@ sequenceDiagram
 - Dashboard refresh does not trigger agents, MT5 initialization, LLM calls, or feature recomputation.
 - Repeated idle polling does not recompute the full decision pipeline.
 
->>>>>>> abd61d4 (docs: add architecture diagrams to README)
+## Paused Phase 9 retrieval scope
+
+Phase 9 Task 2 is paused after its strict offline contract foundation. The repository contains
+retrieval identities, manifests, audit contracts, package exports, and contract tests only. Source
+adapters, rendering, embedding providers, persistence, indexing, ranking, services, CLI commands,
+and Task 1 context adaptation are not implemented. Nothing in `axq.retrieval` is imported by the
+live/replay fast path, initializes Ollama, builds an index, connects to MT5, or gains decision,
+broker, deployment, governance, or Final OOS authority.
+
 ## Key Features
 
 - Strict agent, master, risk, and execution contracts with `BUY`/`SELL`/`HOLD` semantics.
@@ -397,6 +402,7 @@ src/axq/orchestration/  Task 9 deterministic startup/event/decision/recovery com
 src/axq/experience/     Phase 8 exact attribution, immutable experiences, store, analytics, CLI
 src/axq/reflection/     Phase 8 reflections, proposals, preregistered evaluation evidence, CLI
 src/axq/reasoning/      Phase 9 offline structured LLM boundary, Ollama adapter, audit store, CLI
+src/axq/retrieval/      paused Phase 9 Task 2 offline contract foundation; no runtime integration
 src/axq/dashboard/      optional read-only Streamlit operator views over explicit artifact paths
 src/axq/replay_validation/ shared Phase 7 replay and immutable policy composition
 master/ risk/ execution/ Phase 7 integration boundaries and operator-facing documentation

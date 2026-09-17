@@ -1,4 +1,4 @@
-"""Strict immutable contracts for offline Phase 8 evidence retrieval."""
+"""Strict immutable contracts for the paused Phase 9 Task 2 retrieval boundary."""
 
 from __future__ import annotations
 
